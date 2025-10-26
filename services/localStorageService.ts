@@ -1,4 +1,4 @@
-import type { User, StudyProgress, PlacementTestResult } from '../types';
+import type { User, StudyProgress, PlacementTestResult, DailyProgress } from '../types';
 
 const USERS_KEY = 'app_users';
 
@@ -27,7 +27,7 @@ export const registerUserLocal = (name: string, password: string): { success: bo
         return { success: false, message: 'Tên người dùng đã tồn tại.' };
     }
     // Create a user without level/progress, which will be added after placement test
-    const newUser: Partial<User> = { name, password, studyProgress: {} };
+    const newUser: Partial<User> = { name, password, studyProgress: {}, dailyProgress: undefined };
     users.push(newUser as User);
     saveUsers(users);
     return { success: true };
@@ -46,6 +46,15 @@ export const updateUserProgressLocal = (name: string, progress: StudyProgress): 
     const userIndex = users.findIndex(u => u.name.toLowerCase() === name.toLowerCase());
     if (userIndex !== -1) {
         users[userIndex].studyProgress = progress;
+        saveUsers(users);
+    }
+};
+
+export const updateUserDailyProgressLocal = (name: string, progress: DailyProgress): void => {
+    const users = getUsers();
+    const userIndex = users.findIndex(u => u.name.toLowerCase() === name.toLowerCase());
+    if (userIndex !== -1) {
+        users[userIndex].dailyProgress = progress;
         saveUsers(users);
     }
 };

@@ -41,18 +41,37 @@ export interface PlacementTestResult {
   analysis: TestAnalysis;
 }
 
+export interface DailyGoal {
+  id: string;
+  description: string;
+  type: 'learn_new' | 'review_srs' | 'complete_quiz' | 'complete_listening' | 'complete_conversation';
+  target: number;
+  current: number;
+}
+
+export interface DailyProgress {
+  date: string; // YYYY-MM-DD
+  streak: number;
+  goals: DailyGoal[];
+}
+
 export interface User {
   name: string;
   password: string;
   level: CEFRLevel;
   placementTestResult?: PlacementTestResult;
   studyProgress?: StudyProgress;
+  dailyProgress?: DailyProgress;
 }
 
-export type StudyStatus = 'known' | 'review';
+export interface StudyRecord {
+  srsLevel: number; // 0 for new, 1, 2, 3... for increasing review intervals
+  nextReview: string; // ISO date string
+  lastAnswer: 'again' | 'good' | 'easy' | null;
+}
 
 export interface StudyProgress {
-  [wordEnglish: string]: StudyStatus;
+  [wordEnglish: string]: StudyRecord;
 }
 
-export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth';
+export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading';

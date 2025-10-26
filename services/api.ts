@@ -1,4 +1,4 @@
-import type { User, StudyProgress, PlacementTestResult } from '../types';
+import type { User, StudyProgress, PlacementTestResult, DailyProgress } from '../types';
 import * as local from './localStorageService';
 
 // =================================================================
@@ -71,10 +71,29 @@ export const updateProgress = async (name: string, progress: StudyProgress): Pro
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}` 
             },
-            body: JSON.stringify({ progress }),
+            body: JSON.stringify({ studyProgress: progress }),
         });
     } catch (error) {
         console.error('Update progress API error:', error);
+    }
+};
+
+export const updateDailyProgress = async (name: string, progress: DailyProgress): Promise<void> => {
+    if (!BACKEND_API_URL) {
+        return local.updateUserDailyProgressLocal(name, progress);
+    }
+    try {
+        const token = sessionStorage.getItem('authToken');
+        await fetch(`${BACKEND_API_URL}/user/daily-progress`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ dailyProgress: progress }),
+        });
+    } catch (error) {
+        console.error('Update daily progress API error:', error);
     }
 };
 

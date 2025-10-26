@@ -12,9 +12,10 @@ declare global {
 
 interface ListeningViewProps {
   currentUser: User | null;
+  onGoalUpdate: () => void;
 }
 
-const ListeningView: React.FC<ListeningViewProps> = ({ currentUser }) => {
+const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate }) => {
     const [status, setStatus] = useState<'idle' | 'fetching' | 'ready' | 'listening' | 'analyzing' | 'feedback'>('idle');
     const [sentence, setSentence] = useState('');
     const [userTranscript, setUserTranscript] = useState('');
@@ -73,6 +74,7 @@ Example response: {"score": 85, "comment": "Làm tốt lắm! Âm cuối của t
             const parsedFeedback = JSON.parse(jsonText);
             setFeedback(parsedFeedback);
             setStatus('feedback');
+            onGoalUpdate(); // Mark goal as completed after feedback
 
         } catch (err) {
             console.error("Gemini Feedback Error:", err);

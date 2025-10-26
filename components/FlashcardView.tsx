@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { Word, Category, StudyProgress, StudyStatus } from '../types';
+import type { Word, Category, StudyProgress, StudyRecord } from '../types';
 import Flashcard from './Flashcard';
+import * as srsService from '../services/srsService';
 
 interface FlashcardViewProps {
   words: Word[];
   categories: Category[];
   studyProgress: StudyProgress;
-  onUpdateStudyProgress: (wordEnglish: string, status: StudyStatus) => void;
+  onUpdateStudyProgress: (wordEnglish: string, performance: 'again' | 'good' | 'easy') => void;
   onResetStudyProgress: (wordKeys: string[]) => void;
-  initialStudyFilter: 'review' | 'unknown' | null;
+  initialStudyFilter: 'review' | 'new' | null;
   onInitialFilterConsumed: () => void;
 }
 
@@ -27,7 +28,7 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [studyFilter, setStudyFilter] = useState<'all' | 'review' | 'unknown' | 'known'>('all');
+  const [studyFilter, setStudyFilter] = useState<'review' | 'new'>('review');
   const [wordSet, setWordSet] = useState<Word[]>([]);
 
   useEffect(() => {
@@ -37,43 +38,34 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
     }
   }, [initialStudyFilter, onInitialFilterConsumed]);
 
-  // This is the pool of words based on category selection
   const categoryFilteredWords = useMemo(() => {
-    if (selectedCategory === 'all') {
-      return words;
-    }
+    if (selectedCategory === 'all') return words;
     const category = categories.find(c => c.id === selectedCategory);
-    if (!category) return [];
-    const categoryWords = new Set(category.words.map(w => w.english));
-    return words.filter(w => categoryWords.has(w.english));
+    return category ? category.words : [];
   }, [words, categories, selectedCategory]);
 
-  // This further filters the pool based on study status
+  const { wordsToReview, newWords } = useMemo(() => {
+    return srsService.getWordsForSession(categoryFilteredWords, studyProgress);
+  }, [categoryFilteredWords, studyProgress]);
+
   const finalFilteredWords = useMemo(() => {
-      if (studyFilter === 'all') {
-          return categoryFilteredWords;
+      if (studyFilter === 'review') {
+          return wordsToReview;
       }
-      return categoryFilteredWords.filter(word => {
-          const status = studyProgress[word.english];
-          if (studyFilter === 'review') return status === 'review';
-          if (studyFilter === 'known') return status === 'known';
-          if (studyFilter === 'unknown') return !status;
-          return true;
-      });
-  }, [categoryFilteredWords, studyFilter, studyProgress]);
+      return newWords; // studyFilter === 'new'
+  }, [studyFilter, wordsToReview, newWords]);
   
   const studyCounts = useMemo(() => {
-      return categoryFilteredWords.reduce((acc, word) => {
-          const status = studyProgress[word.english];
-          if (status === 'known') acc.known++;
-          else if (status === 'review') acc.review++;
-          else acc.unknown++;
-          return acc;
-      }, { known: 0, review: 0, unknown: 0, total: categoryFilteredWords.length });
+      const { wordsToReview: review, newWords: news } = srsService.getWordsForSession(categoryFilteredWords, studyProgress);
+      return { 
+          review: review.length, 
+          new: news.length,
+          total: categoryFilteredWords.length
+      };
   }, [categoryFilteredWords, studyProgress]);
 
   useEffect(() => {
-    setWordSet(finalFilteredWords);
+    setWordSet(shuffleArray(finalFilteredWords));
     setCurrentIndex(0);
   }, [finalFilteredWords]);
 
@@ -96,11 +88,13 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
     });
   };
 
-  const handleMarkWord = (word: Word, status: StudyStatus) => {
-    onUpdateStudyProgress(word.english, status);
-    // Automatically move to the next card after a short delay
+  const handleAnswer = (word: Word, performance: 'again' | 'good' | 'easy') => {
+    onUpdateStudyProgress(word.english, performance);
     setTimeout(() => {
-        goToNext();
+        // Remove the answered word from the current session's set
+        setWordSet(prevSet => prevSet.filter(w => w.english !== word.english));
+        // The index will automatically adjust or reset if it goes out of bounds
+        setCurrentIndex(prevIndex => Math.min(prevIndex, wordSet.length - 2));
     }, 300);
   };
   
@@ -160,17 +154,15 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
                         onChange={(e) => setStudyFilter(e.target.value as any)}
                         className="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                        <option value="all">Tất cả ({studyCounts.total})</option>
-                        <option value="unknown">Chưa học ({studyCounts.unknown})</option>
-                        <option value="review">Cần xem lại ({studyCounts.review})</option>
-                        <option value="known">Đã biết ({studyCounts.known})</option>
+                        <option value="review">Ôn tập hôm nay ({studyCounts.review})</option>
+                        <option value="new">Học từ mới ({studyCounts.new})</option>
                     </select>
                 </div>
             </div>
             <div className="flex justify-center items-center gap-4 pt-4 border-t">
                  {wordSet.length > 0 && (
                     <p className="text-lg font-semibold text-slate-600">
-                        Thẻ {currentIndex + 1} / {wordSet.length}
+                        Còn lại: {wordSet.length} thẻ
                     </p>
                 )}
                  <button 
@@ -188,8 +180,8 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
             <div className="w-full max-w-2xl h-[400px] md:h-[450px] flex items-center justify-center">
                 <Flashcard 
                   word={wordSet[currentIndex]} 
-                  onMarkWord={handleMarkWord}
-                  studyStatus={studyProgress[wordSet[currentIndex].english]}
+                  onAnswer={handleAnswer}
+                  studyRecord={studyProgress[wordSet[currentIndex].english]}
                 />
             </div>
 
@@ -220,8 +212,8 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
         <div className="text-center p-8 bg-white rounded-lg shadow-md mt-4">
             <h3 className="text-xl font-semibold text-slate-700">Tuyệt vời!</h3>
             <p className="text-slate-500 mt-2">
-                Không còn thẻ nào trong chế độ xem này. <br/>
-                Hãy thử chọn một chế độ học hoặc chủ đề khác.
+                Bạn đã hoàn thành tất cả các thẻ trong phiên học này. <br/>
+                Hãy quay lại vào ngày mai để ôn tập tiếp nhé!
             </p>
         </div>
       )}

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import type { User, StudyProgress, Category, ViewMode, CEFRLevel } from '../types';
+import type { User, StudyProgress, Category, ViewMode, CEFRLevel, DailyProgress, DailyGoal } from '../types';
 import { LEARNING_IDIOMS } from '../constants';
+import * as srsService from '../services/srsService';
 
 const CEFR_LEVEL_MAP: Record<CEFRLevel, { name: string, color: string }> = {
     'A1': { name: 'A1 - Mới bắt đầu', color: 'bg-green-100 text-green-800' },
@@ -42,21 +43,21 @@ const SkillCard: React.FC<{
 
 const NextLessonCard: React.FC<{
     reviewCount: number;
-    unknownCount: number;
-    navigateTo: (mode: ViewMode, options?: { initialFilter: 'review' | 'unknown' }) => void;
-}> = ({ reviewCount, unknownCount, navigateTo }) => {
+    newCount: number;
+    navigateTo: (mode: ViewMode, options?: { initialFilter: 'review' | 'new' }) => void;
+}> = ({ reviewCount, newCount, navigateTo }) => {
     
     let title = "Bắt đầu học từ mới";
-    let description = `Bạn có ${unknownCount} từ chưa học. Hãy bắt đầu chinh phục chúng!`;
-    let buttonText = "Bắt đầu học";
-    let onClickAction = () => navigateTo('flashcard', { initialFilter: 'unknown' });
+    let description = `Bạn có ${newCount} từ chưa học. Hãy bắt đầu chinh phục chúng!`;
+    let buttonText = "Học từ mới";
+    let onClickAction = () => navigateTo('flashcard', { initialFilter: 'new' });
 
     if (reviewCount > 0) {
-        title = "Ôn tập từ vựng";
-        description = `Bạn có ${reviewCount} từ được đánh dấu cần xem lại. Hãy ôn tập ngay!`;
+        title = "Ôn tập hôm nay";
+        description = `Bạn có ${reviewCount} từ cần ôn tập. Hãy ôn lại để không quên nhé!`;
         buttonText = `Ôn tập ${reviewCount} từ`;
         onClickAction = () => navigateTo('flashcard', { initialFilter: 'review' });
-    } else if (unknownCount === 0) {
+    } else if (newCount === 0) {
         title = "Làm bài trắc nghiệm";
         description = "Bạn đã học hết từ vựng! Hãy củng cố kiến thức bằng một bài trắc nghiệm nhé.";
         buttonText = "Làm trắc nghiệm";
@@ -65,7 +66,7 @@ const NextLessonCard: React.FC<{
 
     return (
         <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
-            <h3 className="text-xl font-bold text-slate-800">Bài học tiếp theo của bạn</h3>
+            <h3 className="text-xl font-bold text-slate-800">{title}</h3>
             <p className="text-slate-500 mt-2">{description}</p>
             <button
                 onClick={onClickAction}
@@ -109,26 +110,67 @@ const IdiomCard: React.FC = () => {
     );
 }
 
+const DailyGoalsCard: React.FC<{ dailyProgress: DailyProgress | null }> = ({ dailyProgress }) => {
+    if (!dailyProgress) return null;
+
+    const allGoalsMet = dailyProgress.goals.every(g => g.current >= g.target);
+
+    return (
+        <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
+            <div className="flex justify-between items-start">
+                 <h3 className="text-xl font-bold text-slate-700 mb-4">Mục tiêu hôm nay</h3>
+                 <div className="flex items-center gap-2 text-orange-500 font-bold">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.934l-6.5 11.9a1 1 0 001.64 1.065l6.5-11.9a1 1 0 00-.385-1.45z" clipRule="evenodd" /><path fillRule="evenodd" d="M8.343 3.404a1 1 0 011.414 0l6.25 6.25a1 1 0 010 1.414l-6.25 6.25a1 1 0 01-1.414-1.414L13.586 11H3a1 1 0 110-2h10.586L8.343 4.818a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                    <span>{dailyProgress.streak} ngày</span>
+                 </div>
+            </div>
+            <div className="space-y-4">
+                {dailyProgress.goals.map(goal => {
+                    const progress = Math.min(100, (goal.current / goal.target) * 100);
+                    const isCompleted = goal.current >= goal.target;
+                    return (
+                        <div key={goal.id}>
+                             <div className="flex justify-between mb-1 text-sm">
+                                <span className="font-medium text-slate-600">{goal.description}</span>
+                                <span className={`font-semibold ${isCompleted ? 'text-green-600' : 'text-slate-500'}`}>{goal.current}/{goal.target}</span>
+                            </div>
+                            <div className="w-full bg-slate-200 rounded-full h-2">
+                                <div className={`h-2 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-indigo-600'}`} style={{width: `${progress}%`}}></div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+            {allGoalsMet && <p className="text-center mt-6 font-semibold text-green-700">🎉 Hoàn thành tất cả mục tiêu! Giữ vững phong độ nhé!</p>}
+        </div>
+    );
+};
+
 
 interface DashboardViewProps {
   currentUser: User | null;
   studyProgress: StudyProgress;
+  dailyProgress: DailyProgress | null;
   categories: Category[];
-  navigateTo: (mode: ViewMode, options?: { initialFilter: 'review' | 'unknown' }) => void;
+  navigateTo: (mode: ViewMode, options?: { initialFilter: 'review' | 'new' }) => void;
 }
 
-const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgress, categories, navigateTo }) => {
+const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgress, dailyProgress, categories, navigateTo }) => {
 
-    const allWordsCount = useMemo(() => categories.flatMap(c => c.words).length, [categories]);
+    const allWords = useMemo(() => categories.flatMap(c => c.words), [categories]);
 
     const stats = useMemo(() => {
-        const progressValues = Object.values(studyProgress);
-        const knownCount = progressValues.filter(s => s === 'known').length;
-        const reviewCount = progressValues.filter(s => s === 'review').length;
-        const unknownCount = allWordsCount - knownCount - reviewCount;
-        const learnedPercentage = allWordsCount > 0 ? Math.round(((knownCount + reviewCount) / allWordsCount) * 100) : 0;
-        return { knownCount, reviewCount, unknownCount, learnedPercentage };
-    }, [studyProgress, allWordsCount]);
+        const { wordsToReview, newWords } = srsService.getWordsForSession(allWords, studyProgress);
+        const learnedCount = allWords.length - newWords.length;
+        const learnedPercentage = allWords.length > 0 ? Math.round((learnedCount / allWords.length) * 100) : 0;
+        return { 
+            reviewCount: wordsToReview.length, 
+            newCount: newWords.length,
+            learnedCount,
+            learnedPercentage,
+            totalCount: allWords.length
+        };
+    }, [studyProgress, allWords]);
 
     if (!currentUser) {
       return (
@@ -160,19 +202,27 @@ const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgres
                 <div className="lg:col-span-2 space-y-8">
                     <NextLessonCard 
                         reviewCount={stats.reviewCount}
-                        unknownCount={stats.unknownCount}
+                        newCount={stats.newCount}
                         navigateTo={navigateTo}
                     />
                      <div>
                         <h3 className="text-2xl font-bold text-slate-800 mb-6">Tất cả kỹ năng</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <SkillCard 
-                                title="Từ Vựng & Ngữ Pháp"
-                                description="Học từ mới qua Flashcard và tra cứu cẩm nang ngữ pháp."
+                                title="Học từ vựng (SRS)"
+                                description="Học từ mới và ôn tập theo phương pháp lặp lại ngắt quãng."
                                 icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10.392C3.057 14.71 4.245 14 5.5 14c1.255 0 2.443.29 3.5.804V4.804zM14.5 4c-1.255 0-2.443.29-3.5.804v10.392c1.057.514 2.245.804 3.5.804c1.255 0 2.443-.29 3.5-.804V4.804C16.943 4.29 15.755 4 14.5 4z" /></svg>}
                                 onClick={() => navigateTo('flashcard')}
                                 buttonText="Bắt đầu học"
                                 gradient="bg-gradient-to-br from-indigo-500 to-purple-600"
+                            />
+                             <SkillCard 
+                                title="Phòng Đọc AI"
+                                description="Luyện đọc hiểu và học từ vựng trong ngữ cảnh thực tế."
+                                icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6 text-white"><path d="M9.25 3.321a.75.75 0 011.5 0v1.821a.75.75 0 01-1.5 0V3.321zM11.603 3.38a.75.75 0 00-1.06-1.06l-1.288 1.287a.75.75 0 001.06 1.06l1.288-1.287zM5.457 4.637a.75.75 0 10-1.06-1.06L3.109 4.865a.75.75 0 001.06 1.06l1.288-1.288zM2.5 9.25a.75.75 0 01.75-.75h1.821a.75.75 0 010 1.5H3.25a.75.75 0 01-.75-.75zM14.929 7.671a.75.75 0 00-1.06 1.06l1.287 1.288a.75.75 0 001.06-1.06l-1.287-1.288zM4.637 14.543a.75.75 0 10-1.06 1.06L4.865 16.89a.75.75 0 001.06-1.06l-1.288-1.287zM10 12.25a.75.75 0 01.75.75v1.821a.75.75 0 01-1.5 0v-1.821a.75.75 0 01.75-.75zM8.397 16.62a.75.75 0 00-1.06 1.06l1.288 1.287a.75.75 0 001.06-1.06L8.397 16.62zM12.5 10a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /><path d="M17.5 9.25a.75.75 0 00-1.5 0v1.821a.75.75 0 001.5 0V9.25zM14.543 15.363a.75.75 0 10-1.06 1.06l1.288 1.288a.75.75 0 001.06-1.06l-1.288-1.288z" /></svg>}
+                                onClick={() => navigateTo('reading')}
+                                buttonText="Bắt đầu đọc"
+                                gradient="bg-gradient-to-br from-sky-500 to-cyan-600"
                             />
                             <SkillCard 
                                 title="AI Giao tiếp"
@@ -190,26 +240,19 @@ const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgres
                                 buttonText="Luyện phát âm"
                                 gradient="bg-gradient-to-br from-teal-500 to-green-600"
                             />
-                            <SkillCard 
-                                title="AI Viết truyện"
-                                description="Xây dựng câu chuyện ngắn từ các từ vựng đã chọn."
-                                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg>}
-                                onClick={() => navigateTo('story')}
-                                buttonText="Viết truyện ngắn"
-                                gradient="bg-gradient-to-br from-rose-500 to-orange-600"
-                            />
                         </div>
                     </div>
                 </div>
 
                 {/* Right Sidebar */}
                 <div className="space-y-8">
+                    <DailyGoalsCard dailyProgress={dailyProgress} />
                     <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
                         <h3 className="text-xl font-bold text-slate-700 mb-4">Tiến trình của bạn</h3>
                          <div>
                             <div className="flex justify-between mb-1">
-                                <span className="text-base font-medium text-indigo-700">Tổng quan</span>
-                                <span className="text-sm font-medium text-indigo-700">{stats.knownCount + stats.reviewCount} / {allWordsCount} từ</span>
+                                <span className="text-base font-medium text-indigo-700">Đã học</span>
+                                <span className="text-sm font-medium text-indigo-700">{stats.learnedCount} / {stats.totalCount} từ</span>
                             </div>
                             <div className="w-full bg-slate-200 rounded-full h-2.5">
                                 <div className="bg-indigo-600 h-2.5 rounded-full" style={{width: `${stats.learnedPercentage}%`}}></div>
@@ -217,30 +260,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgres
                         </div>
                         <div className="mt-6 space-y-3">
                              <div className="flex justify-between items-center text-sm">
-                                <span className="flex items-center gap-2 text-slate-600"><span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>Đã biết</span>
-                                <span className="font-semibold">{stats.knownCount}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="flex items-center gap-2 text-slate-600"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>Cần ôn tập</span>
+                                <span className="flex items-center gap-2 text-slate-600"><span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>Từ cần ôn tập hôm nay</span>
                                 <span className="font-semibold">{stats.reviewCount}</span>
                             </div>
-                             <div className="flex justify-between items-center text-sm">
-                                <span className="flex items-center gap-2 text-slate-600"><span className="w-2.5 h-2.5 rounded-full bg-slate-300"></span>Chưa học</span>
-                                <span className="font-semibold">{stats.unknownCount}</span>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="flex items-center gap-2 text-slate-600"><span className="w-2.5 h-2.5 rounded-full bg-slate-300"></span>Từ mới</span>
+                                <span className="font-semibold">{stats.newCount}</span>
                             </div>
                         </div>
                     </div>
-                    {currentUser.placementTestResult && (
-                        <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
-                            <h3 className="text-xl font-bold text-slate-700 mb-4">Kết quả đầu vào</h3>
-                            <p className="text-slate-600">
-                                Trình độ ban đầu của bạn được xác định là <strong className={`font-bold px-2 py-0.5 rounded-md ${CEFR_LEVEL_MAP[currentUser.level].color}`}>{currentUser.level}</strong>. 
-                                Lộ trình học được cá nhân hóa dựa trên kết quả này.
-                            </p>
-                        </div>
-                    )}
                 </div>
-
             </div>
 
         </div>

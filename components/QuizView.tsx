@@ -5,13 +5,14 @@ interface QuizViewProps {
   allWords: Word[]; // All words for generating options
   wordsForQuiz: Word[]; // Words to be tested, possibly filtered by search
   categories: Category[];
+  onGoalUpdate: () => void;
 }
 
 const shuffleArray = <T,>(array: T[]): T[] => {
   return [...array].sort(() => Math.random() - 0.5);
 };
 
-const QuizView: React.FC<QuizViewProps> = ({ allWords, wordsForQuiz, categories }) => {
+const QuizView: React.FC<QuizViewProps> = ({ allWords, wordsForQuiz, categories, onGoalUpdate }) => {
   const [quizState, setQuizState] = useState<'setup' | 'playing' | 'result'>('setup');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [numQuestions, setNumQuestions] = useState(10);
@@ -45,6 +46,7 @@ const QuizView: React.FC<QuizViewProps> = ({ allWords, wordsForQuiz, categories 
     setSelectedAnswer(null);
     setIsCorrect(null);
     setQuizState('playing');
+    onGoalUpdate();
   };
 
   const currentQuestion = questions[currentQuestionIndex];

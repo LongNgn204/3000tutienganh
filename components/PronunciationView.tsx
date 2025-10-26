@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import type { Word, StudyProgress } from '../types';
 import SpeakerButton from './SpeakerButton';
+import * as srsService from '../services/srsService';
 
 // Add SpeechRecognition to the window interface for browsers that support it
 declare global {
@@ -25,8 +26,9 @@ const PronunciationView: React.FC<{ words: Word[], studyProgress: StudyProgress 
     const recognitionRef = useRef<any>(null);
 
     const getNewWord = () => {
-        const reviewWords = words.filter(w => studyProgress[w.english] === 'review');
-        const unknownWords = words.filter(w => !studyProgress[w.english]);
+        // FIX: Use srsService to get words for review and new words, instead of incorrect comparison.
+        const reviewWords = srsService.getWordsToReview(words, studyProgress);
+        const unknownWords = srsService.getNewWords(words, studyProgress);
         
         let pool = [];
         if (reviewWords.length > 0) pool.push(...reviewWords);

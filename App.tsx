@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import { WORD_CATEGORIES, ALL_WORDS } from './constants';
-import type { User, StudyProgress, StudyStatus, ViewMode, PlacementTestResult } from './types';
+import type { User, StudyProgress, ViewMode, PlacementTestResult, StudyRecord, DailyProgress } from './types';
 import Footer from './components/Footer';
 import * as api from './services/api';
+import * as srsService from './services/srsService';
 
 // Lazy load components for better performance
 const Sidebar = lazy(() => import('./components/Sidebar'));
@@ -20,6 +21,7 @@ const GrammarView = lazy(() => import('./components/GrammarView'));
 const ListeningView = lazy(() => import('./components/ListeningView'));
 const AdvancedGrammarView = lazy(() => import('./components/AdvancedGrammarView'));
 const AuthView = lazy(() => import('./components/AuthView'));
+const ReadingRoomView = lazy(() => import('./components/ReadingRoomView'));
 
 
 const Loader: React.FC = () => (
@@ -35,12 +37,48 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('auth');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [studyProgress, setStudyProgress] = useState<StudyProgress>({});
-  const [initialFlashcardFilter, setInitialFlashcardFilter] = useState<'review' | 'unknown' | null>(null);
+  const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
+  const [initialFlashcardFilter, setInitialFlashcardFilter] = useState<'review' | 'new' | null>(null);
   const [testResultToShow, setTestResultToShow] = useState<PlacementTestResult | null>(null);
   const [pendingUserName, setPendingUserName] = useState<string | null>(null);
 
 
   const mainContentRef = useRef<HTMLDivElement>(null);
+
+  const initializeDailyProgress = (user: User): DailyProgress => {
+      const today = new Date().toISOString().split('T')[0];
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      const lastProgress = user.dailyProgress;
+      let newStreak = 1;
+
+      if (lastProgress) {
+          if (lastProgress.date === today) {
+              // Already initialized for today
+              return lastProgress;
+          }
+          if (lastProgress.date === yesterdayStr) {
+              const allGoalsMet = lastProgress.goals.every(g => g.current >= g.target);
+              if (allGoalsMet) {
+                  newStreak = lastProgress.streak + 1;
+              } else {
+                  newStreak = 0; // Streak broken
+              }
+          } else {
+              newStreak = 1; // Not consecutive day
+          }
+      }
+
+      const newGoals = [
+          { id: 'g1', description: 'Học 10 từ mới', type: 'learn_new' as const, target: 10, current: 0 },
+          { id: 'g2', description: 'Ôn tập 15 thẻ', type: 'review_srs' as const, target: 15, current: 0 },
+          { id: 'g3', description: 'Hoàn thành 1 bài luyện nghe', type: 'complete_listening' as const, target: 1, current: 0 },
+      ];
+
+      return { date: today, streak: newStreak, goals: newGoals };
+  };
 
   useEffect(() => {
     const verifySession = async () => {
@@ -48,6 +86,9 @@ const App: React.FC = () => {
         if (user) {
             setCurrentUser(user);
             setStudyProgress(user.studyProgress || {});
+            const newDailyProgress = initializeDailyProgress(user);
+            setDailyProgress(newDailyProgress);
+            api.updateDailyProgress(user.name, newDailyProgress);
             setViewMode('dashboard');
         } else {
             setViewMode('auth');
@@ -74,6 +115,9 @@ const App: React.FC = () => {
         } else {
             setCurrentUser(result.user);
             setStudyProgress(result.user.studyProgress || {});
+            const newDailyProgress = initializeDailyProgress(result.user);
+            setDailyProgress(newDailyProgress);
+            api.updateDailyProgress(result.user.name, newDailyProgress);
             setViewMode('dashboard');
         }
         return { success: true };
@@ -94,9 +138,11 @@ const App: React.FC = () => {
     if (result.success && result.user) {
         setCurrentUser(result.user);
         setStudyProgress(result.user.studyProgress || {});
+        const newDailyProgress = initializeDailyProgress(result.user);
+        setDailyProgress(newDailyProgress);
+        api.updateDailyProgress(result.user.name, newDailyProgress);
     } else {
         console.error("Failed to complete placement test:", result.message);
-        // Fallback or show error
         setViewMode('auth');
         return;
     }
@@ -110,15 +156,41 @@ const App: React.FC = () => {
     api.logout();
     setCurrentUser(null);
     setStudyProgress({});
+    setDailyProgress(null);
     setViewMode('auth');
   };
   
-  const handleUpdateStudyProgress = async (wordEnglish: string, status: StudyStatus) => {
+  const handleUpdateStudyProgress = async (wordEnglish: string, performance: 'again' | 'good' | 'easy') => {
     if (!currentUser) return;
-    const newProgress = { ...studyProgress, [wordEnglish]: status };
+
+    const currentRecord = studyProgress[wordEnglish] || srsService.getInitialRecord();
+    const isNewWord = !studyProgress[wordEnglish];
+    const newRecord = srsService.calculateNextReview(currentRecord, performance);
+    
+    const newProgress = { ...studyProgress, [wordEnglish]: newRecord };
     setStudyProgress(newProgress);
     await api.updateProgress(currentUser.name, newProgress);
+
+    if (performance !== 'again' && isNewWord) {
+      handleGoalUpdate('learn_new', 1);
+    }
+    handleGoalUpdate('review_srs', 1);
   };
+
+  const handleGoalUpdate = async (type: 'learn_new' | 'review_srs' | 'complete_quiz' | 'complete_listening' | 'complete_conversation', amount: number) => {
+    if (!currentUser || !dailyProgress) return;
+
+    const newGoals = dailyProgress.goals.map(goal => {
+        if (goal.type === type) {
+            return { ...goal, current: Math.min(goal.target, goal.current + amount) };
+        }
+        return goal;
+    });
+
+    const newDailyProgress = { ...dailyProgress, goals: newGoals };
+    setDailyProgress(newDailyProgress);
+    await api.updateDailyProgress(currentUser.name, newDailyProgress);
+  }
   
   const handleResetStudyProgress = async (wordKeys: string[]) => {
       if (!currentUser) return;
@@ -130,7 +202,7 @@ const App: React.FC = () => {
       await api.updateProgress(currentUser.name, newProgress);
   };
 
-  const navigateTo = (mode: ViewMode, options?: { initialFilter: 'review' | 'unknown' }) => {
+  const navigateTo = (mode: ViewMode, options?: { initialFilter: 'review' | 'new' }) => {
     if (options?.initialFilter) {
       setInitialFlashcardFilter(options.initialFilter);
     } else {
@@ -156,21 +228,24 @@ const App: React.FC = () => {
         return <DashboardView 
                   currentUser={currentUser} 
                   studyProgress={studyProgress}
+                  dailyProgress={dailyProgress}
                   categories={WORD_CATEGORIES}
                   navigateTo={navigateTo}
                />;
       case 'story':
         return <AIStoryView words={ALL_WORDS} studyProgress={studyProgress} />;
       case 'conversation':
-        return <ConversationView allWords={ALL_WORDS} studyProgress={studyProgress} currentUser={currentUser} />;
+        return <ConversationView allWords={ALL_WORDS} studyProgress={studyProgress} currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_conversation', 1)} />;
       case 'pronunciation':
         return <PronunciationView words={ALL_WORDS} studyProgress={studyProgress} />;
       case 'grammar':
         return <GrammarView />;
       case 'listening':
-        return <ListeningView currentUser={currentUser} />;
+        return <ListeningView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_listening', 1)}/>;
       case 'advanced-grammar':
         return <AdvancedGrammarView currentUser={currentUser} />;
+      case 'reading':
+        return <ReadingRoomView currentUser={currentUser} />;
       case 'flashcard':
         return <FlashcardView 
               words={filteredWords} 
@@ -182,7 +257,7 @@ const App: React.FC = () => {
               onInitialFilterConsumed={() => setInitialFlashcardFilter(null)}
             />;
       case 'quiz':
-         return <QuizView allWords={ALL_WORDS} wordsForQuiz={filteredWords} categories={WORD_CATEGORIES} />;
+         return <QuizView allWords={ALL_WORDS} wordsForQuiz={filteredWords} categories={WORD_CATEGORIES} onGoalUpdate={() => handleGoalUpdate('complete_quiz', 1)} />;
       case 'list':
       default:
         return <WordList 

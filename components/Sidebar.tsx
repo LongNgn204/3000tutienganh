@@ -106,6 +106,9 @@ const Sidebar: React.FC<{
              <NavButton onClick={() => navigateTo('listening')} isActive={viewMode === 'listening'} label="Luyện Nghe">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" /></svg>
             </NavButton>
+            <NavButton onClick={() => navigateTo('reading')} isActive={viewMode === 'reading'} label="Phòng Đọc AI">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M9.25 3.321a.75.75 0 011.5 0v1.821a.75.75 0 01-1.5 0V3.321zM11.603 3.38a.75.75 0 00-1.06-1.06l-1.288 1.287a.75.75 0 001.06 1.06l1.288-1.287zM5.457 4.637a.75.75 0 10-1.06-1.06L3.109 4.865a.75.75 0 001.06 1.06l1.288-1.288zM2.5 9.25a.75.75 0 01.75-.75h1.821a.75.75 0 010 1.5H3.25a.75.75 0 01-.75-.75zM14.929 7.671a.75.75 0 00-1.06 1.06l1.287 1.288a.75.75 0 001.06-1.06l-1.287-1.288zM4.637 14.543a.75.75 0 10-1.06 1.06L4.865 16.89a.75.75 0 001.06-1.06l-1.288-1.287zM10 12.25a.75.75 0 01.75.75v1.821a.75.75 0 01-1.5 0v-1.821a.75.75 0 01.75-.75zM8.397 16.62a.75.75 0 00-1.06 1.06l1.288 1.287a.75.75 0 001.06-1.06L8.397 16.62zM12.5 10a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /><path d="M17.5 9.25a.75.75 0 00-1.5 0v1.821a.75.75 0 001.5 0V9.25zM14.543 15.363a.75.75 0 10-1.06 1.06l1.288 1.288a.75.75 0 001.06-1.06l-1.288-1.288z" /></svg>
+            </NavButton>
         </NavGroup>
       </nav>
       <UserProfile currentUser={currentUser} onLogoutClick={onLogoutClick} />

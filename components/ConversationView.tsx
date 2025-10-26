@@ -52,6 +52,7 @@ interface ConversationViewProps {
   allWords: Word[];
   studyProgress: StudyProgress;
   currentUser: User | null;
+  onGoalUpdate: () => void;
 }
 
 interface TranscriptItem {
@@ -59,7 +60,7 @@ interface TranscriptItem {
     content: string;
 }
 
-const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProgress, currentUser }) => {
+const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProgress, currentUser, onGoalUpdate }) => {
   const [stage, setStage] = useState<'setup' | 'chatting' | 'finished'>('setup');
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
   const [targetWords, setTargetWords] = useState<Word[]>([]);
@@ -124,8 +125,9 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
   const handleStartConversation = async () => {
     setConnectionStatus('connecting');
     setError(null);
+    onGoalUpdate();
 
-    const wordsToReview = allWords.filter(w => studyProgress[w.english] === 'review');
+    const wordsToReview = allWords.filter(w => studyProgress[w.english]?.srsLevel > 0);
     const wordsUnknown = allWords.filter(w => !studyProgress[w.english]);
     let potentialWords = [...wordsToReview, ...shuffleArray(wordsUnknown)];
     if (potentialWords.length < 3) {

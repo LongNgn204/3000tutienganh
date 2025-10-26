@@ -14,6 +14,7 @@ const VIEW_TITLES: Record<ViewMode, string> = {
     'placement-test-result': 'Kết quả kiểm tra',
     'listening': 'Luyện Nghe Cùng AI',
     'advanced-grammar': 'Ngữ pháp Chuyên sâu',
+    'reading': 'Phòng Đọc AI',
     'auth': 'Đăng nhập & Đăng ký',
 };
 

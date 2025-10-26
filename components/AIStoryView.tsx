@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import type { Word, StudyProgress } from '../types';
 import SpeakerButton from './SpeakerButton';
+import * as srsService from '../services/srsService';
 
 interface AIStoryViewProps {
   words: Word[];
@@ -21,7 +22,8 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
 
   const filteredWords = useMemo(() => {
     if (filter === 'review') {
-      return words.filter(word => studyProgress[word.english] === 'review');
+      // FIX: Use srsService to get words for review instead of incorrect comparison.
+      return srsService.getWordsToReview(words, studyProgress);
     }
     return words;
   }, [words, studyProgress, filter]);
