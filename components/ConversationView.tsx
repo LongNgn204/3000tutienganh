@@ -66,6 +66,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
   const [usedWords, setUsedWords] = useState<Set<string>>(new Set());
   const [transcript, setTranscript] = useState<TranscriptItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isApiKeySelected, setIsApiKeySelected] = useState(false);
 
   // Refs for managing Web Audio API and Gemini Live session
   // FIX: Replaced non-existent 'LiveSession' with 'any' as the type is not exported.
@@ -81,6 +82,16 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
   // Refs for building transcriptions
   const currentInputTranscriptionRef = useRef('');
   const currentOutputTranscriptionRef = useRef('');
+
+  useEffect(() => {
+    window.aistudio?.hasSelectedApiKey().then(setIsApiKeySelected);
+  }, []);
+
+  const handleSelectKey = async () => {
+    await window.aistudio.openSelectKey();
+    setIsApiKeySelected(true); // Assume success to avoid race condition
+  };
+
 
   const stopConversation = () => {
     // Disconnect microphone processing
@@ -249,7 +260,13 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
                 },
                 onerror: (e) => {
                     console.error('Session Error:', e);
-                    setError('Kết nối bị lỗi. Vui lòng thử lại.');
+                    const errorMessage = (e as any).message || e.toString();
+                    if (errorMessage.includes('API key expired') || errorMessage.includes('API_KEY_INVALID')) {
+                      setError('API key của bạn đã hết hạn hoặc không hợp lệ. Vui lòng chọn một key mới.');
+                      setIsApiKeySelected(false);
+                    } else {
+                      setError('Kết nối bị lỗi. Vui lòng thử lại.');
+                    }
                     stopConversation();
                 },
                 onclose: () => {
@@ -309,13 +326,27 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
                 <h2 className="text-3xl font-bold text-slate-800">AI Luyện Nói</h2>
                 <p className="text-slate-600 mt-4 mb-8">Thực hành từ vựng bằng cách nói chuyện trực tiếp với AI. AI sẽ đưa ra một vài từ, và nhiệm vụ của bạn là sử dụng chúng trong cuộc hội thoại!</p>
                 {error && <p className="text-red-500 bg-red-50 p-3 rounded-md mb-4">{error}</p>}
-                <button
-                    onClick={handleStartConversation}
-                    disabled={connectionStatus === 'connecting'}
-                    className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md transition-all transform hover:scale-105 disabled:bg-slate-400 disabled:cursor-wait"
-                >
-                    {connectionStatus === 'connecting' ? 'Đang chuẩn bị...' : 'Bắt đầu Luyện tập'}
-                </button>
+                
+                {isApiKeySelected ? (
+                    <button
+                        onClick={handleStartConversation}
+                        disabled={connectionStatus === 'connecting'}
+                        className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md transition-all transform hover:scale-105 disabled:bg-slate-400 disabled:cursor-wait"
+                    >
+                        {connectionStatus === 'connecting' ? 'Đang chuẩn bị...' : 'Bắt đầu Luyện tập'}
+                    </button>
+                ) : (
+                    <div className="text-center">
+                        <p className="text-sm text-slate-600 mb-4">Vui lòng chọn API Key để sử dụng tính năng này.</p>
+                        <button
+                            onClick={handleSelectKey}
+                            className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-md transition-all transform hover:scale-105"
+                        >
+                            Chọn API Key
+                        </button>
+                         <p className="text-xs text-slate-500 mt-2">Tính năng này yêu cầu API key của riêng bạn. <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="underline">Tìm hiểu thêm về thanh toán</a>.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
