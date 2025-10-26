@@ -1,16 +1,26 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'react';
 import Header from './components/Header';
-import Sidebar from './components/Sidebar';
-import WordList from './components/WordList';
-import FlashcardView from './components/FlashcardView';
-import QuizView from './components/QuizView';
-import AIStoryView from './components/AIStoryView';
-import DashboardView from './components/DashboardView';
-import ConversationView from './components/ConversationView';
-import LoginModal from './components/LoginModal';
-import PlacementTestView from './components/PlacementTestView';
 import { WORD_CATEGORIES, ALL_WORDS } from './constants';
 import type { Category, User, StudyProgress, StudyStatus, ViewMode, PlacementTestResult } from './types';
+
+// Lazy load components for better performance
+const Sidebar = lazy(() => import('./components/Sidebar'));
+const WordList = lazy(() => import('./components/WordList'));
+const FlashcardView = lazy(() => import('./components/FlashcardView'));
+const QuizView = lazy(() => import('./components/QuizView'));
+const AIStoryView = lazy(() => import('./components/AIStoryView'));
+const DashboardView = lazy(() => import('./components/DashboardView'));
+const ConversationView = lazy(() => import('./components/ConversationView'));
+const LoginModal = lazy(() => import('./components/LoginModal'));
+const PlacementTestView = lazy(() => import('./components/PlacementTestView'));
+const PlacementTestResultView = lazy(() => import('./components/PlacementTestResultView'));
+
+
+const Loader: React.FC = () => (
+    <div className="flex-1 flex items-center justify-center">
+        <div className="w-14 h-14 border-4 border-slate-200 border-b-blue-500 rounded-full animate-spin"></div>
+    </div>
+);
 
 const App: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>(WORD_CATEGORIES[0]?.id || '');
@@ -22,7 +32,7 @@ const App: React.FC = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [studyProgress, setStudyProgress] = useState<StudyProgress>({});
   const [initialFlashcardFilter, setInitialFlashcardFilter] = useState<'review' | 'unknown' | null>(null);
-
+  const [testResultToShow, setTestResultToShow] = useState<PlacementTestResult | null>(null);
 
   const mainContentRef = useRef<HTMLDivElement>(null);
 
@@ -65,13 +75,16 @@ const App: React.FC = () => {
     return () => {
       sections?.forEach((section) => observer.unobserve(section));
     };
-  }, [viewMode]);
+  }, [viewMode, mainContentRef.current]);
 
   const handleCategoryClick = (id: string) => {
-    const section = document.getElementById(id);
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    setViewMode('list');
+    setTimeout(() => {
+      const section = document.getElementById(id);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 0);
   };
 
   const handleLogin = (name: string) => {
@@ -80,16 +93,22 @@ const App: React.FC = () => {
     setViewMode('placement-test');
   };
 
-  const handlePlacementTestComplete = (result: PlacementTestResult) => {
-    if (!pendingUserName) return;
+  const handlePlacementTestSubmit = (result: PlacementTestResult) => {
+      setTestResultToShow(result);
+      setViewMode('placement-test-result');
+  };
+
+  const handlePlacementTestComplete = () => {
+    if (!pendingUserName || !testResultToShow) return;
     const user: User = { 
         name: pendingUserName, 
-        level: result.level,
-        placementTestResult: result,
+        level: testResultToShow.level,
+        placementTestResult: testResultToShow,
     };
     setCurrentUser(user);
     localStorage.setItem('currentUser', JSON.stringify(user));
     setPendingUserName(null);
+    setTestResultToShow(null);
     setViewMode('dashboard');
   };
 
@@ -97,6 +116,7 @@ const App: React.FC = () => {
     setCurrentUser(null);
     localStorage.removeItem('currentUser');
     setIsLoginModalOpen(true);
+    setViewMode('dashboard');
   };
   
   const handleUpdateStudyProgress = (wordEnglish: string, status: StudyStatus) => {
@@ -122,7 +142,6 @@ const App: React.FC = () => {
     }
     setViewMode(mode);
   };
-
 
   const filteredCategories = useMemo((): Category[] => {
     if (!searchQuery) {
@@ -152,13 +171,14 @@ const App: React.FC = () => {
       );
   }, [searchQuery]);
 
-
   const hasSearchResults = useMemo(() => filteredCategories.length > 0, [filteredCategories]);
 
   const renderView = () => {
     switch(viewMode) {
       case 'placement-test':
-        return <PlacementTestView onTestComplete={handlePlacementTestComplete} />;
+        return <PlacementTestView onTestSubmit={handlePlacementTestSubmit} />;
+      case 'placement-test-result':
+        return <PlacementTestResultView result={testResultToShow!} onComplete={handlePlacementTestComplete} />;
       case 'dashboard':
         return <DashboardView 
                   currentUser={currentUser} 
@@ -171,10 +191,7 @@ const App: React.FC = () => {
       case 'conversation':
         return <ConversationView allWords={ALL_WORDS} studyProgress={studyProgress} />;
       case 'flashcard':
-        return (
-          <div className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-slate-800 my-6 text-center flex-shrink-0">Chế độ Flashcard</h2>
-            <FlashcardView 
+        return <FlashcardView 
               words={filteredWords} 
               categories={WORD_CATEGORIES}
               studyProgress={studyProgress}
@@ -182,16 +199,9 @@ const App: React.FC = () => {
               onResetStudyProgress={handleResetStudyProgress}
               initialStudyFilter={initialFlashcardFilter}
               onInitialFilterConsumed={() => setInitialFlashcardFilter(null)}
-            />
-          </div>
-        );
+            />;
       case 'quiz':
-         return (
-          <div className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-slate-800 my-6 text-center flex-shrink-0">Luyện tập trắc nghiệm</h2>
-            <QuizView allWords={ALL_WORDS} wordsForQuiz={filteredWords} categories={WORD_CATEGORIES} />
-          </div>
-        );
+         return <QuizView allWords={ALL_WORDS} wordsForQuiz={filteredWords} categories={WORD_CATEGORIES} />;
       case 'list':
       default:
         return (
@@ -252,17 +262,21 @@ const App: React.FC = () => {
         onLogoutClick={handleLogout}
       />
       
-      {renderView()}
+      <Suspense fallback={<Loader />}>
+        {renderView()}
+      </Suspense>
 
        <footer className="w-full bg-white text-center py-4 border-t mt-auto">
         <p className="text-sm text-slate-500">© 2025 Học Tiếng Anh Cùng AI. Phát triển bởi Long Nguyễn.</p>
       </footer>
       
       {isLoginModalOpen && !pendingUserName && (
-        <LoginModal 
-          onClose={() => setIsLoginModalOpen(false)}
-          onLogin={handleLogin}
-        />
+        <Suspense fallback={<div></div>}>
+            <LoginModal 
+              onClose={() => setIsLoginModalOpen(false)}
+              onLogin={handleLogin}
+            />
+        </Suspense>
       )}
     </div>
   );
