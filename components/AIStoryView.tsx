@@ -214,7 +214,7 @@ Finally, on a new line, write the Vietnamese translation of the story.`;
   return (
     <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 w-full">
         <div className="w-full max-w-3xl text-center mb-6">
-            <h2 className="text-3xl font-bold text-slate-800">Người Dệt Chuyện AI</h2>
+            <h2 className="text-3xl font-bold text-slate-800">Viết Chuyện Cùng AI</h2>
             <p className="text-lg text-slate-600 mt-2">Học từ vựng trong ngữ cảnh bằng những câu chuyện độc đáo do AI tạo ra.</p>
         </div>
         <div className="w-full max-w-3xl">
