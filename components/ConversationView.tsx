@@ -227,7 +227,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
                     }
 
                     // Handle audio playback
-                    const base64Audio = message.serverContent?.modelTurn?.parts[0]?.inlineData.data;
+                    const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
                     if (base64Audio && outputAudioContextRef.current) {
                         const outputCtx = outputAudioContextRef.current;
                         nextAudioStartTimeRef.current = Math.max(nextAudioStartTimeRef.current, outputCtx.currentTime);
