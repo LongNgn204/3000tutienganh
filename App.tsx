@@ -15,7 +15,7 @@ const App: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>(WORD_CATEGORIES[0]?.id || '');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [studyProgress, setStudyProgress] = useState<StudyProgress>({});
@@ -29,6 +29,8 @@ const App: React.FC = () => {
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
+    } else {
+      setIsLoginModalOpen(true);
     }
     // Load study progress
     const storedProgress = localStorage.getItem('studyProgress');
@@ -71,15 +73,18 @@ const App: React.FC = () => {
   };
 
   const handleLogin = (name: string) => {
-    const user = { name };
+    // For a new user, simulate a placement test and assign a starting level.
+    const user: User = { name, level: 'A2' };
     setCurrentUser(user);
     localStorage.setItem('currentUser', JSON.stringify(user));
     setIsLoginModalOpen(false);
+    setViewMode('dashboard'); // Ensure user is directed to dashboard after login
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('currentUser');
+    setIsLoginModalOpen(true);
   };
   
   const handleUpdateStudyProgress = (wordEnglish: string, status: StudyStatus) => {
@@ -236,7 +241,7 @@ const App: React.FC = () => {
       {renderView()}
 
        <footer className="w-full bg-white text-center py-4 border-t mt-auto">
-        <p className="text-sm text-slate-500">© 2025 Học Từ Vựng Cùng AI. Phát triển bởi Long Nguyễn.</p>
+        <p className="text-sm text-slate-500">© 2025 Học Tiếng Anh Cùng AI. Phát triển bởi Long Nguyễn.</p>
       </footer>
       
       {isLoginModalOpen && (
