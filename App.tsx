@@ -8,8 +8,9 @@ import AIStoryView from './components/AIStoryView';
 import DashboardView from './components/DashboardView';
 import ConversationView from './components/ConversationView';
 import LoginModal from './components/LoginModal';
+import PlacementTestView from './components/PlacementTestView';
 import { WORD_CATEGORIES, ALL_WORDS } from './constants';
-import type { Category, User, StudyProgress, StudyStatus, ViewMode } from './types';
+import type { Category, User, StudyProgress, StudyStatus, ViewMode, CEFRLevel } from './types';
 
 const App: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>(WORD_CATEGORIES[0]?.id || '');
@@ -17,6 +18,7 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [pendingUserName, setPendingUserName] = useState<string | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [studyProgress, setStudyProgress] = useState<StudyProgress>({});
   const [initialFlashcardFilter, setInitialFlashcardFilter] = useState<'review' | 'unknown' | null>(null);
@@ -73,12 +75,18 @@ const App: React.FC = () => {
   };
 
   const handleLogin = (name: string) => {
-    // For a new user, simulate a placement test and assign a starting level.
-    const user: User = { name, level: 'A2' };
+    setPendingUserName(name);
+    setIsLoginModalOpen(false);
+    setViewMode('placement-test');
+  };
+
+  const handlePlacementTestComplete = (level: CEFRLevel) => {
+    if (!pendingUserName) return;
+    const user: User = { name: pendingUserName, level };
     setCurrentUser(user);
     localStorage.setItem('currentUser', JSON.stringify(user));
-    setIsLoginModalOpen(false);
-    setViewMode('dashboard'); // Ensure user is directed to dashboard after login
+    setPendingUserName(null);
+    setViewMode('dashboard');
   };
 
   const handleLogout = () => {
@@ -145,6 +153,8 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch(viewMode) {
+      case 'placement-test':
+        return <PlacementTestView onTestComplete={handlePlacementTestComplete} />;
       case 'dashboard':
         return <DashboardView 
                   currentUser={currentUser} 
@@ -244,7 +254,7 @@ const App: React.FC = () => {
         <p className="text-sm text-slate-500">© 2025 Học Tiếng Anh Cùng AI. Phát triển bởi Long Nguyễn.</p>
       </footer>
       
-      {isLoginModalOpen && (
+      {isLoginModalOpen && !pendingUserName && (
         <LoginModal 
           onClose={() => setIsLoginModalOpen(false)}
           onLogin={handleLogin}
