@@ -2,11 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import type { Word } from '../types';
 
-interface AIExplainModalProps {
-  word: Word;
-  onClose: () => void;
-}
-
 // Simple parser to convert basic markdown to HTML for safe rendering
 const parseSimpleMarkdown = (text: string) => {
     // Basic sanitization
@@ -19,14 +14,23 @@ const parseSimpleMarkdown = (text: string) => {
         .replace(/\n/g, '<br />'); // Newlines
 };
 
+// FIX: Defined the props interface for the component.
+interface AIExplainModalProps {
+  word: Word;
+  onClose: () => void;
+}
+
 const AIExplainModal: React.FC<AIExplainModalProps> = ({ word, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [explanation, setExplanation] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const fetchExplanation = async () => {
+  const fetchExplanationStream = async () => {
       setIsLoading(true);
+      setIsStreaming(false);
       setError(null);
+      setExplanation('');
       
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -47,22 +51,30 @@ const AIExplainModal: React.FC<AIExplainModalProps> = ({ word, onClose }) => {
 
 Nếu không có từ đồng nghĩa hoặc trái nghĩa, hãy ghi "Không có".`;
 
-        const response = await ai.models.generateContent({
+        const responseStream = await ai.models.generateContentStream({
             model: 'gemini-2.5-flash',
             contents: prompt
         });
+        
+        setIsLoading(false);
+        setIsStreaming(true);
+        let accumulatedText = '';
+        for await (const chunk of responseStream) {
+            accumulatedText += chunk.text;
+            setExplanation(accumulatedText);
+        }
+        setIsStreaming(false);
 
-        setExplanation(response.text);
       } catch (err) {
         console.error("Gemini API Error:", err);
         setError("Rất tiếc, AI không thể phản hồi lúc này. Vui lòng thử lại sau.");
-      } finally {
         setIsLoading(false);
+        setIsStreaming(false);
       }
     };
 
   useEffect(() => {
-    fetchExplanation();
+    fetchExplanationStream();
   }, [word]);
 
   return (
@@ -75,7 +87,7 @@ Nếu không có từ đồng nghĩa hoặc trái nghĩa, hãy ghi "Không có".
           <h2 className="text-2xl font-bold text-slate-800">
             AI giải thích: <span className="text-blue-600">{word.english}</span>
           </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">&times;</button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-3xl leading-none">&times;</button>
         </div>
         
         <div className="flex-grow overflow-y-auto pr-2">
@@ -93,12 +105,13 @@ Nếu không có từ đồng nghĩa hoặc trái nghĩa, hãy ghi "Không có".
               {error}
             </div>
           )}
-          {!isLoading && !error && (
-            <div 
+          
+          <div 
               className="text-slate-700 space-y-3 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: parseSimpleMarkdown(explanation) }} 
             />
-          )}
+          {/* Blinking cursor effect during streaming */}
+          {isStreaming && <span className="inline-block w-2 h-5 bg-slate-700 animate-pulse ml-1"></span>}
         </div>
 
         <div className="mt-6 pt-4 border-t text-right">
