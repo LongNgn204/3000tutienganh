@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-// FIX: Removed unused and non-exported 'LiveSession' type from import.
 import { GoogleGenAI, LiveServerMessage, Modality, Blob } from "@google/genai";
-import type { Word, StudyProgress } from '../types';
+import type { Word, StudyProgress, User } from '../types';
 import SpeakerButton from './SpeakerButton';
 
 // Helper functions for shuffling array
@@ -52,6 +51,7 @@ async function decodeAudioData(
 interface ConversationViewProps {
   allWords: Word[];
   studyProgress: StudyProgress;
+  currentUser: User | null;
 }
 
 interface TranscriptItem {
@@ -59,16 +59,16 @@ interface TranscriptItem {
     content: string;
 }
 
-const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProgress }) => {
+const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProgress, currentUser }) => {
   const [stage, setStage] = useState<'setup' | 'chatting' | 'finished'>('setup');
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
   const [targetWords, setTargetWords] = useState<Word[]>([]);
   const [usedWords, setUsedWords] = useState<Set<string>>(new Set());
   const [transcript, setTranscript] = useState<TranscriptItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [enableVietnamese, setEnableVietnamese] = useState(true);
 
   // Refs for managing Web Audio API and Gemini Live session
-  // FIX: Replaced non-existent 'LiveSession' with 'any' as the type is not exported.
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
   const outputAudioContextRef = useRef<AudioContext | null>(null);
@@ -125,7 +125,6 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
     setConnectionStatus('connecting');
     setError(null);
 
-    // Select words for the mission
     const wordsToReview = allWords.filter(w => studyProgress[w.english] === 'review');
     const wordsUnknown = allWords.filter(w => !studyProgress[w.english]);
     let potentialWords = [...wordsToReview, ...shuffleArray(wordsUnknown)];
@@ -149,7 +148,31 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
 
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const wordList = selectedWords.map(w => w.english).join(', ');
-        const systemInstruction = `You are Gem, a friendly English tutor. Your goal is to have a voice conversation with a Vietnamese learner. You MUST ALWAYS respond in this exact format: First, speak the English sentence. Then, immediately say "In Vietnamese," followed by the Vietnamese translation. For example: "That's a great idea! In Vietnamese, đó là một ý tưởng tuyệt vời!". The student's mission is to use these words: ${wordList}. Guide the conversation naturally to give them a chance to use these words. Keep your English responses short and clear. Start the conversation by saying "Hello! How are you today? In Vietnamese, Xin chào! Bạn hôm nay có khỏe không?".`;
+        
+        const userLevel = currentUser?.level || 'A2';
+        let levelInstruction = '';
+        switch(userLevel) {
+            case 'A1':
+            case 'A2':
+                levelInstruction = "Adjust your language to be simple and clear, using basic vocabulary and short sentences suitable for an A2 (Elementary) learner.";
+                break;
+            case 'B1':
+                levelInstruction = "Use a range of everyday vocabulary and sentence structures suitable for a B1 (Intermediate) learner.";
+                break;
+            case 'B2':
+                levelInstruction = "Use more complex sentences, a wider range of vocabulary, and some idiomatic expressions suitable for a B2 (Upper-Intermediate) learner.";
+                break;
+            case 'C1':
+            case 'C2':
+                levelInstruction = "Feel free to use advanced vocabulary, complex grammatical structures, and nuanced expressions suitable for a C1 (Advanced) learner.";
+                break;
+        }
+
+        const translationInstruction = enableVietnamese 
+            ? `You MUST ALWAYS respond in this exact format: First, speak the English sentence. Then, immediately say "In Vietnamese," followed by the Vietnamese translation. For example: "That's a great idea! In Vietnamese, đó là một ý tưởng tuyệt vời!".`
+            : `You MUST respond ONLY in English. DO NOT provide any Vietnamese translation.`;
+
+        const systemInstruction = `You are Gem, a friendly English tutor. Your goal is to have a voice conversation with a Vietnamese learner whose CEFR level is ${userLevel}. ${levelInstruction} ${translationInstruction} The student's mission is to use these words: ${wordList}. Guide the conversation naturally to give them a chance to use these words. Keep your English responses short and clear. Start the conversation by saying "Hello! How are you today?".`;
 
         inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
         outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
@@ -185,7 +208,6 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
                     setStage('chatting');
                 },
                 onmessage: async (message: LiveServerMessage) => {
-                    // Handle transcription
                     if (message.serverContent?.inputTranscription) {
                         const text = message.serverContent.inputTranscription.text;
                         currentInputTranscriptionRef.current += text;
@@ -209,7 +231,6 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
                         });
                     }
                     if (message.serverContent?.turnComplete) {
-                        // Check for used words
                         const newlyUsed = new Set(usedWords);
                         targetWords.forEach(word => {
                             if (!newlyUsed.has(word.english) && currentInputTranscriptionRef.current.toLowerCase().includes(word.english.toLowerCase())) {
@@ -219,14 +240,13 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
                         setUsedWords(newlyUsed);
 
                         if (newlyUsed.size === selectedWords.length && stage !== 'finished') {
-                           setTimeout(() => setStage('finished'), 2000); // Give AI time to say congrats
+                           setTimeout(() => setStage('finished'), 2000);
                         }
 
                         currentInputTranscriptionRef.current = '';
                         currentOutputTranscriptionRef.current = '';
                     }
 
-                    // Handle audio playback
                     const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
                     if (base64Audio && outputAudioContextRef.current) {
                         const outputCtx = outputAudioContextRef.current;
@@ -253,7 +273,6 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
                     stopConversation();
                 },
                 onclose: () => {
-                   // Clean up is handled by stopConversation
                 },
             },
         });
@@ -307,7 +326,21 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
             <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full">
                 <h2 className="text-3xl font-bold text-slate-800">AI Luyện Nói</h2>
-                <p className="text-slate-600 mt-4 mb-8">Thực hành từ vựng bằng cách nói chuyện trực tiếp với AI. AI sẽ đưa ra một vài từ, và nhiệm vụ của bạn là sử dụng chúng trong cuộc hội thoại!</p>
+                <p className="text-slate-600 mt-4 mb-6">Thực hành từ vựng bằng cách nói chuyện trực tiếp với AI. AI sẽ đưa ra một vài từ, và nhiệm vụ của bạn là sử dụng chúng trong cuộc hội thoại!</p>
+                
+                <div className="flex items-center justify-center mb-8">
+                    <label className="flex items-center cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            checked={enableVietnamese}
+                            onChange={(e) => setEnableVietnamese(e.target.checked)}
+                            className="sr-only peer"
+                        />
+                        <div className="relative w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span className="ms-3 text-sm font-medium text-slate-700">Bật bản dịch tiếng Việt</span>
+                    </label>
+                </div>
+
                 {error && <p className="text-red-500 bg-red-50 p-3 rounded-md mb-4">{error}</p>}
                 
                 <button
@@ -339,10 +372,14 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
                 <div key={index} className={`flex items-start gap-3 ${item.author === 'user' ? 'justify-end' : 'justify-start'}`}>
                    {item.author === 'ai' && (
                        <>
-                        <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-1">AI</div>
+                        <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-1 shadow">AI</div>
                         <div className="max-w-md p-3 rounded-2xl shadow-sm bg-slate-100 text-slate-800 rounded-bl-none">
                             {(() => {
                                 const fullText = item.content;
+                                if (!enableVietnamese) {
+                                    return <p className="leading-relaxed">{fullText}</p>;
+                                }
+                                
                                 const separatorRegex = /in vietnamese,/i;
                                 const matchIndex = fullText.search(separatorRegex);
 
@@ -372,7 +409,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
                         <div className="max-w-md p-3 rounded-2xl shadow-sm bg-blue-100 text-slate-800 rounded-br-none">
                             <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: highlightUsedWords(item.content) }}></p>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-slate-600 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-1">BẠN</div>
+                        <div className="w-8 h-8 rounded-full bg-slate-600 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-1 shadow">BẠN</div>
                        </>
                    )}
                 </div>
