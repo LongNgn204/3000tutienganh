@@ -1,5 +1,43 @@
 import React, { useMemo } from 'react';
-import type { User, StudyProgress, Category, ViewMode } from '../types';
+import type { User, StudyProgress, Category, ViewMode, CEFRLevel } from '../types';
+
+const CEFR_LEVEL_MAP: Record<CEFRLevel, string> = {
+    'A1': 'A1 - Mới bắt đầu',
+    'A2': 'A2 - Sơ cấp',
+    'B1': 'B1 - Trung cấp',
+    'B2': 'B2 - Trung cao cấp',
+    'C1': 'C1 - Cao cấp',
+    'C2': 'C2 - Thành thạo',
+};
+
+interface SkillCardProps {
+    title: string;
+    description: string;
+    icon: string;
+    onClick: () => void;
+    buttonText: string;
+}
+
+const SkillCard: React.FC<SkillCardProps> = ({ title, description, icon, onClick, buttonText }) => (
+    <div className="bg-white p-6 rounded-xl shadow-lg flex flex-col hover:shadow-xl transition-shadow duration-300 border border-slate-200">
+        <div className="flex items-start gap-4">
+            <div className="text-3xl">{icon}</div>
+            <div>
+                <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+                <p className="text-sm text-slate-500 mt-1 h-10">{description}</p>
+            </div>
+        </div>
+        <div className="mt-auto pt-4">
+            <button
+                onClick={onClick}
+                className="w-full px-4 py-2 bg-blue-100 text-blue-800 font-semibold rounded-lg hover:bg-blue-200 transition-colors"
+            >
+                {buttonText}
+            </button>
+        </div>
+    </div>
+);
+
 
 interface DashboardViewProps {
   currentUser: User | null;
@@ -7,57 +45,6 @@ interface DashboardViewProps {
   categories: Category[];
   navigateTo: (mode: ViewMode, options?: { initialFilter: 'review' | 'unknown' }) => void;
 }
-
-const StatCard: React.FC<{ title: string; value: number; icon: React.ReactNode; color: string }> = ({ title, value, icon, color }) => {
-    return (
-        <div className={`bg-white p-6 rounded-xl shadow-lg border-l-4 ${color} flex items-center space-x-4`}>
-            <div className="text-3xl">{icon}</div>
-            <div>
-                <p className="text-slate-500 text-sm font-medium">{title}</p>
-                <p className="text-3xl font-bold text-slate-800">{value}</p>
-            </div>
-        </div>
-    );
-};
-
-const ProgressCircle: React.FC<{ percentage: number }> = ({ percentage }) => {
-    const circumference = 2 * Math.PI * 54; // 2 * pi * radius
-    const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-    return (
-        <div className="relative w-48 h-48">
-            <svg className="w-full h-full" viewBox="0 0 120 120">
-                <circle
-                    className="text-slate-200"
-                    strokeWidth="12"
-                    stroke="currentColor"
-                    fill="transparent"
-                    r="54"
-                    cx="60"
-                    cy="60"
-                />
-                <circle
-                    className="text-blue-600"
-                    strokeWidth="12"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="transparent"
-                    r="54"
-                    cx="60"
-                    cy="60"
-                    style={{ transition: 'stroke-dashoffset 0.5s ease-out' }}
-                    transform="rotate(-90 60 60)"
-                />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-3xl font-bold text-blue-700">{Math.round(percentage)}%</span>
-            </div>
-        </div>
-    );
-};
-
 
 const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgress, categories, navigateTo }) => {
 
@@ -67,110 +54,76 @@ const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgres
         const progressValues = Object.values(studyProgress);
         const knownCount = progressValues.filter(s => s === 'known').length;
         const reviewCount = progressValues.filter(s => s === 'review').length;
-        const unknownCount = allWordsCount - knownCount - reviewCount;
-        const overallPercentage = allWordsCount > 0 ? (knownCount / allWordsCount) * 100 : 0;
-        return { knownCount, reviewCount, unknownCount, overallPercentage };
-    }, [studyProgress, allWordsCount]);
+        return { knownCount, reviewCount };
+    }, [studyProgress]);
 
-    const masteryByCategory = useMemo(() => {
-        return categories.map(category => {
-            const total = category.words.length;
-            if (total === 0) return { name: category.name, percentage: 0 };
-            
-            const known = category.words.filter(word => studyProgress[word.english] === 'known').length;
-            return {
-                id: category.id,
-                name: category.name,
-                percentage: (known / total) * 100,
-            };
-        });
-    }, [categories, studyProgress]);
-    
     if (!currentUser) {
       return (
-        <div className="text-center py-20">
-          <h2 className="text-2xl font-bold text-slate-700">Vui lòng đăng nhập</h2>
-          <p className="text-slate-500 mt-2">Đăng nhập để xem tiến độ học tập của bạn.</p>
+        <div className="flex-1 flex items-center justify-center text-center py-20 px-4">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-700">Chào mừng đến với Học Tiếng Anh Cùng AI</h2>
+            <p className="text-slate-500 mt-2 max-w-md mx-auto">Vui lòng đăng nhập để bắt đầu lộ trình học được cá nhân hóa dành riêng cho bạn.</p>
+          </div>
         </div>
       );
     }
 
     return (
         <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h2 className="text-3xl font-bold text-slate-800 mb-6">
-                Tổng quan tiến độ của <span className="text-blue-600">{currentUser.name}</span>
-            </h2>
+            <div className="bg-white p-6 rounded-xl shadow-md border border-slate-200 mb-8">
+                <h2 className="text-3xl font-bold text-slate-800">
+                    Chào mừng trở lại, <span className="text-blue-600">{currentUser.name}!</span>
+                </h2>
+                <p className="text-slate-600 mt-2">
+                    Trình độ hiện tại của bạn: <span className="font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{CEFR_LEVEL_MAP[currentUser.level]}</span>
+                </p>
+            </div>
+            
+            <h3 className="text-2xl font-bold text-slate-800 mb-6">Lộ trình học tập của bạn</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {/* Overall Progress */}
-                <div className="lg:col-span-1 md:col-span-2 bg-white p-6 rounded-xl shadow-lg flex flex-col items-center justify-center text-center">
-                    <h3 className="text-lg font-semibold text-slate-700 mb-4">Tiến độ tổng thể</h3>
-                    <ProgressCircle percentage={stats.overallPercentage} />
-                    <p className="text-slate-500 mt-4 text-sm">Bạn đã học được {stats.knownCount} trên {allWordsCount} từ.</p>
-                </div>
-
-                {/* Stat Cards */}
-                <div className="lg:col-span-3 md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <StatCard 
-                        title="Tổng số từ đã học" 
-                        value={stats.knownCount} 
-                        color="border-green-500"
-                        icon={<span className="text-green-500">🎓</span>} 
-                    />
-                    <StatCard 
-                        title="Từ cần ôn tập" 
-                        value={stats.reviewCount} 
-                        color="border-yellow-500"
-                        icon={<span className="text-yellow-500">📚</span>} 
-                    />
-                    <StatCard 
-                        title="Từ chưa học" 
-                        value={stats.unknownCount} 
-                        color="border-slate-400"
-                        icon={<span className="text-slate-400">📖</span>}
-                    />
-                    <div className="bg-blue-50 p-6 rounded-xl shadow-lg border-l-4 border-blue-500 flex flex-col justify-center">
-                        <h4 className="text-slate-700 font-semibold mb-3">Bắt đầu ôn tập</h4>
-                        <div className="space-y-2">
-                             <button
-                                onClick={() => navigateTo('flashcard', { initialFilter: 'review' })}
-                                disabled={stats.reviewCount === 0}
-                                className="w-full text-left text-sm font-semibold text-blue-800 bg-blue-200/50 hover:bg-blue-200/80 px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                             >
-                                Ôn tập {stats.reviewCount} từ cần xem lại
-                            </button>
-                             <button
-                                onClick={() => navigateTo('flashcard', { initialFilter: 'unknown' })}
-                                disabled={stats.unknownCount === 0}
-                                className="w-full text-left text-sm font-semibold text-slate-800 bg-slate-200/50 hover:bg-slate-200/80 px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                             >
-                                Học từ mới
-                            </button>
-                        </div>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <SkillCard 
+                    title="Từ Vựng & Đọc Hiểu"
+                    description={`Đã học ${stats.knownCount}/${allWordsCount} từ. ${stats.reviewCount} từ cần ôn tập.`}
+                    icon="📖"
+                    onClick={() => navigateTo('flashcard')}
+                    buttonText="Ôn tập Flashcard"
+                />
+                <SkillCard 
+                    title="Luyện Nói AI"
+                    description="Thực hành giao tiếp trong các tình huống thực tế."
+                    icon="💬"
+                    onClick={() => navigateTo('conversation')}
+                    buttonText="Bắt đầu hội thoại"
+                />
+                 <SkillCard 
+                    title="Luyện Viết AI"
+                    description="Xây dựng câu chuyện từ các từ vựng đã chọn."
+                    icon="✍️"
+                    onClick={() => navigateTo('story')}
+                    buttonText="Viết truyện ngắn"
+                />
+                 <SkillCard 
+                    title="Kiểm tra & Củng cố"
+                    description="Làm các bài trắc nghiệm để củng cố kiến thức."
+                    icon="🎯"
+                    onClick={() => navigateTo('quiz')}
+                    buttonText="Làm bài trắc nghiệm"
+                />
+                <SkillCard 
+                    title="Tra cứu & Khám phá"
+                    description="Khám phá toàn bộ danh sách từ và giải thích của AI."
+                    icon="🧠"
+                    onClick={() => navigateTo('list')}
+                    buttonText="Xem danh sách từ"
+                />
+                <div className="bg-slate-100 p-6 rounded-xl flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-300">
+                    <h3 className="text-lg font-bold text-slate-600">Sắp ra mắt</h3>
+                    <p className="text-sm text-slate-500 mt-1">Các module Luyện Nghe và Ngữ pháp chuyên sâu sẽ sớm được cập nhật!</p>
+                    <div className="text-3xl mt-3">🎧📝</div>
                 </div>
             </div>
 
-            {/* Mastery by Category */}
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-xl font-bold text-slate-800 mb-4">Mức độ thành thạo theo chủ đề</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
-                    {masteryByCategory.map(category => (
-                        <div key={category.id}>
-                            <div className="flex justify-between items-center mb-1">
-                                <p className="text-sm font-medium text-slate-700">{category.name}</p>
-                                <p className="text-sm font-semibold text-blue-600">{Math.round(category.percentage)}%</p>
-                            </div>
-                            <div className="w-full bg-slate-200 rounded-full h-2.5">
-                                <div 
-                                    className="bg-blue-600 h-2.5 rounded-full" 
-                                    style={{ width: `${category.percentage}%`, transition: 'width 0.5s ease-in-out' }}
-                                ></div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
         </div>
     );
 };
