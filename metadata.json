@@ -1,6 +1,6 @@
 {
-  "name": "3000 Từ Tiếng Anh Thông Dụng",
-  "description": "Một ứng dụng web giúp người dùng Việt Nam học 3000 từ tiếng Anh thông dụng, được phân loại theo các chủ đề khác nhau để dễ dàng tra cứu và học tập.",
+  "name": "Học Tiếng Anh Cùng AI",
+  "description": "Nền tảng học tiếng Anh toàn diện với sự trợ giúp của AI, theo lộ trình CEFR. Luyện tập đủ 4 kỹ năng Nghe - Nói - Đọc - Viết.",
   "requestFramePermissions": [
     "microphone"
   ]
