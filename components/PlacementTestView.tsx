@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import type { CEFRLevel, PlacementTestResult, TestAnalysis, LevelPerformance, IncorrectQuestionInfo } from '../types';
 
 interface PlacementTestViewProps {
-  onTestComplete: (result: PlacementTestResult) => void;
+  onTestSubmit: (result: PlacementTestResult) => void;
 }
 
-const questions = [
+const ALL_QUESTIONS = [
   // A1 Level
   { id: 'q1', text: 'She ___ a doctor.', options: ['is', 'are', 'am'], correctAnswer: 'is', level: 'A1' as CEFRLevel },
   { id: 'q2', text: '___ are you from?', options: ['What', 'Where', 'Who'], correctAnswer: 'Where', level: 'A1' as CEFRLevel },
+  { id: 'q21', text: 'I have ___ apple.', options: ['a', 'an', 'the'], correctAnswer: 'an', level: 'A1' as CEFRLevel },
   // A2 Level
   { id: 'q3', text: 'I saw ___ good film last night.', options: ['a', 'an', 'the'], correctAnswer: 'a', level: 'A2' as CEFRLevel },
   { id: 'q4', text: 'He ___ to work by bus yesterday.', options: ['go', 'goes', 'went'], correctAnswer: 'went', level: 'A2' as CEFRLevel },
+  { id: 'q22', text: 'She is ___ than her sister.', options: ['tall', 'taller', 'tallest'], correctAnswer: 'taller', level: 'A2' as CEFRLevel },
   // B1 Level
   { id: 'q5', text: "I haven't seen him ___ last year.", options: ['since', 'for', 'in'], correctAnswer: 'since', level: 'B1' as CEFRLevel },
   { id: 'q6', text: 'If you ___ harder, you would pass the exam.', options: ['study', 'studied', 'have studied'], correctAnswer: 'studied', level: 'B1' as CEFRLevel },
@@ -23,11 +25,16 @@ const questions = [
   { id: 'q10', text: 'The report ___ be finished by tomorrow.', options: ['must', 'can', 'should'], correctAnswer: 'must', level: 'B2' as CEFRLevel },
   // C1 Level
   { id: 'q11', text: '___ the bad weather, the match went ahead.', options: ['Despite', 'Although', 'However'], correctAnswer: 'Despite', level: 'C1' as CEFRLevel },
-  { id: 'q12', text: 'The proliferation of digital media has fundamentally altered how we consume information. While it offers unprecedented access to knowledge, it also presents challenges related to information overload and the spread of misinformation. What is a major challenge mentioned?', options: ['Limited access to knowledge', 'The spread of false information', 'The high cost of digital media'], correctAnswer: 'The spread of false information', level: 'C1' as CEFRLevel },
+  { id: 'q12', text: 'The proliferation of digital media has fundamentally altered how we consume information. What is a major challenge of this?', options: ['Limited access to knowledge', 'The spread of false information', 'The high cost of digital media'], correctAnswer: 'The spread of false information', level: 'C1' as CEFRLevel },
   { id: 'q13', text: 'Not only ___ the exam, but he also got the highest score.', options: ['he passed', 'did he pass', 'he did pass'], correctAnswer: 'did he pass', level: 'C1' as CEFRLevel },
 ];
 
-const PlacementTestView: React.FC<PlacementTestViewProps> = ({ onTestComplete }) => {
+const shuffleArray = <T,>(array: T[]): T[] => {
+  return [...array].sort(() => Math.random() - 0.5);
+};
+
+const PlacementTestView: React.FC<PlacementTestViewProps> = ({ onTestSubmit }) => {
+  const [questions, setQuestions] = useState(() => shuffleArray(ALL_QUESTIONS));
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +43,9 @@ const PlacementTestView: React.FC<PlacementTestViewProps> = ({ onTestComplete })
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
   };
   
-  const isAllAnswered = Object.keys(answers).length === questions.length;
+  const answeredCount = Object.keys(answers).length;
+  const progressPercentage = (answeredCount / questions.length) * 100;
+  const isAllAnswered = answeredCount === questions.length;
 
   const handleSubmit = async () => {
     if (!isAllAnswered) {
@@ -46,7 +55,6 @@ const PlacementTestView: React.FC<PlacementTestViewProps> = ({ onTestComplete })
     setIsLoading(true);
     setError(null);
 
-    // Perform detailed analysis locally first
     let score = 0;
     const incorrectQuestions: IncorrectQuestionInfo[] = [];
     const performanceByLevel: Partial<Record<CEFRLevel, { correct: number, total: number }>> = {};
@@ -65,7 +73,7 @@ const PlacementTestView: React.FC<PlacementTestViewProps> = ({ onTestComplete })
             incorrectQuestions.push({
                 questionId: q.id,
                 questionText: q.text,
-                userAnswer: answers[q.id],
+                userAnswer: answers[q.id] ?? 'Chưa trả lời',
                 correctAnswer: q.correctAnswer,
                 level: level,
             });
@@ -89,7 +97,6 @@ const PlacementTestView: React.FC<PlacementTestViewProps> = ({ onTestComplete })
         performanceByLevel: finalPerformance,
     };
     
-    // Then, get the final CEFR level from AI
     const submissionText = questions.map(q => 
       `Question (Level ${q.level}): "${q.text}"\nUser's Answer: "${answers[q.id]}"\nCorrect Answer: "${q.correctAnswer}"`
     ).join('\n\n');
@@ -113,20 +120,19 @@ Return ONLY the level designation (e.g., "B1"), and nothing else.`;
         const validLevels: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
         
         const finalResult: PlacementTestResult = {
-            level: validLevels.includes(level) ? level : 'A2', // Fallback to A2 if invalid response
+            level: validLevels.includes(level) ? level : 'A2', 
             analysis: analysis,
         };
-        onTestComplete(finalResult);
+        onTestSubmit(finalResult);
 
     } catch (err) {
         console.error("Gemini API Error:", err);
         setError("AI đánh giá đã gặp lỗi. Vui lòng thử lại sau. Sử dụng kết quả phân tích tạm thời.");
-        // Fallback: Still complete the test with local analysis and a default level
         const fallbackResult: PlacementTestResult = {
             level: 'A2', 
             analysis: analysis,
         };
-        onTestComplete(fallbackResult);
+        onTestSubmit(fallbackResult);
     } finally {
         setIsLoading(false);
     }
@@ -134,7 +140,7 @@ Return ONLY the level designation (e.g., "B1"), and nothing else.`;
 
   if (isLoading) {
     return (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
             <div className="bg-white p-10 rounded-2xl shadow-xl max-w-md w-full">
                  <svg className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -148,10 +154,16 @@ Return ONLY the level designation (e.g., "B1"), and nothing else.`;
   }
 
   return (
-    <div className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in-up">
         <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200">
-            <h1 className="text-3xl font-bold text-slate-800 text-center">Bài Kiểm Tra Trình Độ</h1>
-            <p className="text-slate-600 text-center mt-2 mb-8">Hãy chọn đáp án đúng nhất cho các câu hỏi dưới đây để AI xác định trình độ của bạn.</p>
+            <div className="text-center">
+                <h1 className="text-3xl font-bold text-slate-800">Bài Kiểm Tra Trình Độ</h1>
+                <p className="text-slate-600 mt-2 mb-8">Hãy chọn đáp án đúng nhất để AI xác định trình độ của bạn.</p>
+            </div>
+
+            <div className="w-full bg-slate-200 rounded-full h-2.5 mb-8 sticky top-24 z-10">
+                <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-500" style={{ width: `${progressPercentage}%` }}></div>
+            </div>
             
             {error && <div className="bg-red-50 text-red-700 p-4 rounded-md mb-6">{error}</div>}
 
@@ -164,7 +176,7 @@ Return ONLY the level designation (e.g., "B1"), and nothing else.`;
                         </p>
                         <div className="mt-4 space-y-3">
                             {q.options.map(option => (
-                                <label key={option} className="flex items-center p-3 rounded-lg border border-slate-200 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-400 cursor-pointer transition-colors">
+                                <label key={option} className="flex items-center p-3 rounded-lg border-2 border-slate-200 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 cursor-pointer transition-all duration-200">
                                     <input 
                                         type="radio"
                                         name={q.id}
@@ -173,7 +185,7 @@ Return ONLY the level designation (e.g., "B1"), and nothing else.`;
                                         onChange={() => handleAnswerChange(q.id, option)}
                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300"
                                     />
-                                    <span className="ml-3 text-slate-800">{option}</span>
+                                    <span className="ml-3 text-slate-800 font-medium">{option}</span>
                                 </label>
                             ))}
                         </div>
@@ -195,4 +207,4 @@ Return ONLY the level designation (e.g., "B1"), and nothing else.`;
   );
 };
 
-export default PlacementTestView;
+    export default PlacementTestView;
