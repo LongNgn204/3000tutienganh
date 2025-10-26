@@ -21,7 +21,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
         className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-8"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-2xl font-bold text-center text-slate-800 mb-6">Đăng nhập</h2>
+        <h2 className="text-2xl font-bold text-center text-slate-800 mb-6">Bắt đầu học</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="name" className="block text-sm font-medium text-slate-600 mb-1">Tên của bạn</label>
@@ -39,10 +39,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
             type="submit"
             className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Bắt đầu học
+            Vào học
           </button>
         </form>
-         <p className="text-xs text-slate-400 text-center mt-4">Đây là phiên bản mô phỏng, bạn chỉ cần nhập tên để tiếp tục.</p>
+         <p className="text-xs text-slate-500 text-center mt-4">Sau khi đăng nhập, hệ thống sẽ tự động xếp bạn vào một trình độ khởi đầu để bắt đầu học.</p>
       </div>
     </div>
   );
