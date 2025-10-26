@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, LiveServerMessage, Modality, Blob, LiveSession } from "@google/genai";
+// FIX: Removed unused and non-exported 'LiveSession' type from import.
+import { GoogleGenAI, LiveServerMessage, Modality, Blob } from "@google/genai";
 import type { Word, StudyProgress } from '../types';
 import SpeakerButton from './SpeakerButton';
 
@@ -67,7 +68,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
   const [error, setError] = useState<string | null>(null);
 
   // Refs for managing Web Audio API and Gemini Live session
-  const sessionPromiseRef = useRef<Promise<LiveSession> | null>(null);
+  // FIX: Replaced non-existent 'LiveSession' with 'any' as the type is not exported.
+  const sessionPromiseRef = useRef<Promise<any> | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
   const outputAudioContextRef = useRef<AudioContext | null>(null);
   const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
@@ -147,7 +149,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
 
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const wordList = selectedWords.map(w => w.english).join(', ');
-        const systemInstruction = `You are Gem, a friendly and patient English tutor for a Vietnamese learner. Your goal is to have a simple, encouraging voice conversation. The student's mission is to use these words: ${wordList}. Guide the conversation naturally to give them a chance to use these words. Keep your spoken responses short (1-2 sentences) and clear. Start the conversation by saying hello and asking how they are doing today.`;
+        const systemInstruction = `You are Gem, a friendly English tutor. Your goal is to have a voice conversation with a Vietnamese learner. You MUST ALWAYS respond in this exact format: First, speak the English sentence. Then, immediately say "In Vietnamese," followed by the Vietnamese translation. For example: "That's a great idea! In Vietnamese, đó là một ý tưởng tuyệt vời!". The student's mission is to use these words: ${wordList}. Guide the conversation naturally to give them a chance to use these words. Keep your English responses short and clear. Start the conversation by saying "Hello! How are you today? In Vietnamese, Xin chào! Bạn hôm nay có khỏe không?".`;
 
         inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
         outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
@@ -334,12 +336,44 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
         <div className="flex-1 bg-white rounded-xl shadow-inner border p-4 overflow-y-auto space-y-4">
             {transcript.map((item, index) => (
                 <div key={index} className={`flex items-start gap-3 ${item.author === 'user' ? 'justify-end' : 'justify-start'}`}>
-                   {item.author === 'ai' && <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-1">AI</div>}
-                   <div className={`max-w-md p-3 rounded-2xl shadow-sm ${item.author === 'user' ? 'bg-blue-100 text-slate-800 rounded-br-none' : 'bg-slate-100 text-slate-800 rounded-bl-none'}`}>
-                      <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: item.author === 'user' ? highlightUsedWords(item.content) : item.content }}></p>
-                      {item.author === 'ai' && item.content && <div className="mt-2 -mb-1 -mr-1 text-right"><SpeakerButton textToSpeak={item.content} ariaLabel="Nghe lại" /></div>}
-                   </div>
-                   {item.author === 'user' && <div className="w-8 h-8 rounded-full bg-slate-600 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-1">BẠN</div>}
+                   {item.author === 'ai' && (
+                       <>
+                        <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-1">AI</div>
+                        <div className="max-w-md p-3 rounded-2xl shadow-sm bg-slate-100 text-slate-800 rounded-bl-none">
+                            {(() => {
+                                const fullText = item.content;
+                                const separatorRegex = /in vietnamese,/i;
+                                const matchIndex = fullText.search(separatorRegex);
+
+                                let englishPart = fullText;
+                                let vietnamesePart = '';
+
+                                if (matchIndex !== -1) {
+                                    englishPart = fullText.substring(0, matchIndex).trim();
+                                    vietnamesePart = fullText.substring(matchIndex + "In Vietnamese,".length).trim().replace(/^:?\s*/, '');
+                                }
+                                
+                                return (
+                                    <>
+                                        <p className="leading-relaxed">{englishPart}</p>
+                                        {vietnamesePart && (
+                                            <p className="text-sm text-slate-500 mt-2 pt-2 border-t border-slate-200/60 italic">{vietnamesePart}</p>
+                                        )}
+                                    </>
+                                );
+                            })()}
+                            {item.content && <div className="mt-2 -mb-1 -mr-1 text-right"><SpeakerButton textToSpeak={item.content} ariaLabel="Nghe lại" /></div>}
+                        </div>
+                       </>
+                   )}
+                   {item.author === 'user' && (
+                       <>
+                        <div className="max-w-md p-3 rounded-2xl shadow-sm bg-blue-100 text-slate-800 rounded-br-none">
+                            <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: highlightUsedWords(item.content) }}></p>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-slate-600 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-1">BẠN</div>
+                       </>
+                   )}
                 </div>
             ))}
             {stage === 'finished' && (
@@ -365,4 +399,4 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
   );
 };
 
-export default ConversationView; 
+export default ConversationView;
