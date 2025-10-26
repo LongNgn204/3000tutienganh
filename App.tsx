@@ -10,7 +10,7 @@ import ConversationView from './components/ConversationView';
 import LoginModal from './components/LoginModal';
 import PlacementTestView from './components/PlacementTestView';
 import { WORD_CATEGORIES, ALL_WORDS } from './constants';
-import type { Category, User, StudyProgress, StudyStatus, ViewMode, CEFRLevel } from './types';
+import type { Category, User, StudyProgress, StudyStatus, ViewMode, PlacementTestResult } from './types';
 
 const App: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>(WORD_CATEGORIES[0]?.id || '');
@@ -80,9 +80,13 @@ const App: React.FC = () => {
     setViewMode('placement-test');
   };
 
-  const handlePlacementTestComplete = (level: CEFRLevel) => {
+  const handlePlacementTestComplete = (result: PlacementTestResult) => {
     if (!pendingUserName) return;
-    const user: User = { name: pendingUserName, level };
+    const user: User = { 
+        name: pendingUserName, 
+        level: result.level,
+        placementTestResult: result,
+    };
     setCurrentUser(user);
     localStorage.setItem('currentUser', JSON.stringify(user));
     setPendingUserName(null);
