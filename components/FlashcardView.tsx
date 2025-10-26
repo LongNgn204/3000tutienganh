@@ -8,6 +8,8 @@ interface FlashcardViewProps {
   studyProgress: StudyProgress;
   onUpdateStudyProgress: (wordEnglish: string, status: StudyStatus) => void;
   onResetStudyProgress: (wordKeys: string[]) => void;
+  initialStudyFilter: 'review' | 'unknown' | null;
+  onInitialFilterConsumed: () => void;
 }
 
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -19,12 +21,21 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
     categories, 
     studyProgress,
     onUpdateStudyProgress,
-    onResetStudyProgress
+    onResetStudyProgress,
+    initialStudyFilter,
+    onInitialFilterConsumed
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [studyFilter, setStudyFilter] = useState<'all' | 'review' | 'unknown' | 'known'>('all');
   const [wordSet, setWordSet] = useState<Word[]>([]);
+
+  useEffect(() => {
+    if (initialStudyFilter) {
+      setStudyFilter(initialStudyFilter);
+      onInitialFilterConsumed();
+    }
+  }, [initialStudyFilter, onInitialFilterConsumed]);
 
   // This is the pool of words based on category selection
   const categoryFilteredWords = useMemo(() => {
