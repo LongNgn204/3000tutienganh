@@ -6,6 +6,7 @@ import FlashcardView from './components/FlashcardView';
 import QuizView from './components/QuizView';
 import AIStoryView from './components/AIStoryView';
 import DashboardView from './components/DashboardView';
+import ConversationView from './components/ConversationView';
 import LoginModal from './components/LoginModal';
 import { WORD_CATEGORIES, ALL_WORDS } from './constants';
 import type { Category, User, StudyProgress, StudyStatus, ViewMode } from './types';
@@ -148,6 +149,8 @@ const App: React.FC = () => {
                />;
       case 'story':
         return <AIStoryView words={ALL_WORDS} studyProgress={studyProgress} />;
+      case 'conversation':
+        return <ConversationView allWords={ALL_WORDS} studyProgress={studyProgress} />;
       case 'flashcard':
         return (
           <div className="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
