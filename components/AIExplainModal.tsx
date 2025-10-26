@@ -23,7 +23,6 @@ const AIExplainModal: React.FC<AIExplainModalProps> = ({ word, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [explanation, setExplanation] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [isApiKeySelected, setIsApiKeySelected] = useState(false);
 
   const fetchExplanation = async () => {
       setIsLoading(true);
@@ -56,38 +55,15 @@ Nếu không có từ đồng nghĩa hoặc trái nghĩa, hãy ghi "Không có".
         setExplanation(response.text);
       } catch (err) {
         console.error("Gemini API Error:", err);
-        const errorMessage = (err as any).message || '';
-        if (errorMessage.includes('API key expired') || errorMessage.includes('API_KEY_INVALID')) {
-            setError("API key của bạn không hợp lệ hoặc đã hết hạn. Vui lòng chọn một key mới.");
-            setIsApiKeySelected(false);
-        } else {
-            setError("Rất tiếc, AI không thể phản hồi lúc này. Vui lòng thử lại sau.");
-        }
+        setError("Rất tiếc, AI không thể phản hồi lúc này. Vui lòng thử lại sau.");
       } finally {
         setIsLoading(false);
       }
     };
 
   useEffect(() => {
-    const checkKeyAndFetch = async () => {
-        setIsLoading(true);
-        const hasKey = await window.aistudio?.hasSelectedApiKey();
-        setIsApiKeySelected(hasKey);
-        if (hasKey) {
-            fetchExplanation();
-        } else {
-            setIsLoading(false);
-        }
-    };
-    checkKeyAndFetch();
-  }, [word]);
-  
-  const handleSelectKey = async () => {
-    await window.aistudio.openSelectKey();
-    // Assume success and re-fetch
-    setIsApiKeySelected(true);
     fetchExplanation();
-  };
+  }, [word]);
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -117,24 +93,11 @@ Nếu không có từ đồng nghĩa hoặc trái nghĩa, hãy ghi "Không có".
               {error}
             </div>
           )}
-          {!isLoading && !error && isApiKeySelected && (
+          {!isLoading && !error && (
             <div 
               className="text-slate-700 space-y-3 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: parseSimpleMarkdown(explanation) }} 
             />
-          )}
-          {!isLoading && !isApiKeySelected && (
-            <div className="text-center p-4 h-full flex flex-col items-center justify-center">
-                <h3 className="text-lg font-bold text-slate-700 mb-2">Yêu cầu API Key</h3>
-                <p className="text-slate-500 mb-4">Để nhận giải thích từ AI, bạn cần chọn API Key của mình.</p>
-                <button
-                    onClick={handleSelectKey}
-                    className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg"
-                >
-                    Chọn API Key
-                </button>
-                 <p className="text-xs text-slate-500 mt-2">Tính năng này yêu cầu API key của riêng bạn. <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="underline">Tìm hiểu thêm về thanh toán</a>.</p>
-            </div>
           )}
         </div>
 
