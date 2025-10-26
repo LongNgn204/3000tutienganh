@@ -12,6 +12,50 @@ export const TYPE_COLORS: { [key: string]: string } = {
     'det': '#14b8a6',     // teal-500
 };
 
+export const LEARNING_IDIOMS = [
+  {
+    idiom: "Practice makes perfect.",
+    meaning: "Luyện tập tạo nên sự hoàn hảo.",
+    example: "Don't give up on learning the piano. Practice makes perfect! (Đừng từ bỏ việc học piano. Có công mài sắt, có ngày nên kim!)"
+  },
+  {
+    idiom: "Burn the midnight oil.",
+    meaning: "Thức khuya để học hoặc làm việc.",
+    example: "She was burning the midnight oil to prepare for her final exams. (Cô ấy đã thức khuya học bài để chuẩn bị cho kỳ thi cuối kỳ.)"
+  },
+  {
+    idiom: "Hit the books.",
+    meaning: "Bắt đầu học một cách nghiêm túc.",
+    example: "I have a big test tomorrow, so I need to hit the books tonight. (Tôi có một bài kiểm tra lớn vào ngày mai, vì vậy tối nay tôi cần phải học hành chăm chỉ.)"
+  },
+  {
+    idiom: "Pass with flying colors.",
+    meaning: "Vượt qua kỳ thi với điểm số rất cao.",
+    example: "He studied hard and passed the exam with flying colors. (Anh ấy đã học rất chăm chỉ và vượt qua kỳ thi với điểm số xuất sắc.)"
+  },
+  {
+    idiom: "The school of hard knocks.",
+    meaning: "Học hỏi từ những kinh nghiệm thực tế, thường là cay đắng.",
+    example: "He didn't go to college, but he learned everything from the school of hard knocks. (Anh ấy không học đại học, nhưng anh ấy đã học mọi thứ từ trường đời.)"
+  },
+  {
+    idiom: "Learn by heart.",
+    meaning: "Học thuộc lòng.",
+    example: "I had to learn the poem by heart for the literature class. (Tôi đã phải học thuộc lòng bài thơ cho lớp văn học.)"
+  },
+  {
+    idiom: "Draw a blank.",
+    meaning: "Không thể nhớ ra điều gì.",
+    example: "I tried to remember his name, but I just drew a blank. (Tôi đã cố nhớ tên anh ấy, nhưng tôi không thể nào nhớ ra được.)"
+  },
+  {
+    idiom: "A for effort.",
+    meaning: "Điểm A cho sự cố gắng (dù kết quả có thể không tốt).",
+    example: "The cake didn't turn out well, but I'll give you an A for effort for trying. (Chiếc bánh không ngon lắm, nhưng tôi sẽ cho bạn điểm A vì sự cố gắng.)"
+  }
+];
+
+
 // Dữ liệu thô sẽ được xử lý để thêm màu và ví dụ
 const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] })[] = [
   {

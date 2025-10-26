@@ -40,7 +40,7 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
     });
   };
 
-  const generateStoryStream = async () => {
+  const generateStory = async () => {
     if (selectedWords.length < MIN_WORDS) {
         alert(`Vui lòng chọn ít nhất ${MIN_WORDS} từ.`);
         return;
@@ -61,34 +61,20 @@ First, write the English story.
 Then, on a new line, write the exact separator: "${separator}".
 Finally, on a new line, write the Vietnamese translation of the story.`;
         
-        const responseStream = await ai.models.generateContentStream({
+        const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
         });
         
-        let fullResponse = "";
-        let englishPart = "";
-        let vietnamesePart = "";
-        let foundSeparator = false;
-
-        for await (const chunk of responseStream) {
-            fullResponse += chunk.text;
-            if (!foundSeparator) {
-                if (fullResponse.includes(separator)) {
-                    const parts = fullResponse.split(separator);
-                    englishPart = parts[0];
-                    vietnamesePart = parts[1] || "";
-                    setStoryEnglish(englishPart);
-                    setStoryVietnamese(vietnamesePart);
-                    foundSeparator = true;
-                } else {
-                    englishPart = fullResponse;
-                    setStoryEnglish(englishPart);
-                }
-            } else {
-                 vietnamesePart += chunk.text;
-                 setStoryVietnamese(vietnamesePart);
-            }
+        const fullResponse = response.text;
+        
+        if (fullResponse.includes(separator)) {
+            const parts = fullResponse.split(separator);
+            setStoryEnglish(parts[0].trim());
+            setStoryVietnamese(parts[1]?.trim() || '');
+        } else {
+            setStoryEnglish(fullResponse.trim());
+            setStoryVietnamese('AI không cung cấp bản dịch.');
         }
 
     } catch (err) {
@@ -106,14 +92,14 @@ Finally, on a new line, write the Vietnamese translation of the story.`;
   };
 
   const renderContent = () => {
-    if (isGenerating && !storyEnglish) {
+    if (isGenerating) {
       return (
         <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
             <svg className="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p className="text-slate-500 font-semibold">AI đang tạo nên câu chuyện của bạn...</p>
+            <p className="text-slate-500 font-semibold">AI đang viết nên câu chuyện của bạn...</p>
         </div>
       );
     }
@@ -126,7 +112,7 @@ Finally, on a new line, write the Vietnamese translation of the story.`;
       );
     }
 
-    if (storyEnglish || isGenerating) {
+    if (storyEnglish) {
       return (
         <div className="bg-white p-6 rounded-lg shadow-md border animate-fade-in">
             <div className="flex justify-between items-start mb-4">
@@ -137,28 +123,25 @@ Finally, on a new line, write the Vietnamese translation of the story.`;
             className="text-lg text-slate-700 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: highlightWords(storyEnglish, selectedWords) }}
           />
-           {isGenerating && !storyEnglish.endsWith('.') && <span className="inline-block w-2 h-5 bg-slate-700 animate-pulse ml-1"></span>}
 
           {storyVietnamese && (
             <p className="text-md text-slate-500 mt-4 pt-4 border-t italic">{storyVietnamese}</p>
           )}
 
-          {!isGenerating && (
-              <div className="mt-6 flex justify-end gap-4">
-                <button
-                  onClick={() => { setStoryEnglish(''); setStoryVietnamese(''); setSelectedWords([]); }}
-                  className="px-4 py-2 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 transition-colors"
-                >
-                  Chọn từ mới
-                </button>
-                 <button
-                  onClick={generateStoryStream}
-                  className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Tạo truyện khác
-                </button>
-              </div>
-          )}
+          <div className="mt-6 flex justify-end gap-4">
+            <button
+              onClick={() => { setStoryEnglish(''); setStoryVietnamese(''); setSelectedWords([]); }}
+              className="px-4 py-2 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 transition-colors"
+            >
+              Chọn từ mới
+            </button>
+             <button
+              onClick={generateStory}
+              className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Tạo truyện khác
+            </button>
+          </div>
         </div>
       );
     }
@@ -200,7 +183,7 @@ Finally, on a new line, write the Vietnamese translation of the story.`;
              <div className="mt-6 flex justify-between items-center">
                 <p className="text-sm text-slate-600 font-semibold">Đã chọn: {selectedWords.length}/{MAX_WORDS}</p>
                 <button
-                    onClick={generateStoryStream}
+                    onClick={generateStory}
                     disabled={selectedWords.length < MIN_WORDS || selectedWords.length > MAX_WORDS || isGenerating}
                     className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md transition-all hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed"
                 >
@@ -214,7 +197,7 @@ Finally, on a new line, write the Vietnamese translation of the story.`;
   return (
     <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 w-full">
         <div className="w-full max-w-3xl text-center mb-6">
-            <h2 className="text-3xl font-bold text-slate-800">Viết Chuyện Cùng AI</h2>
+            <h2 className="text-3xl font-bold text-slate-800">Viết Chuyện Với AI</h2>
             <p className="text-lg text-slate-600 mt-2">Học từ vựng trong ngữ cảnh bằng những câu chuyện độc đáo do AI tạo ra.</p>
         </div>
         <div className="w-full max-w-3xl">

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import { WORD_CATEGORIES, ALL_WORDS } from './constants';
-import type { Category, User, StudyProgress, StudyStatus, ViewMode, PlacementTestResult } from './types';
+import type { User, StudyProgress, StudyStatus, ViewMode, PlacementTestResult } from './types';
+import Footer from './components/Footer';
+import * as api from './services/api';
 
 // Lazy load components for better performance
 const Sidebar = lazy(() => import('./components/Sidebar'));
@@ -11,86 +13,72 @@ const QuizView = lazy(() => import('./components/QuizView'));
 const AIStoryView = lazy(() => import('./components/AIStoryView'));
 const DashboardView = lazy(() => import('./components/DashboardView'));
 const ConversationView = lazy(() => import('./components/ConversationView'));
-const LoginModal = lazy(() => import('./components/LoginModal'));
 const PlacementTestView = lazy(() => import('./components/PlacementTestView'));
 const PlacementTestResultView = lazy(() => import('./components/PlacementTestResultView'));
+const PronunciationView = lazy(() => import('./components/PronunciationView'));
+const GrammarView = lazy(() => import('./components/GrammarView'));
+const ListeningView = lazy(() => import('./components/ListeningView'));
+const AdvancedGrammarView = lazy(() => import('./components/AdvancedGrammarView'));
+const AuthView = lazy(() => import('./components/AuthView'));
 
 
 const Loader: React.FC = () => (
-    <div className="flex-1 flex items-center justify-center">
-        <div className="w-14 h-14 border-4 border-slate-200 border-b-blue-500 rounded-full animate-spin"></div>
+    <div className="flex-1 flex items-center justify-center h-full">
+        <div className="w-14 h-14 border-4 border-slate-200 border-b-indigo-500 rounded-full animate-spin"></div>
     </div>
 );
 
 const App: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>(WORD_CATEGORIES[0]?.id || '');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
+  const [viewMode, setViewMode] = useState<ViewMode>('auth');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [pendingUserName, setPendingUserName] = useState<string | null>(null);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [studyProgress, setStudyProgress] = useState<StudyProgress>({});
   const [initialFlashcardFilter, setInitialFlashcardFilter] = useState<'review' | 'unknown' | null>(null);
   const [testResultToShow, setTestResultToShow] = useState<PlacementTestResult | null>(null);
+  const [pendingUserName, setPendingUserName] = useState<string | null>(null);
+
 
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Persist user login
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-    } else {
-      setIsLoginModalOpen(true);
-    }
-    // Load study progress
-    const storedProgress = localStorage.getItem('studyProgress');
-    if (storedProgress) {
-        setStudyProgress(JSON.parse(storedProgress));
-    }
+    const verifySession = async () => {
+        const { user } = await api.checkSession();
+        if (user) {
+            setCurrentUser(user);
+            setStudyProgress(user.studyProgress || {});
+            setViewMode('dashboard');
+        } else {
+            setViewMode('auth');
+        }
+    };
+    verifySession();
   }, []);
 
-  useEffect(() => {
-    if (viewMode !== 'list') return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveCategory(entry.target.id);
-          }
-        });
-      },
-      {
-        root: mainContentRef.current,
-        rootMargin: '-150px 0px -70% 0px',
-        threshold: 0,
-      }
-    );
-
-    const sections = mainContentRef.current?.querySelectorAll('section[id]');
-    sections?.forEach((section) => observer.observe(section));
-
-    return () => {
-      sections?.forEach((section) => observer.unobserve(section));
-    };
-  }, [viewMode, mainContentRef.current]);
-
-  const handleCategoryClick = (id: string) => {
-    setViewMode('list');
-    setTimeout(() => {
-      const section = document.getElementById(id);
-      if (section) {
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 0);
+  const handleRegister = async (name: string, password: string): Promise<{ success: boolean, message?: string }> => {
+    const result = await api.register(name, password);
+    if (result.success) {
+        setPendingUserName(name);
+        setViewMode('placement-test');
+    }
+    return result;
   };
 
-  const handleLogin = (name: string) => {
-    setPendingUserName(name);
-    setIsLoginModalOpen(false);
-    setViewMode('placement-test');
+  const handleLogin = async (name: string, password: string): Promise<{ success: boolean, message?: string }> => {
+    const result = await api.login(name, password);
+    if (result.success && result.user) {
+        if (!result.user.level) { // User registered but didn't complete the placement test
+            setPendingUserName(name);
+            setViewMode('placement-test');
+        } else {
+            setCurrentUser(result.user);
+            setStudyProgress(result.user.studyProgress || {});
+            setViewMode('dashboard');
+        }
+        return { success: true };
+    }
+    return { success: false, message: result.message };
   };
 
   const handlePlacementTestSubmit = (result: PlacementTestResult) => {
@@ -98,42 +86,50 @@ const App: React.FC = () => {
       setViewMode('placement-test-result');
   };
 
-  const handlePlacementTestComplete = () => {
+  const handlePlacementTestComplete = async () => {
     if (!pendingUserName || !testResultToShow) return;
-    const user: User = { 
-        name: pendingUserName, 
-        level: testResultToShow.level,
-        placementTestResult: testResultToShow,
-    };
-    setCurrentUser(user);
-    localStorage.setItem('currentUser', JSON.stringify(user));
+    
+    const result = await api.completePlacementTest(pendingUserName, testResultToShow);
+
+    if (result.success && result.user) {
+        setCurrentUser(result.user);
+        setStudyProgress(result.user.studyProgress || {});
+    } else {
+        console.error("Failed to complete placement test:", result.message);
+        // Fallback or show error
+        setViewMode('auth');
+        return;
+    }
+
     setPendingUserName(null);
     setTestResultToShow(null);
     setViewMode('dashboard');
   };
 
   const handleLogout = () => {
+    api.logout();
     setCurrentUser(null);
-    localStorage.removeItem('currentUser');
-    setIsLoginModalOpen(true);
-    setViewMode('dashboard');
+    setStudyProgress({});
+    setViewMode('auth');
   };
   
-  const handleUpdateStudyProgress = (wordEnglish: string, status: StudyStatus) => {
+  const handleUpdateStudyProgress = async (wordEnglish: string, status: StudyStatus) => {
+    if (!currentUser) return;
     const newProgress = { ...studyProgress, [wordEnglish]: status };
     setStudyProgress(newProgress);
-    localStorage.setItem('studyProgress', JSON.stringify(newProgress));
+    await api.updateProgress(currentUser.name, newProgress);
   };
   
-  const handleResetStudyProgress = (wordKeys: string[]) => {
+  const handleResetStudyProgress = async (wordKeys: string[]) => {
+      if (!currentUser) return;
       const newProgress = { ...studyProgress };
       wordKeys.forEach(key => {
           delete newProgress[key];
       });
       setStudyProgress(newProgress);
-      localStorage.setItem('studyProgress', JSON.stringify(newProgress));
+      await api.updateProgress(currentUser.name, newProgress);
   };
-  
+
   const navigateTo = (mode: ViewMode, options?: { initialFilter: 'review' | 'unknown' }) => {
     if (options?.initialFilter) {
       setInitialFlashcardFilter(options.initialFilter);
@@ -141,27 +137,9 @@ const App: React.FC = () => {
       setInitialFlashcardFilter(null);
     }
     setViewMode(mode);
+    setIsMobileSidebarOpen(false);
   };
 
-  const filteredCategories = useMemo((): Category[] => {
-    if (!searchQuery) {
-      return WORD_CATEGORIES;
-    }
-    const lowercasedQuery = searchQuery.toLowerCase();
-    
-    const relevantCategories: Category[] = [];
-    WORD_CATEGORIES.forEach(category => {
-        const wordsInCategory = category.words.filter(word =>
-            word.english.toLowerCase().includes(lowercasedQuery) ||
-            word.vietnamese.toLowerCase().includes(lowercasedQuery)
-        );
-        if (wordsInCategory.length > 0) {
-            relevantCategories.push({ ...category, words: wordsInCategory });
-        }
-    });
-    return relevantCategories;
-  }, [searchQuery]);
-  
   const filteredWords = useMemo(() => {
       if (!searchQuery) return ALL_WORDS;
       const lowercasedQuery = searchQuery.toLowerCase();
@@ -171,14 +149,9 @@ const App: React.FC = () => {
       );
   }, [searchQuery]);
 
-  const hasSearchResults = useMemo(() => filteredCategories.length > 0, [filteredCategories]);
 
   const renderView = () => {
     switch(viewMode) {
-      case 'placement-test':
-        return <PlacementTestView onTestSubmit={handlePlacementTestSubmit} />;
-      case 'placement-test-result':
-        return <PlacementTestResultView result={testResultToShow!} onComplete={handlePlacementTestComplete} />;
       case 'dashboard':
         return <DashboardView 
                   currentUser={currentUser} 
@@ -190,6 +163,14 @@ const App: React.FC = () => {
         return <AIStoryView words={ALL_WORDS} studyProgress={studyProgress} />;
       case 'conversation':
         return <ConversationView allWords={ALL_WORDS} studyProgress={studyProgress} currentUser={currentUser} />;
+      case 'pronunciation':
+        return <PronunciationView words={ALL_WORDS} studyProgress={studyProgress} />;
+      case 'grammar':
+        return <GrammarView />;
+      case 'listening':
+        return <ListeningView currentUser={currentUser} />;
+      case 'advanced-grammar':
+        return <AdvancedGrammarView currentUser={currentUser} />;
       case 'flashcard':
         return <FlashcardView 
               words={filteredWords} 
@@ -204,80 +185,66 @@ const App: React.FC = () => {
          return <QuizView allWords={ALL_WORDS} wordsForQuiz={filteredWords} categories={WORD_CATEGORIES} />;
       case 'list':
       default:
-        return (
-          <div className="flex-grow max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <div className="lg:grid lg:grid-cols-12 lg:gap-8 py-8">
-              {isSidebarOpen && (
-                <div className="lg:col-span-3">
-                  <Sidebar 
-                    categories={WORD_CATEGORIES} 
-                    activeCategory={activeCategory} 
-                    onCategoryClick={handleCategoryClick}
-                  />
-                </div>
-              )}
-              <main 
-                ref={mainContentRef} 
-                className={`relative transition-all duration-300 ${isSidebarOpen ? 'lg:col-span-9' : 'lg:col-span-12'} w-full mt-8 lg:mt-0 lg:max-h-[calc(100vh-100px)] overflow-y-auto`}
-              >
-                <button
-                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                    className="hidden lg:flex items-center justify-center absolute top-16 -left-4 z-20 w-8 h-8 bg-white rounded-full shadow-md border hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    aria-label={isSidebarOpen ? 'Ẩn chủ đề' : 'Hiện chủ đề'}
-                    title={isSidebarOpen ? 'Ẩn chủ đề' : 'Hiện chủ đề'}
-                >
-                    {isSidebarOpen ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                    ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                    )}
-                </button>
-                {searchQuery && !hasSearchResults ? (
-                    <div className="text-center py-16">
-                        <h3 className="text-xl font-semibold text-slate-600">Không tìm thấy từ nào</h3>
-                        <p className="text-slate-500 mt-2">Hãy thử một từ khóa khác.</p>
-                    </div>
-                ) : (
-                   <>
-                      <h2 className="text-3xl font-bold text-slate-800 mb-6">Danh sách từ vựng</h2>
-                      <WordList categories={filteredCategories} />
-                    </>
-                )}
-              </main>
-            </div>
-          </div>
-        )
+        return <WordList 
+                  categories={WORD_CATEGORIES}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  activeCategory={activeCategory}
+                  setActiveCategory={setActiveCategory}
+                  mainContentRef={mainContentRef}
+                />
     }
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
-      <Header 
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        viewMode={viewMode}
-        navigateTo={navigateTo}
-        currentUser={currentUser}
-        onLoginClick={() => setIsLoginModalOpen(true)}
-        onLogoutClick={handleLogout}
-      />
-      
-      <Suspense fallback={<Loader />}>
-        {renderView()}
-      </Suspense>
-
-       <footer className="w-full bg-white text-center py-4 border-t mt-auto">
-        <p className="text-sm text-slate-500">© 2025 Học Tiếng Anh Cùng AI. Phát triển bởi Long Nguyễn.</p>
-      </footer>
-      
-      {isLoginModalOpen && !pendingUserName && (
-        <Suspense fallback={<div></div>}>
-            <LoginModal 
-              onClose={() => setIsLoginModalOpen(false)}
-              onLogin={handleLogin}
-            />
+  // Auth Guard
+  if (!currentUser) {
+    return (
+        <Suspense fallback={<div id="initial-loader"><div className="spinner"></div></div>}>
+            {(() => {
+                 switch(viewMode) {
+                    case 'placement-test':
+                        return <PlacementTestView onTestSubmit={handlePlacementTestSubmit} />;
+                    case 'placement-test-result':
+                        return <PlacementTestResultView result={testResultToShow!} onComplete={handlePlacementTestComplete} />;
+                    case 'auth':
+                    default:
+                        return <AuthView onLogin={handleLogin} onRegister={handleRegister} />;
+                 }
+            })()}
         </Suspense>
-      )}
+    );
+  }
+
+  // Main App Layout
+  return (
+    <div className={`min-h-screen text-slate-800 flex ${isMobileSidebarOpen ? 'sidebar-open' : ''}`}>
+      <Suspense fallback={<div></div>}>
+        <Sidebar 
+          viewMode={viewMode} 
+          navigateTo={navigateTo}
+          currentUser={currentUser}
+          onLogoutClick={handleLogout}
+        />
+      </Suspense>
+      <div 
+        className="fixed inset-0 bg-black/50 z-30 lg:hidden sidebar-overlay opacity-0 pointer-events-none transition-opacity"
+        onClick={() => setIsMobileSidebarOpen(false)}
+      ></div>
+
+      <div className="flex flex-col flex-1 lg:pl-64">
+        <Header 
+          viewMode={viewMode}
+          onMenuClick={() => setIsMobileSidebarOpen(true)}
+        />
+        <main className="flex-1 flex flex-col">
+          <Suspense fallback={<Loader />}>
+            <div className="flex-grow w-full max-w-screen-2xl mx-auto flex flex-col">
+              {renderView()}
+            </div>
+          </Suspense>
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 };

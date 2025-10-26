@@ -43,8 +43,10 @@ export interface PlacementTestResult {
 
 export interface User {
   name: string;
+  password: string;
   level: CEFRLevel;
   placementTestResult?: PlacementTestResult;
+  studyProgress?: StudyProgress;
 }
 
 export type StudyStatus = 'known' | 'review';
@@ -53,4 +55,4 @@ export interface StudyProgress {
   [wordEnglish: string]: StudyStatus;
 }
 
-export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test';
+export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth';
