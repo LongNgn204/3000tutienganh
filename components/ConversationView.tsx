@@ -150,29 +150,26 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
         const wordList = selectedWords.map(w => w.english).join(', ');
         
         const userLevel = currentUser?.level || 'A2';
-        let levelInstruction = '';
-        switch(userLevel) {
-            case 'A1':
-            case 'A2':
-                levelInstruction = "Adjust your language to be simple and clear, using basic vocabulary and short sentences suitable for an A2 (Elementary) learner.";
-                break;
-            case 'B1':
-                levelInstruction = "Use a range of everyday vocabulary and sentence structures suitable for a B1 (Intermediate) learner.";
-                break;
-            case 'B2':
-                levelInstruction = "Use more complex sentences, a wider range of vocabulary, and some idiomatic expressions suitable for a B2 (Upper-Intermediate) learner.";
-                break;
-            case 'C1':
-            case 'C2':
-                levelInstruction = "Feel free to use advanced vocabulary, complex grammatical structures, and nuanced expressions suitable for a C1 (Advanced) learner.";
-                break;
-        }
-
+        
         const translationInstruction = enableVietnamese 
             ? `You MUST ALWAYS respond in this exact format: First, speak the English sentence. Then, immediately say "In Vietnamese," followed by the Vietnamese translation. For example: "That's a great idea! In Vietnamese, đó là một ý tưởng tuyệt vời!".`
             : `You MUST respond ONLY in English. DO NOT provide any Vietnamese translation.`;
 
-        const systemInstruction = `You are Gem, a friendly English tutor. Your goal is to have a voice conversation with a Vietnamese learner whose CEFR level is ${userLevel}. ${levelInstruction} ${translationInstruction} The student's mission is to use these words: ${wordList}. Guide the conversation naturally to give them a chance to use these words. Keep your English responses short and clear. Start the conversation by saying "Hello! How are you today?".`;
+        const systemInstruction = `You are Gem, a highly intelligent and adaptive English tutor. Your primary goal is to have a dynamic voice conversation with a Vietnamese learner.
+
+**Initial Level:** The user's starting CEFR level is ${userLevel}. Begin the conversation at this level.
+
+**ADAPTIVE BEHAVIOR (CRITICAL):**
+1.  **Analyze Continuously:** As the user speaks, constantly analyze their vocabulary range, grammatical accuracy, and the complexity of their sentence structures.
+2.  **Level Up:** If the user demonstrates a strong command of English (using advanced words, complex sentences, few errors), you MUST gradually increase the difficulty of your own language. Introduce more sophisticated vocabulary, academic phrasing, and more complex grammatical structures to challenge them and help them grow.
+3.  **Level Down:** If the user struggles (simple words, frequent errors, hesitation), you MUST simplify your language to match their current level, ensuring the conversation remains encouraging and comprehensible.
+
+**Core Task:** The student's mission is to use these words: ${wordList}. Guide the conversation naturally to give them a chance to use these words.
+
+**Language & Format:**
+${translationInstruction}
+
+Start the conversation by saying "Hello! How are you today?".`;
 
         inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
         outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
