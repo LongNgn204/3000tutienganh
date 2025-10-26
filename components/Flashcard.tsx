@@ -56,8 +56,8 @@ const Flashcard: React.FC<FlashcardProps> = ({ word, onAnswer, studyRecord }) =>
               <h2 className="text-6xl md:text-7xl font-extrabold text-slate-800 tracking-tight">{word.english}</h2>
             </div>
             
-            <div className="text-center text-slate-600">
-                <p>{isFlipped ? '' : 'Nhấn để xem nghĩa'}</p>
+            <div className="text-center text-slate-500 opacity-80">
+                <p>Nhấn để xem nghĩa</p>
             </div>
         </div>
 
