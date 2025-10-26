@@ -26,4 +26,4 @@ export interface StudyProgress {
   [wordEnglish: string]: StudyStatus;
 }
 
-export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation';
+export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test';
