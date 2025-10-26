@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import type { Word, StudyProgress } from '../types';
 import SpeakerButton from './SpeakerButton';
 
@@ -13,8 +13,9 @@ const MAX_WORDS = 5;
 
 const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
   const [selectedWords, setSelectedWords] = useState<Word[]>([]);
-  const [storyResult, setStoryResult] = useState<{ english: string, vietnamese: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [storyEnglish, setStoryEnglish] = useState('');
+  const [storyVietnamese, setStoryVietnamese] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'review'>('all');
 
@@ -39,60 +40,73 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
     });
   };
 
-  const generateStory = async () => {
+  const generateStoryStream = async () => {
     if (selectedWords.length < MIN_WORDS) {
         alert(`Vui lòng chọn ít nhất ${MIN_WORDS} từ.`);
         return;
     }
 
-    setIsLoading(true);
+    setIsGenerating(true);
     setError(null);
-    setStoryResult(null);
+    setStoryEnglish('');
+    setStoryVietnamese('');
 
     const wordList = selectedWords.map(w => w.english).join(', ');
+    const separator = "---VIETNAMESE_TRANSLATION---";
 
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const prompt = `Act as a creative storyteller for a Vietnamese person learning English. Write a very short, simple story (around 50-70 words) that MUST include the following words: ${wordList}. The story should be easy to understand and engaging. Provide the output in a JSON format with two keys: "english_story" and "vietnamese_translation".`;
+        const prompt = `Act as a creative storyteller for a Vietnamese person learning English. Write a very short, simple story (around 50-70 words) that MUST include the following words: ${wordList}. The story should be easy to understand and engaging. 
+First, write the English story.
+Then, on a new line, write the exact separator: "${separator}".
+Finally, on a new line, write the Vietnamese translation of the story.`;
         
-        const response = await ai.models.generateContent({
+        const responseStream = await ai.models.generateContentStream({
             model: "gemini-2.5-flash",
             contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        english_story: { type: Type.STRING },
-                        vietnamese_translation: { type: Type.STRING },
-                    },
-                    required: ["english_story", "vietnamese_translation"],
-                }
-            }
         });
         
-        const jsonString = response.text.trim();
-        const parsedResult = JSON.parse(jsonString);
-        setStoryResult({
-            english: parsedResult.english_story,
-            vietnamese: parsedResult.vietnamese_translation
-        });
+        let fullResponse = "";
+        let englishPart = "";
+        let vietnamesePart = "";
+        let foundSeparator = false;
+
+        for await (const chunk of responseStream) {
+            fullResponse += chunk.text;
+            if (!foundSeparator) {
+                if (fullResponse.includes(separator)) {
+                    const parts = fullResponse.split(separator);
+                    englishPart = parts[0];
+                    vietnamesePart = parts[1] || "";
+                    setStoryEnglish(englishPart);
+                    setStoryVietnamese(vietnamesePart);
+                    foundSeparator = true;
+                } else {
+                    englishPart = fullResponse;
+                    setStoryEnglish(englishPart);
+                }
+            } else {
+                 vietnamesePart += chunk.text;
+                 setStoryVietnamese(vietnamesePart);
+            }
+        }
 
     } catch (err) {
         console.error("Gemini Story Generation Error:", err);
         setError("Rất tiếc, AI không thể tạo truyện lúc này. Vui lòng thử lại sau.");
     } finally {
-        setIsLoading(false);
+        setIsGenerating(false);
     }
   };
   
   const highlightWords = (text: string, wordsToHighlight: Word[]) => {
-      const wordRegex = new RegExp(`\\b(${wordsToHighlight.map(w => w.english).join('|')})\\b`, 'gi');
+      if (wordsToHighlight.length === 0) return text;
+      const wordRegex = new RegExp(`\\b(${wordsToHighlight.map(w => w.english.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|')})\\b`, 'gi');
       return text.replace(wordRegex, '<strong class="bg-yellow-200 text-yellow-800 px-1 rounded">$1</strong>');
   };
 
   const renderContent = () => {
-    if (isLoading) {
+    if (isGenerating && !storyEnglish) {
       return (
         <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
             <svg className="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -112,32 +126,39 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
       );
     }
 
-    if (storyResult) {
+    if (storyEnglish || isGenerating) {
       return (
         <div className="bg-white p-6 rounded-lg shadow-md border animate-fade-in">
             <div className="flex justify-between items-start mb-4">
                 <h3 className="text-xl font-bold text-slate-800">Câu chuyện của bạn</h3>
-                <SpeakerButton textToSpeak={storyResult.english} ariaLabel="Nghe câu chuyện" />
+                <SpeakerButton textToSpeak={storyEnglish} ariaLabel="Nghe câu chuyện" />
             </div>
           <p 
             className="text-lg text-slate-700 leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: highlightWords(storyResult.english, selectedWords) }}
+            dangerouslySetInnerHTML={{ __html: highlightWords(storyEnglish, selectedWords) }}
           />
-          <p className="text-md text-slate-500 mt-4 pt-4 border-t italic">{storyResult.vietnamese}</p>
-          <div className="mt-6 flex justify-end gap-4">
-            <button
-              onClick={() => { setStoryResult(null); setSelectedWords([]); }}
-              className="px-4 py-2 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 transition-colors"
-            >
-              Chọn từ mới
-            </button>
-             <button
-              onClick={generateStory}
-              className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Tạo truyện khác
-            </button>
-          </div>
+           {isGenerating && !storyEnglish.endsWith('.') && <span className="inline-block w-2 h-5 bg-slate-700 animate-pulse ml-1"></span>}
+
+          {storyVietnamese && (
+            <p className="text-md text-slate-500 mt-4 pt-4 border-t italic">{storyVietnamese}</p>
+          )}
+
+          {!isGenerating && (
+              <div className="mt-6 flex justify-end gap-4">
+                <button
+                  onClick={() => { setStoryEnglish(''); setStoryVietnamese(''); setSelectedWords([]); }}
+                  className="px-4 py-2 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 transition-colors"
+                >
+                  Chọn từ mới
+                </button>
+                 <button
+                  onClick={generateStoryStream}
+                  className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Tạo truyện khác
+                </button>
+              </div>
+          )}
         </div>
       );
     }
@@ -179,8 +200,8 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
              <div className="mt-6 flex justify-between items-center">
                 <p className="text-sm text-slate-600 font-semibold">Đã chọn: {selectedWords.length}/{MAX_WORDS}</p>
                 <button
-                    onClick={generateStory}
-                    disabled={selectedWords.length < MIN_WORDS || selectedWords.length > MAX_WORDS || isLoading}
+                    onClick={generateStoryStream}
+                    disabled={selectedWords.length < MIN_WORDS || selectedWords.length > MAX_WORDS || isGenerating}
                     className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md transition-all hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed"
                 >
                     Tạo truyện
