@@ -1,13 +1,11 @@
 import React from 'react';
-import type { User } from '../types';
-
-type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story';
+import type { User, ViewMode } from '../types';
 
 interface HeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   viewMode: ViewMode;
-  setViewMode: (mode: ViewMode) => void;
+  navigateTo: (mode: ViewMode, options?: { initialFilter: 'review' | 'unknown' }) => void;
   currentUser: User | null;
   onLoginClick: () => void;
   onLogoutClick: () => void;
@@ -17,7 +15,7 @@ const Header: React.FC<HeaderProps> = ({
   searchQuery, 
   setSearchQuery, 
   viewMode, 
-  setViewMode,
+  navigateTo,
   currentUser,
   onLoginClick,
   onLogoutClick 
@@ -27,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <div className="flex items-center">
-             <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight">
+             <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight cursor-pointer" onClick={() => navigateTo('list')}>
                 <span className="text-blue-600">3000</span> Từ Tiếng Anh
             </h1>
           </div>
@@ -48,7 +46,19 @@ const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-x-1 md:gap-x-2">
             <div className="flex flex-col items-center justify-center w-16 text-center">
                 <button
-                    onClick={() => setViewMode('story')}
+                    onClick={() => navigateTo('dashboard')}
+                    className={`flex items-center justify-center w-9 h-9 rounded-full transition-colors ${viewMode === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
+                    title="Tiến độ"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                    </svg>
+                </button>
+                <span className="text-xs text-slate-500 mt-1 leading-tight">Tiến độ</span>
+            </div>
+            <div className="flex flex-col items-center justify-center w-16 text-center">
+                <button
+                    onClick={() => navigateTo('story')}
                     className={`flex items-center justify-center w-9 h-9 rounded-full transition-colors ${viewMode === 'story' ? 'bg-blue-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
                     title="Luyện tập AI"
                 >
@@ -62,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({
             </div>
              <div className="flex flex-col items-center justify-center w-16 text-center">
                 <button
-                    onClick={() => setViewMode('quiz')}
+                    onClick={() => navigateTo('quiz')}
                     className={`flex items-center justify-center w-9 h-9 rounded-full transition-colors ${viewMode === 'quiz' ? 'bg-blue-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
                     title="Luyện tập"
                 >
@@ -74,11 +84,11 @@ const Header: React.FC<HeaderProps> = ({
              </div>
              <div className="flex flex-col items-center justify-center w-16 text-center">
                 <button
-                    onClick={() => setViewMode(viewMode === 'list' ? 'flashcard' : 'list')}
+                    onClick={() => navigateTo(viewMode === 'list' ? 'flashcard' : 'list')}
                     className={`flex items-center justify-center w-9 h-9 rounded-full transition-colors ${viewMode === 'flashcard' ? 'bg-blue-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
                     title={viewMode === 'list' ? 'Chế độ Flashcard' : 'Chế độ danh sách'}
                 >
-                {viewMode === 'flashcard' || viewMode === 'quiz' || viewMode === 'story' ? (
+                {viewMode === 'flashcard' || viewMode === 'quiz' || viewMode === 'story' || viewMode === 'dashboard' ? (
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                     </svg>
