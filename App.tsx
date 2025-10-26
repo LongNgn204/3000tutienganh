@@ -189,7 +189,7 @@ const App: React.FC = () => {
       case 'story':
         return <AIStoryView words={ALL_WORDS} studyProgress={studyProgress} />;
       case 'conversation':
-        return <ConversationView allWords={ALL_WORDS} studyProgress={studyProgress} />;
+        return <ConversationView allWords={ALL_WORDS} studyProgress={studyProgress} currentUser={currentUser} />;
       case 'flashcard':
         return <FlashcardView 
               words={filteredWords} 
