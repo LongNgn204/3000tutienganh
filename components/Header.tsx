@@ -25,8 +25,8 @@ const Header: React.FC<HeaderProps> = ({
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <div className="flex items-center">
-             <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight cursor-pointer" onClick={() => navigateTo('list')}>
-                <span className="text-blue-600">3000</span> Từ Tiếng Anh
+             <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight cursor-pointer" onClick={() => navigateTo('dashboard')}>
+                Học Tiếng Anh <span className="text-blue-600">Cùng AI</span>
             </h1>
           </div>
           <div className="flex-1 flex justify-center px-2 lg:px-8">
