@@ -22,3 +22,5 @@ export type StudyStatus = 'known' | 'review';
 export interface StudyProgress {
   [wordEnglish: string]: StudyStatus;
 }
+
+export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard';
