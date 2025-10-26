@@ -16,7 +16,13 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return [...array].sort(() => Math.random() - 0.5);
 };
 
-const PronunciationView: React.FC<{ words: Word[], studyProgress: StudyProgress }> = ({ words, studyProgress }) => {
+interface PronunciationViewProps {
+  words: Word[];
+  studyProgress: StudyProgress;
+  onGoalUpdate: () => void;
+}
+
+const PronunciationView: React.FC<PronunciationViewProps> = ({ words, studyProgress, onGoalUpdate }) => {
     const [targetWord, setTargetWord] = useState<Word | null>(null);
     const [status, setStatus] = useState<'idle' | 'listening' | 'analyzing' | 'feedback'>('idle');
     const [transcript, setTranscript] = useState('');
@@ -26,7 +32,6 @@ const PronunciationView: React.FC<{ words: Word[], studyProgress: StudyProgress 
     const recognitionRef = useRef<any>(null);
 
     const getNewWord = () => {
-        // FIX: Use srsService to get words for review and new words, instead of incorrect comparison.
         const reviewWords = srsService.getWordsToReview(words, studyProgress);
         const unknownWords = srsService.getNewWords(words, studyProgress);
         
@@ -117,6 +122,7 @@ Hãy đưa ra phản hồi bằng **tiếng Việt**, thật ngắn gọn, mang 
             });
             
             setFeedback(response.text);
+            onGoalUpdate();
 
         } catch (err) {
             console.error("Gemini API Error:", err);

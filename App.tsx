@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import { WORD_CATEGORIES, ALL_WORDS } from './constants';
-import type { User, StudyProgress, ViewMode, PlacementTestResult, StudyRecord, DailyProgress } from './types';
+import type { User, StudyProgress, ViewMode, PlacementTestResult, StudyRecord, DailyProgress, DailyGoal } from './types';
 import Footer from './components/Footer';
 import * as api from './services/api';
 import * as srsService from './services/srsService';
@@ -71,10 +71,10 @@ const App: React.FC = () => {
           }
       }
 
-      const newGoals = [
-          { id: 'g1', description: 'Học 10 từ mới', type: 'learn_new' as const, target: 10, current: 0 },
-          { id: 'g2', description: 'Ôn tập 15 thẻ', type: 'review_srs' as const, target: 15, current: 0 },
-          { id: 'g3', description: 'Hoàn thành 1 bài luyện nghe', type: 'complete_listening' as const, target: 1, current: 0 },
+      const newGoals: DailyGoal[] = [
+          { id: 'g1', description: 'Học 10 từ mới', type: 'learn_new', target: 10, current: 0 },
+          { id: 'g2', description: 'Ôn tập 15 từ SRS', type: 'review_srs', target: 15, current: 0 },
+          { id: 'g3', description: 'Luyện giao tiếp 1 lần', type: 'complete_conversation', target: 1, current: 0 },
       ];
 
       return { date: today, streak: newStreak, goals: newGoals };
@@ -177,7 +177,7 @@ const App: React.FC = () => {
     handleGoalUpdate('review_srs', 1);
   };
 
-  const handleGoalUpdate = async (type: 'learn_new' | 'review_srs' | 'complete_quiz' | 'complete_listening' | 'complete_conversation', amount: number) => {
+  const handleGoalUpdate = async (type: DailyGoal['type'], amount: number) => {
     if (!currentUser || !dailyProgress) return;
 
     const newGoals = dailyProgress.goals.map(goal => {
@@ -233,19 +233,19 @@ const App: React.FC = () => {
                   navigateTo={navigateTo}
                />;
       case 'story':
-        return <AIStoryView words={ALL_WORDS} studyProgress={studyProgress} />;
+        return <AIStoryView words={ALL_WORDS} studyProgress={studyProgress} onGoalUpdate={() => handleGoalUpdate('complete_story', 1)} />;
       case 'conversation':
         return <ConversationView allWords={ALL_WORDS} studyProgress={studyProgress} currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_conversation', 1)} />;
       case 'pronunciation':
-        return <PronunciationView words={ALL_WORDS} studyProgress={studyProgress} />;
+        return <PronunciationView words={ALL_WORDS} studyProgress={studyProgress} onGoalUpdate={() => handleGoalUpdate('complete_pronunciation', 1)} />;
       case 'grammar':
         return <GrammarView />;
       case 'listening':
         return <ListeningView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_listening', 1)}/>;
       case 'advanced-grammar':
-        return <AdvancedGrammarView currentUser={currentUser} />;
+        return <AdvancedGrammarView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_adv_grammar', 1)} />;
       case 'reading':
-        return <ReadingRoomView currentUser={currentUser} />;
+        return <ReadingRoomView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_reading', 1)} />;
       case 'flashcard':
         return <FlashcardView 
               words={filteredWords} 

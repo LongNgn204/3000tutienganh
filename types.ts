@@ -44,7 +44,7 @@ export interface PlacementTestResult {
 export interface DailyGoal {
   id: string;
   description: string;
-  type: 'learn_new' | 'review_srs' | 'complete_quiz' | 'complete_listening' | 'complete_conversation';
+  type: 'learn_new' | 'review_srs' | 'complete_quiz' | 'complete_listening' | 'complete_conversation' | 'complete_pronunciation' | 'complete_story' | 'complete_adv_grammar' | 'complete_reading';
   target: number;
   current: number;
 }

@@ -7,12 +7,13 @@ import * as srsService from '../services/srsService';
 interface AIStoryViewProps {
   words: Word[];
   studyProgress: StudyProgress;
+  onGoalUpdate: () => void;
 }
 
 const MIN_WORDS = 3;
 const MAX_WORDS = 5;
 
-const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
+const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress, onGoalUpdate }) => {
   const [selectedWords, setSelectedWords] = useState<Word[]>([]);
   const [storyEnglish, setStoryEnglish] = useState('');
   const [storyVietnamese, setStoryVietnamese] = useState('');
@@ -22,7 +23,6 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
 
   const filteredWords = useMemo(() => {
     if (filter === 'review') {
-      // FIX: Use srsService to get words for review instead of incorrect comparison.
       return srsService.getWordsToReview(words, studyProgress);
     }
     return words;
@@ -78,6 +78,7 @@ Finally, on a new line, write the Vietnamese translation of the story.`;
             setStoryEnglish(fullResponse.trim());
             setStoryVietnamese('AI không cung cấp bản dịch.');
         }
+        onGoalUpdate();
 
     } catch (err) {
         console.error("Gemini Story Generation Error:", err);

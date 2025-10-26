@@ -4,6 +4,7 @@ import type { User } from '../types';
 
 interface ReadingRoomViewProps {
     currentUser: User | null;
+    onGoalUpdate: () => void;
 }
 
 const AIExplainModal: React.FC<{ word: string, context: string, onClose: () => void }> = ({ word, context, onClose }) => {
@@ -50,7 +51,7 @@ const AIExplainModal: React.FC<{ word: string, context: string, onClose: () => v
     );
 };
 
-const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser }) => {
+const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUpdate }) => {
     const [status, setStatus] = useState<'idle' | 'fetching' | 'ready'>('idle');
     const [article, setArticle] = useState('');
     const [selectedWord, setSelectedWord] = useState<{ word: string, context: string } | null>(null);
@@ -67,6 +68,7 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser }) => {
             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
             setArticle(response.text);
             setStatus('ready');
+            onGoalUpdate();
         } catch (err) {
             console.error(err);
             setError('Không thể tạo bài đọc mới. Vui lòng thử lại.');
@@ -105,10 +107,15 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser }) => {
                                 if (segment.trim() === '') {
                                     return <span key={index}>{segment}</span>;
                                 }
+                                const words = segment.split(/([.,!?;:"“”])/);
                                 return (
-                                    <span key={index} className="cursor-pointer hover:bg-yellow-200 transition-colors rounded" onClick={handleWordClick}>
-                                        {segment}
-                                    </span>
+                                    <React.Fragment key={index}>
+                                        {words.map((word, wordIndex) => (
+                                             <span key={wordIndex} className="cursor-pointer hover:bg-yellow-200 transition-colors rounded" onClick={handleWordClick}>
+                                                 {word}
+                                             </span>
+                                        ))}
+                                    </React.Fragment>
                                 );
                             })}
                         </div>

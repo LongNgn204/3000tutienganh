@@ -179,6 +179,7 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
         <>
             <div className="w-full max-w-2xl h-[400px] md:h-[450px] flex items-center justify-center">
                 <Flashcard 
+                  key={wordSet[currentIndex].english}
                   word={wordSet[currentIndex]} 
                   onAnswer={handleAnswer}
                   studyRecord={studyProgress[wordSet[currentIndex].english]}

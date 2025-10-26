@@ -4,6 +4,7 @@ import type { User } from '../types';
 
 interface AdvancedGrammarViewProps {
   currentUser: User | null;
+  onGoalUpdate: () => void;
 }
 
 interface Challenge {
@@ -25,7 +26,7 @@ const parseMarkdown = (text: string) => {
         .replace(/\n/g, '<br />');
 };
 
-const AdvancedGrammarView: React.FC<AdvancedGrammarViewProps> = ({ currentUser }) => {
+const AdvancedGrammarView: React.FC<AdvancedGrammarViewProps> = ({ currentUser, onGoalUpdate }) => {
     const [status, setStatus] = useState<'idle' | 'fetching' | 'ready' | 'checking' | 'feedback'>('idle');
     const [challenge, setChallenge] = useState<Challenge | null>(null);
     const [userAnswer, setUserAnswer] = useState('');
@@ -96,6 +97,7 @@ Please provide your evaluation in a single, valid JSON object with three keys:
             const parsedFeedback = JSON.parse(jsonText);
             setFeedback(parsedFeedback);
             setStatus('feedback');
+            onGoalUpdate();
 
         } catch (err) {
             console.error("Gemini Feedback Error:", err);
