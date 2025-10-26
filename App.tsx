@@ -5,11 +5,10 @@ import WordList from './components/WordList';
 import FlashcardView from './components/FlashcardView';
 import QuizView from './components/QuizView';
 import AIStoryView from './components/AIStoryView';
+import DashboardView from './components/DashboardView';
 import LoginModal from './components/LoginModal';
 import { WORD_CATEGORIES, ALL_WORDS } from './constants';
-import type { Category, User, StudyProgress, StudyStatus } from './types';
-
-type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story';
+import type { Category, User, StudyProgress, StudyStatus, ViewMode } from './types';
 
 const App: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>(WORD_CATEGORIES[0]?.id || '');
@@ -19,6 +18,8 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [studyProgress, setStudyProgress] = useState<StudyProgress>({});
+  const [initialFlashcardFilter, setInitialFlashcardFilter] = useState<'review' | 'unknown' | null>(null);
+
 
   const mainContentRef = useRef<HTMLDivElement>(null);
 
@@ -94,6 +95,16 @@ const App: React.FC = () => {
       setStudyProgress(newProgress);
       localStorage.setItem('studyProgress', JSON.stringify(newProgress));
   };
+  
+  const navigateTo = (mode: ViewMode, options?: { initialFilter: 'review' | 'unknown' }) => {
+    if (options?.initialFilter) {
+      setInitialFlashcardFilter(options.initialFilter);
+    } else {
+      setInitialFlashcardFilter(null);
+    }
+    setViewMode(mode);
+  };
+
 
   const filteredCategories = useMemo((): Category[] => {
     if (!searchQuery) {
@@ -128,6 +139,13 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch(viewMode) {
+      case 'dashboard':
+        return <DashboardView 
+                  currentUser={currentUser} 
+                  studyProgress={studyProgress}
+                  categories={WORD_CATEGORIES}
+                  navigateTo={navigateTo}
+               />;
       case 'story':
         return <AIStoryView words={ALL_WORDS} studyProgress={studyProgress} />;
       case 'flashcard':
@@ -140,6 +158,8 @@ const App: React.FC = () => {
               studyProgress={studyProgress}
               onUpdateStudyProgress={handleUpdateStudyProgress}
               onResetStudyProgress={handleResetStudyProgress}
+              initialStudyFilter={initialFlashcardFilter}
+              onInitialFilterConsumed={() => setInitialFlashcardFilter(null)}
             />
           </div>
         );
@@ -204,7 +224,7 @@ const App: React.FC = () => {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         viewMode={viewMode}
-        setViewMode={setViewMode}
+        navigateTo={navigateTo}
         currentUser={currentUser}
         onLoginClick={() => setIsLoginModalOpen(true)}
         onLogoutClick={handleLogout}
@@ -213,7 +233,7 @@ const App: React.FC = () => {
       {renderView()}
 
        <footer className="w-full bg-white text-center py-4 border-t mt-auto">
-        <p className="text-sm text-slate-500">Bản quyền © 2025 bởi Long Nguyễn</p>
+        <p className="text-sm text-slate-500">© 2025 Học Từ Vựng Cùng AI. Phát triển bởi Long Nguyễn.</p>
       </footer>
       
       {isLoginModalOpen && (
