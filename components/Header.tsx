@@ -56,6 +56,19 @@ const Header: React.FC<HeaderProps> = ({
                 </button>
                 <span className="text-xs text-slate-500 mt-1 leading-tight">Tiến độ</span>
             </div>
+             <div className="flex flex-col items-center justify-center w-16 text-center">
+                <button
+                    onClick={() => navigateTo('conversation')}
+                    className={`flex items-center justify-center w-9 h-9 rounded-full transition-colors ${viewMode === 'conversation' ? 'bg-blue-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
+                    title="Luyện nói cùng AI"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v6a2 2 0 01-2 2H9.414a1 1 0 00-.707.293L4 17.586V13a1 1 0 00-1-1H4a2 2 0 01-2-2V5z" />
+                      <path d="M15 4a1 1 0 11-2 0 1 1 0 012 0zM12 4a1 1 0 11-2 0 1 1 0 012 0zM9 4a1 1 0 11-2 0 1 1 0 012 0z" />
+                    </svg>
+                </button>
+                <span className="text-xs text-slate-500 mt-1 leading-tight">AI Luyện Nói</span>
+            </div>
             <div className="flex flex-col items-center justify-center w-16 text-center">
                 <button
                     onClick={() => navigateTo('story')}
@@ -88,7 +101,7 @@ const Header: React.FC<HeaderProps> = ({
                     className={`flex items-center justify-center w-9 h-9 rounded-full transition-colors ${viewMode === 'flashcard' ? 'bg-blue-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
                     title={viewMode === 'list' ? 'Chế độ Flashcard' : 'Chế độ danh sách'}
                 >
-                {viewMode === 'flashcard' || viewMode === 'quiz' || viewMode === 'story' || viewMode === 'dashboard' ? (
+                {viewMode === 'flashcard' || viewMode === 'quiz' || viewMode === 'story' || viewMode === 'dashboard' || viewMode === 'conversation' ? (
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                     </svg>
