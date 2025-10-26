@@ -21,7 +21,7 @@
     }
     .flashcard {
       transition: transform 0.6s;
-      transform-style: preserve-3d;
+      transform-style: preserve-d;
     }
     .flashcard.is-flipped {
       transform: rotateY(180deg);
@@ -32,6 +32,47 @@
     }
     .flashcard-back {
       transform: rotateY(180deg);
+    }
+    /* Animation Keyframes */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    .animate-fade-in-up {
+      animation: fadeInUp 0.5s ease-in-out;
+    }
+    /* Initial loading spinner */
+    #initial-loader {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-color: #f8fafc; /* bg-slate-50 */
+    }
+    .spinner {
+        width: 56px;
+        height: 56px;
+        border: 6px solid #e2e8f0; /* border-slate-200 */
+        border-bottom-color: #3b82f6; /* border-blue-500 */
+        border-radius: 50%;
+        display: inline-block;
+        box-sizing: border-box;
+        animation: rotation 1s linear infinite;
+    }
+    @keyframes rotation {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
     }
   </style>
 <script type="importmap">
@@ -46,7 +87,11 @@
 </script>
 </head>
 <body class="bg-slate-50">
-  <div id="root"></div>
+  <div id="root">
+    <div id="initial-loader">
+        <div class="spinner"></div>
+    </div>
+  </div>
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>
