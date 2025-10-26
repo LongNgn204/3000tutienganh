@@ -17,16 +17,6 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'review'>('all');
-  const [isApiKeySelected, setIsApiKeySelected] = useState(false);
-
-  useEffect(() => {
-    window.aistudio?.hasSelectedApiKey().then(setIsApiKeySelected);
-  }, []);
-
-  const handleSelectKey = async () => {
-    await window.aistudio.openSelectKey();
-    setIsApiKeySelected(true);
-  };
 
   const filteredWords = useMemo(() => {
     if (filter === 'review') {
@@ -90,13 +80,7 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
 
     } catch (err) {
         console.error("Gemini Story Generation Error:", err);
-        const errorMessage = (err as any).message || '';
-        if (errorMessage.includes('API key expired') || errorMessage.includes('API_KEY_INVALID')) {
-            setError("API key của bạn không hợp lệ. Vui lòng chọn một key mới để tạo truyện.");
-            setIsApiKeySelected(false);
-        } else {
-            setError("Rất tiếc, AI không thể tạo truyện lúc này. Vui lòng thử lại sau.");
-        }
+        setError("Rất tiếc, AI không thể tạo truyện lúc này. Vui lòng thử lại sau.");
     } finally {
         setIsLoading(false);
     }
@@ -154,22 +138,6 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
               Tạo truyện khác
             </button>
           </div>
-        </div>
-      );
-    }
-
-    if (!isApiKeySelected) {
-      return (
-        <div className="bg-white p-6 rounded-lg shadow-md border text-center">
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Yêu cầu API Key</h3>
-            <p className="text-slate-500 mb-4">Để tạo truyện với AI, bạn cần chọn API Key của mình.</p>
-            <button
-                onClick={handleSelectKey}
-                className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-md"
-            >
-                Chọn API Key
-            </button>
-            <p className="text-xs text-slate-500 mt-2">Tính năng này yêu cầu API key của riêng bạn. <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="underline">Tìm hiểu thêm về thanh toán</a>.</p>
         </div>
       );
     }
