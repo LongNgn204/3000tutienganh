@@ -42,7 +42,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
             Vào học
           </button>
         </form>
-         <p className="text-xs text-slate-500 text-center mt-4">Sau khi đăng nhập, hệ thống sẽ tự động xếp bạn vào một trình độ khởi đầu để bắt đầu học.</p>
+         <p className="text-xs text-slate-500 text-center mt-4">Sau đây, bạn sẽ làm một bài kiểm tra ngắn để AI xác định trình độ tiếng Anh của bạn.</p>
       </div>
     </div>
   );
