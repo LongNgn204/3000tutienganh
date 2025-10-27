@@ -1,6 +1,22 @@
 /**
- * Simple password hashing utility using Web Crypto API
- * For production use, consider using bcrypt.js or similar libraries
+ * ⚠️ WARNING: This implementation uses SHA-256 which is NOT secure for password hashing.
+ * This is for demonstration/development purposes ONLY.
+ * 
+ * SHA-256 issues:
+ * - Too fast, vulnerable to brute-force attacks
+ * - No built-in salt, vulnerable to rainbow tables
+ * - Not a slow hash function designed for passwords
+ * 
+ * For production, use:
+ * - bcrypt (recommended for most use cases)
+ * - scrypt or Argon2 (for high-security requirements)
+ * 
+ * Example with bcrypt.js:
+ * ```
+ * import bcrypt from 'bcryptjs';
+ * const hashedPassword = await bcrypt.hash(password, 10);
+ * const isValid = await bcrypt.compare(password, hash);
+ * ```
  */
 
 /**

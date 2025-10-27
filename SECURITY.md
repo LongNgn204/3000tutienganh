@@ -10,22 +10,31 @@
 
 **Recommended Solution**:
 
-#### Option A: Use Password Hashing Utility (Included)
-We've provided a password hashing utility at `utils/passwordUtils.ts` that uses SHA-256. To implement:
+#### Option A: Use a Proper Password Hashing Library (Recommended)
 
-1. Update `services/localStorageService.ts`:
+**Important**: The included `utils/passwordUtils.ts` uses SHA-256 which is **NOT SECURE** for password hashing. It's provided only for educational purposes.
+
+For any real-world use, install and use bcrypt:
+
+```bash
+npm install bcryptjs
+npm install --save-dev @types/bcryptjs
+```
+
+Then update `services/localStorageService.ts`:
 ```typescript
-import { hashPassword, verifyPassword } from '../utils/passwordUtils';
+import bcrypt from 'bcryptjs';
 
 export const registerUserLocal = async (name: string, password: string) => {
     const users = getUsers();
     if (findUserByNameLocal(name)) {
         return { success: false, message: 'Tên người dùng đã tồn tại.' };
     }
-    const hashedPassword = await hashPassword(password);
+    // Hash password with bcrypt (10 rounds)
+    const hashedPassword = await bcrypt.hash(password, 10);
     const newUser: Partial<User> = { 
         name, 
-        password: hashedPassword, // Store hashed password
+        password: hashedPassword,
         studyProgress: {}, 
         dailyProgress: undefined 
     };
@@ -36,14 +45,14 @@ export const registerUserLocal = async (name: string, password: string) => {
 
 export const loginUserLocal = async (name: string, password: string) => {
     const user = findUserByNameLocal(name);
-    if (user && await verifyPassword(password, user.password)) {
+    if (user && await bcrypt.compare(password, user.password)) {
         return { success: true, user };
     }
     return { success: false, message: 'Tên đăng nhập hoặc mật khẩu không đúng.' };
 };
 ```
 
-2. Update function signatures in `services/api.ts` to be async
+Update function signatures in `services/api.ts` to be async.
 
 #### Option B: Backend Authentication (Recommended for Production)
 Move authentication entirely to the backend:
