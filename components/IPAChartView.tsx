@@ -184,13 +184,13 @@ Provide brutally honest feedback in Vietnamese as a JSON object. A score of 100 
                 </p>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                <div className="xl:col-span-2 space-y-8">
                     {renderPhonemeGrid('vowel', 'Nguyên âm (Vowels)')}
                     {renderPhonemeGrid('consonant', 'Phụ âm (Consonants)')}
                 </div>
                 
-                <div className="lg:sticky lg:top-24 self-start">
+                <div className="xl:sticky xl:top-24 self-start">
                     <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 min-h-[400px] flex flex-col">
                         <h2 className="text-xl font-bold text-slate-800 text-center mb-4">Luyện tập</h2>
                         {!selectedPhoneme || !currentExample ? (

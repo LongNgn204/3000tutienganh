@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import type { User, ReadingArticle, CEFRLevel } from '../types';
 import { CONTENT_LIBRARY } from '../contentLibrary';
@@ -7,6 +7,8 @@ import { CEFR_LEVEL_MAP } from '../cefr';
 interface ReadingRoomViewProps {
     currentUser: User | null;
     onGoalUpdate: () => void;
+    initialContentId: string | null;
+    onInitialContentConsumed: () => void;
 }
 
 const AIExplainModal: React.FC<{ word: string, context: string, onClose: () => void }> = ({ word, context, onClose }) => {
@@ -182,13 +184,25 @@ ${JSON.stringify(article.questions.map((q, index) => ({ index, question: q.quest
     );
 };
 
-const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUpdate }) => {
+const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUpdate, initialContentId, onInitialContentConsumed }) => {
     const [mode, setMode] = useState<'selection' | 'guided' | 'free-read'>('selection');
     const [selectedArticle, setSelectedArticle] = useState<ReadingArticle | null>(null);
     const [freeReadArticle, setFreeReadArticle] = useState<Partial<ReadingArticle> | null>(null);
     const [isFetchingFree, setIsFetchingFree] = useState(false);
     const [selectedWord, setSelectedWord] = useState<{ word: string, context: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (initialContentId) {
+            const article = CONTENT_LIBRARY.reading.find(a => a.id === initialContentId);
+            if (article) {
+                setSelectedArticle(article);
+                setMode('guided');
+            }
+            onInitialContentConsumed();
+        }
+    }, [initialContentId, onInitialContentConsumed]);
+
 
     const handleSelectArticle = (article: ReadingArticle) => {
         setSelectedArticle(article);
@@ -351,7 +365,7 @@ Do not generate questions yet.`;
     return (
         <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:px-8 py-8 w-full animate-fade-in">
             <div className="w-full max-w-3xl">
-                <button onClick={() => { setMode('selection'); setFreeReadArticle(null); }} className="mb-6 font-semibold text-indigo-600 hover:underline">‹ Quay lại chọn chế độ</button>
+                <button onClick={() => { setMode('selection'); setFreeReadArticle(null); setSelectedArticle(null); }} className="mb-6 font-semibold text-indigo-600 hover:underline">‹ Quay lại chọn chế độ</button>
                 <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200">
                     {renderContent()}
                 </div>

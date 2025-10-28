@@ -55,6 +55,7 @@ const App: React.FC = () => {
   const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
   const [initialFlashcardFilter, setInitialFlashcardFilter] = useState<'review' | 'new' | null>(null);
   const [initialFlashcardCategory, setInitialFlashcardCategory] = useState<string | null>(null);
+  const [initialContentId, setInitialContentId] = useState<string | null>(null);
   const [testResultToShow, setTestResultToShow] = useState<PlacementTestResult | null>(null);
 
   const [wordCategories, setWordCategories] = useState<Category[]>(CONSTANT_WORD_CATEGORIES);
@@ -349,24 +350,12 @@ const App: React.FC = () => {
   };
 
 
-  const navigateTo = (mode: ViewMode, options?: { initialFilter?: 'review' | 'new', topicId?: string, initialCategory?: string }) => {
-    if (options?.initialFilter) {
-      setInitialFlashcardFilter(options.initialFilter);
-    } else {
-      setInitialFlashcardFilter(null);
-    }
-
-    if (options?.initialCategory) {
-        setInitialFlashcardCategory(options.initialCategory);
-    } else {
-        setInitialFlashcardCategory(null);
-    }
-
-    if (options?.topicId) {
-      setViewingTopicId(options.topicId);
-    } else {
-      setViewingTopicId(null);
-    }
+  const navigateTo = (mode: ViewMode, options?: { initialFilter?: 'review' | 'new', topicId?: string, initialCategory?: string, targetId?: string }) => {
+    setInitialFlashcardFilter(options?.initialFilter || null);
+    setInitialFlashcardCategory(options?.initialCategory || null);
+    setViewingTopicId(options?.topicId || null);
+    setInitialContentId(options?.targetId || null);
+    
     setViewMode(mode);
     setIsMobileSidebarOpen(false);
   };
@@ -413,11 +402,11 @@ const App: React.FC = () => {
           case 'grammar':
             return <GrammarView />;
           case 'listening':
-            return <ListeningView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_listening', 1)}/>;
+            return <ListeningView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_listening', 1)} initialContentId={initialContentId} onInitialContentConsumed={() => setInitialContentId(null)}/>;
           case 'advanced-grammar':
             return <AdvancedGrammarView currentUser={currentUser} onGoalUpdate={() => {}} />;
           case 'reading':
-            return <ReadingRoomView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_reading', 1)} />;
+            return <ReadingRoomView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_reading', 1)} initialContentId={initialContentId} onInitialContentConsumed={() => setInitialContentId(null)} />;
           case 'writing':
             return <AIWritingView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_writing', 1)} />;
           case 'role-play':

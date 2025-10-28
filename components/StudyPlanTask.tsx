@@ -37,7 +37,7 @@ const StudyPlanTaskItem: React.FC<StudyPlanTaskItemProps> = ({ task, onStartTask
 
     const handleStart = () => {
         const viewMode = TASK_TYPE_TO_VIEW_MODE[task.type];
-        const options: { initialFilter?: 'review' | 'new', initialCategory?: string } = {};
+        const options: { initialFilter?: 'review' | 'new', initialCategory?: string, targetId?: string } = {};
 
         if (task.type === 'flashcard_review') {
             options.initialFilter = 'review';
@@ -49,9 +49,15 @@ const StudyPlanTaskItem: React.FC<StudyPlanTaskItemProps> = ({ task, onStartTask
         if ((task.type === 'flashcard_new' || task.type === 'flashcard_review') && task.targetId) {
             options.initialCategory = task.targetId;
         }
+
+        if ((task.type === 'reading' || task.type === 'listening') && task.targetId) {
+            options.targetId = task.targetId;
+        }
         
         onStartTask(viewMode, options);
-        onCompleteTask(task.id); 
+        // We can optimistically mark it as complete, or wait for a goal update.
+        // For simplicity, let's not mark as complete here, but rather through goal updates.
+        // onCompleteTask(task.id); 
     };
 
     return (

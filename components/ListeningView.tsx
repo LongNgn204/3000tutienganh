@@ -7,6 +7,8 @@ import { GoogleGenAI, Type } from '@google/genai';
 interface ListeningViewProps {
   currentUser: User | null;
   onGoalUpdate: () => void;
+  initialContentId: string | null;
+  onInitialContentConsumed: () => void;
 }
 
 const ListeningQuiz: React.FC<{ exercise: ListeningExercise, onComplete: () => void }> = ({ exercise, onComplete }) => {
@@ -60,7 +62,7 @@ const ListeningQuiz: React.FC<{ exercise: ListeningExercise, onComplete: () => v
 };
 
 
-const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate }) => {
+const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate, initialContentId, onInitialContentConsumed }) => {
     const [mode, setMode] = useState<'selection' | 'guided' | 'random-speak'>('selection');
     const [selectedExercise, setSelectedExercise] = useState<ListeningExercise | null>(null);
     const [isFetching, setIsFetching] = useState(false);
@@ -72,6 +74,18 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
     const [randomSentences, setRandomSentences] = useState<string[]>([]);
     const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
     const [showSentenceText, setShowSentenceText] = useState(false);
+
+    useEffect(() => {
+        if (initialContentId) {
+            const exercise = CONTENT_LIBRARY.listening.find(e => e.id === initialContentId);
+            if (exercise) {
+                setSelectedExercise(exercise);
+                setShowTranscript(false);
+                setMode('guided');
+            }
+            onInitialContentConsumed();
+        }
+    }, [initialContentId, onInitialContentConsumed]);
 
     const handleSelectExercise = (exercise: ListeningExercise) => {
         setSelectedExercise(exercise);
@@ -89,7 +103,7 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'A2';
-            const prompt = `Create ${numRandomSentences} simple, complete English sentences for a ${userLevel}-level Vietnamese learner to practice listening.`;
+            const prompt = `Create exactly ${numRandomSentences} simple, complete English sentences for a ${userLevel}-level Vietnamese learner to practice listening.`;
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
@@ -97,7 +111,7 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
                     responseMimeType: "application/json",
                     responseSchema: {
                         type: Type.ARRAY,
-                        description: `An array of ${numRandomSentences} sentences.`,
+                        description: `An array of exactly ${numRandomSentences} sentences.`,
                         items: {
                             type: Type.STRING
                         }
@@ -106,7 +120,7 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
             });
             const sentences = JSON.parse(response.text);
             if (Array.isArray(sentences) && sentences.length > 0) {
-                setRandomSentences(sentences);
+                setRandomSentences(sentences.slice(0, numRandomSentences)); // Ensure correct number of sentences
                 onGoalUpdate();
             } else {
                 throw new Error("AI did not return a valid array of sentences.");
@@ -137,6 +151,11 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
     };
     
     const exercisesByLevel = CONTENT_LIBRARY.listening.filter(e => e.level === currentUser?.level);
+
+    const resetToSelection = () => {
+        setMode('selection');
+        setSelectedExercise(null);
+    }
 
     if (mode === 'selection') {
         return (
@@ -187,7 +206,7 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
     return (
         <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:px-8 py-8 w-full animate-fade-in">
             <div className="w-full max-w-3xl">
-                <button onClick={() => setMode('selection')} className="mb-6 font-semibold text-indigo-600 hover:underline">‹ Quay lại chọn chế độ</button>
+                <button onClick={resetToSelection} className="mb-6 font-semibold text-indigo-600 hover:underline">‹ Quay lại chọn chế độ</button>
                 <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200">
                     {mode === 'guided' && selectedExercise && (
                         <div>
@@ -204,7 +223,7 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
                             </div>
                             <ListeningQuiz exercise={selectedExercise} onComplete={() => {
                                 onGoalUpdate();
-                                setMode('selection');
+                                resetToSelection();
                             }} />
                         </div>
                     )}

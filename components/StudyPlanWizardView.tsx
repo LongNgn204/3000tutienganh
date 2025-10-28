@@ -113,7 +113,8 @@ Instructions:
 3. Distribute tasks based on skill priorities. Higher priority skills should appear more frequently.
 4. Each task must have 'id', 'description' (in Vietnamese), 'type', 'duration' (in minutes), and 'completed' (set to false).
 5. For tasks of type 'flashcard_new' or 'flashcard_review', you MUST include a 'targetId' field. The 'targetId' should be the ID of a relevant vocabulary category (e.g., "a1-greetings", "b1-work"). The 'description' must also reflect this topic, for example: "Học 10 từ vựng mới về chủ đề Công việc".
-6. Return ONLY the valid JSON object.`;
+6. For tasks of type 'reading' or 'listening', you MUST also include a 'targetId' field with a relevant content ID (e.g., "b1-remote-work" for reading, "a2-ordering-food" for listening). The description should match the content, for example: "Luyện đọc bài 'The Rise of Remote Work'".
+7. Return ONLY the valid JSON object.`;
 
             const taskSchema = {
                 type: Type.OBJECT,
@@ -123,7 +124,7 @@ Instructions:
                     type: { type: Type.STRING, description: "The type of activity." },
                     duration: { type: Type.INTEGER, description: "Duration in minutes." },
                     completed: { type: Type.BOOLEAN },
-                    targetId: { type: Type.STRING, description: "Optional ID for specific content, required for flashcard tasks." }
+                    targetId: { type: Type.STRING, description: "Optional ID for specific content, required for flashcard, reading, and listening tasks." }
                 },
                 required: ['id', 'description', 'type', 'duration', 'completed']
             };

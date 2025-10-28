@@ -223,12 +223,11 @@ Start the conversation by saying "Hello! How are you today?".`;
                             mimeType: 'audio/pcm;rate=16000',
                         };
                         sessionPromiseRef.current?.then((session) => {
-                            session.sendRealtimeInput({ media: pcmBlob });
+                            if(session) session.sendRealtimeInput({ media: pcmBlob });
                         });
                     };
-                    // This is important for the ScriptProcessor to work, but we don't connect the mic source to it yet.
-                    scriptProcessor.connect(inputAudioContextRef.current!.destination);
-                    setConnectionStatus('connected'); // Now connected, but not listening
+                    scriptProcessor.connect(inputAudioContextRef.current!.destination); // Connect to destination to start processing, but source is not connected yet.
+                    setConnectionStatus('connected');
                     setStage('chatting');
                 },
                 onmessage: async (message: LiveServerMessage) => {
