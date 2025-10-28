@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { Word, Category, StudyProgress, StudyRecord } from '../types';
+import type { Word, Category, StudyProgress, StudyRecord, CEFRLevel } from '../types';
 import Flashcard from './Flashcard';
 import * as srsService from '../services/srsService';
+import { CEFR_LEVEL_MAP } from '../cefr';
 
 interface FlashcardViewProps {
   words: Word[];
@@ -63,6 +64,21 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
           total: categoryFilteredWords.length
       };
   }, [categoryFilteredWords, studyProgress]);
+  
+  const groupedCategories = useMemo(() => {
+    return categories.reduce((acc, category) => {
+      const level = category.level;
+      if (!acc[level]) acc[level] = [];
+      acc[level].push(category);
+      return acc;
+    }, {} as Record<CEFRLevel, Category[]>);
+  }, [categories]);
+
+  const sortedLevels = useMemo(() => Object.keys(groupedCategories).sort((a, b) => {
+    const levelOrder = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    return levelOrder.indexOf(a) - levelOrder.indexOf(b);
+  }) as CEFRLevel[], [groupedCategories]);
+
 
   useEffect(() => {
     setWordSet(shuffleArray(finalFilteredWords));
@@ -141,8 +157,12 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
                         className="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="all">Tất cả ({words.length} từ)</option>
-                        {categories.map(cat => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        {sortedLevels.map(level => (
+                          <optgroup key={level} label={CEFR_LEVEL_MAP[level].name}>
+                            {groupedCategories[level].map(cat => (
+                              <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                          </optgroup>
                         ))}
                     </select>
                 </div>

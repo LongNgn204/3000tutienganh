@@ -1,16 +1,24 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import type { User, StudyProgress, Category, ViewMode, CEFRLevel, DailyProgress, DailyGoal } from '../types';
+import type { User, StudyProgress, Category, ViewMode, CEFRLevel, DailyProgress, DailyGoal, Word } from '../types';
 import { LEARNING_IDIOMS } from '../constants';
 import * as srsService from '../services/srsService';
+import { CEFR_LEVEL_MAP } from '../cefr';
 
-const CEFR_LEVEL_MAP: Record<CEFRLevel, { name: string, color: string }> = {
-    'A1': { name: 'A1 - Mới bắt đầu', color: 'bg-green-100 text-green-800' },
-    'A2': { name: 'A2 - Sơ cấp', color: 'bg-blue-100 text-blue-800' },
-    'B1': { name: 'B1 - Trung cấp', color: 'bg-yellow-100 text-yellow-800' },
-    'B2': { name: 'B2 - Trung cao cấp', color: 'bg-orange-100 text-orange-800' },
-    'C1': { name: 'C1 - Cao cấp', color: 'bg-red-100 text-red-800' },
-    'C2': { name: 'C2 - Thành thạo', color: 'bg-purple-100 text-purple-800' },
-};
+const PlacementTestPrompt: React.FC<{ onStart: () => void }> = ({ onStart }) => (
+    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-2xl shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
+        <div className="text-center sm:text-left">
+            <h3 className="text-xl font-bold">Cá nhân hóa lộ trình học của bạn!</h3>
+            <p className="opacity-90 mt-1">Làm bài kiểm tra ngắn để AI xác định chính xác trình độ của bạn.</p>
+        </div>
+        <button
+            onClick={onStart}
+            className="px-5 py-2.5 bg-white text-indigo-600 font-bold rounded-lg hover:bg-indigo-50 transition-all flex-shrink-0"
+        >
+            Làm bài kiểm tra
+        </button>
+    </div>
+);
+
 
 const SkillCard: React.FC<{
     title: string;
@@ -152,12 +160,11 @@ interface DashboardViewProps {
   studyProgress: StudyProgress;
   dailyProgress: DailyProgress | null;
   categories: Category[];
+  allWords: Word[];
   navigateTo: (mode: ViewMode, options?: { initialFilter: 'review' | 'new' }) => void;
 }
 
-const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgress, dailyProgress, categories, navigateTo }) => {
-
-    const allWords = useMemo(() => categories.flatMap(c => c.words), [categories]);
+const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgress, dailyProgress, categories, allWords, navigateTo }) => {
 
     const stats = useMemo(() => {
         const { wordsToReview, newWords } = srsService.getWordsForSession(allWords, studyProgress);
@@ -183,11 +190,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgres
       );
     }
 
+    const showPlacementTestPrompt = !currentUser.placementTestResult;
+
     return (
         <div className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                 <div className="lg:col-span-2 bg-gradient-to-br from-indigo-600 to-blue-700 text-white p-8 rounded-2xl shadow-xl animate-fade-in-up">
-                    <h2 className="text-4xl font-extrabold tracking-tight">
+                    <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
                         Chào mừng trở lại, {currentUser.name}!
                     </h2>
                     <p className="text-indigo-200 mt-2 text-lg">
@@ -200,6 +209,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgres
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Content */}
                 <div className="lg:col-span-2 space-y-8">
+                    {showPlacementTestPrompt && (
+                        <PlacementTestPrompt onStart={() => navigateTo('placement-test')} />
+                    )}
                     <NextLessonCard 
                         reviewCount={stats.reviewCount}
                         newCount={stats.newCount}
@@ -217,7 +229,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgres
                                 gradient="bg-gradient-to-br from-indigo-500 to-purple-600"
                             />
                              <SkillCard 
-                                title="Phòng Đọc AI"
+                                title="Luyện Đọc"
                                 description="Luyện đọc hiểu và học từ vựng trong ngữ cảnh thực tế."
                                 icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6 text-white"><path d="M9.25 3.321a.75.75 0 011.5 0v1.821a.75.75 0 01-1.5 0V3.321zM11.603 3.38a.75.75 0 00-1.06-1.06l-1.288 1.287a.75.75 0 001.06 1.06l1.288-1.287zM5.457 4.637a.75.75 0 10-1.06-1.06L3.109 4.865a.75.75 0 001.06 1.06l1.288-1.288zM2.5 9.25a.75.75 0 01.75-.75h1.821a.75.75 0 010 1.5H3.25a.75.75 0 01-.75-.75zM14.929 7.671a.75.75 0 00-1.06 1.06l1.287 1.288a.75.75 0 001.06-1.06l-1.287-1.288zM4.637 14.543a.75.75 0 10-1.06 1.06L4.865 16.89a.75.75 0 001.06-1.06l-1.288-1.287zM10 12.25a.75.75 0 01.75.75v1.821a.75.75 0 01-1.5 0v-1.821a.75.75 0 01.75-.75zM8.397 16.62a.75.75 0 00-1.06 1.06l1.288 1.287a.75.75 0 001.06-1.06L8.397 16.62zM12.5 10a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /><path d="M17.5 9.25a.75.75 0 00-1.5 0v1.821a.75.75 0 001.5 0V9.25zM14.543 15.363a.75.75 0 10-1.06 1.06l1.288 1.288a.75.75 0 001.06-1.06l-1.288-1.288z" /></svg>}
                                 onClick={() => navigateTo('reading')}

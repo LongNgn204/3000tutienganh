@@ -22,11 +22,17 @@ interface PronunciationViewProps {
   onGoalUpdate: () => void;
 }
 
+interface Feedback {
+    score: number;
+    comment: string;
+    specifics: { phoneme: string; feedback: string; }[];
+}
+
 const PronunciationView: React.FC<PronunciationViewProps> = ({ words, studyProgress, onGoalUpdate }) => {
     const [targetWord, setTargetWord] = useState<Word | null>(null);
     const [status, setStatus] = useState<'idle' | 'listening' | 'analyzing' | 'feedback'>('idle');
     const [transcript, setTranscript] = useState('');
-    const [feedback, setFeedback] = useState('');
+    const [feedback, setFeedback] = useState<Feedback | null>(null);
     const [error, setError] = useState<string | null>(null);
     
     const recognitionRef = useRef<any>(null);
@@ -43,13 +49,15 @@ const PronunciationView: React.FC<PronunciationViewProps> = ({ words, studyProgr
         const shuffledPool = shuffleArray(pool);
         setTargetWord(shuffledPool[0]);
         setTranscript('');
-        setFeedback('');
+        setFeedback(null);
         setError(null);
         setStatus('idle');
     };
 
     useEffect(() => {
-        getNewWord();
+        if (words.length > 0) {
+            getNewWord();
+        }
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -65,7 +73,7 @@ const PronunciationView: React.FC<PronunciationViewProps> = ({ words, studyProgr
         recognition.onstart = () => {
             setStatus('listening');
             setTranscript('');
-            setFeedback('');
+            setFeedback(null);
         };
 
         recognition.onresult = (event: any) => {
@@ -96,32 +104,49 @@ const PronunciationView: React.FC<PronunciationViewProps> = ({ words, studyProgr
         };
 
         recognitionRef.current = recognition;
-    }, []);
+    }, [words]);
 
     const callGeminiForFeedback = async (userTranscript: string) => {
         if (!targetWord) return;
         setStatus('analyzing');
         setError(null);
-        setFeedback('');
+        setFeedback(null);
 
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const prompt = `Với vai trò là một giáo viên dạy phát âm tiếng Anh, hãy đưa ra nhận xét cho một học viên người Việt.
-Học viên đang cố gắng phát âm từ: **"${targetWord.english}"** (phiên âm: /${targetWord.pronunciation}/).
-Họ đã phát âm thành: **"${userTranscript}"**.
+            const prompt = `As an expert English pronunciation coach, evaluate a user's pronunciation for a Vietnamese learner.
+- The target word is: "${targetWord.english}" (phonetics: ${targetWord.pronunciation}).
+- The user said: "${userTranscript}".
 
-Hãy đưa ra phản hồi bằng **tiếng Việt**, thật ngắn gọn, mang tính xây dựng và khích lệ.
-- Nếu họ phát âm **đúng**, hãy khen ngợi (ví dụ: "Chính xác! Phát âm rất chuẩn.").
-- Nếu họ phát âm **gần đúng**, hãy chỉ ra điểm tốt và một điểm nhỏ cần cải thiện (ví dụ: "Rất tốt! Bạn chỉ cần nhấn mạnh hơn vào âm cuối một chút là hoàn hảo.").
-- Nếu họ phát âm **sai**, hãy nhẹ nhàng chỉ ra lỗi sai và hướng dẫn cách sửa một cách đơn giản nhất (ví dụ: "Gần đúng rồi! Hãy chú ý âm /s/ ở cuối từ nhé.").
-`;
+Please provide your evaluation in a valid JSON object with three keys:
+1. "score": An integer from 0 to 100 on how accurate the pronunciation was.
+2. "comment": A short, overall constructive feedback in Vietnamese.
+3. "specifics": An array of objects, where each object has "phoneme" (the specific sound) and "feedback" (a short comment in Vietnamese on that sound). If pronunciation is perfect, return an empty array [].
+
+Example for a mistake: 
+{
+  "score": 65,
+  "comment": "Khá tốt! Bạn cần chú ý một vài âm cuối.",
+  "specifics": [
+    { "phoneme": "/t/", "feedback": "Âm /t/ ở cuối từ 'cat' chưa được bật ra rõ ràng." }
+  ]
+}
+
+Example for a good attempt:
+{
+  "score": 95,
+  "comment": "Rất tốt! Phát âm của bạn rất rõ ràng và chính xác.",
+  "specifics": []
+}`;
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt
             });
             
-            setFeedback(response.text);
+            const jsonText = response.text.replace(/```json|```/g, '').trim();
+            const parsedFeedback = JSON.parse(jsonText);
+            setFeedback(parsedFeedback);
             onGoalUpdate();
 
         } catch (err) {
@@ -139,6 +164,12 @@ Hãy đưa ra phản hồi bằng **tiếng Việt**, thật ngắn gọn, mang 
             recognitionRef.current?.start();
         }
     };
+    
+    const getScoreColor = (score: number) => {
+        if (score >= 80) return 'text-green-500';
+        if (score >= 50) return 'text-yellow-500';
+        return 'text-red-500';
+    };
 
     return (
         <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 w-full animate-fade-in">
@@ -155,7 +186,7 @@ Hãy đưa ra phản hồi bằng **tiếng Việt**, thật ngắn gọn, mang 
                            <SpeakerButton textToSpeak={targetWord.english} ariaLabel={`Phát âm từ ${targetWord.english}`} />
                         </div>
                         <h3 className="text-6xl font-extrabold text-blue-600 my-4">{targetWord.english}</h3>
-                        <p className="text-2xl text-slate-500 italic">/{targetWord.pronunciation}/</p>
+                        <p className="text-2xl text-slate-500 italic">{targetWord.pronunciation}</p>
                     </div>
                 )}
                  <button 
@@ -201,9 +232,27 @@ Hãy đưa ra phản hồi bằng **tiếng Việt**, thật ngắn gọn, mang 
                                     <span>Đang chờ phản hồi...</span>
                                 </div>
                             )}
-                            <p className="text-lg text-blue-800 font-semibold mt-2">
-                                {feedback}
-                            </p>
+                            {feedback && (
+                                <div className="mt-2 space-y-4">
+                                    <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                        <p className="text-md text-slate-800 font-medium flex-grow">{feedback.comment}</p>
+                                        <p className={`text-4xl font-bold ml-4 ${getScoreColor(feedback.score)}`}>{feedback.score}<span className="text-lg">/100</span></p>
+                                    </div>
+                                    {feedback.specifics && feedback.specifics.length > 0 && (
+                                        <div>
+                                            <h5 className="font-semibold text-slate-600 mb-2">Phân tích chi tiết:</h5>
+                                            <div className="space-y-2">
+                                                {feedback.specifics.map((item, index) => (
+                                                    <div key={index} className="flex items-start gap-2 text-sm p-2 bg-slate-100 rounded">
+                                                        <code className="font-bold text-red-600 bg-red-100 px-2 py-1 rounded">{item.phoneme}</code>
+                                                        <p className="text-slate-700">{item.feedback}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

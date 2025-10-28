@@ -68,6 +68,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
   const [transcript, setTranscript] = useState<TranscriptItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [enableVietnamese, setEnableVietnamese] = useState(true);
+  const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'advanced'>('intermediate');
 
   // Refs for managing Web Audio API and Gemini Live session
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
@@ -151,7 +152,12 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const wordList = selectedWords.map(w => w.english).join(', ');
         
-        const userLevel = currentUser?.level || 'A2';
+        const difficultyMap = {
+            beginner: 'A2',
+            intermediate: 'B1',
+            advanced: 'C1'
+        };
+        const selectedLevel = difficultyMap[difficulty];
         
         const translationInstruction = enableVietnamese 
             ? `You MUST ALWAYS respond in this exact format: First, speak the English sentence. Then, immediately say "In Vietnamese," followed by the Vietnamese translation. For example: "That's a great idea! In Vietnamese, đó là một ý tưởng tuyệt vời!".`
@@ -159,7 +165,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
 
         const systemInstruction = `You are Gem, a highly intelligent and adaptive English tutor. Your primary goal is to have a dynamic voice conversation with a Vietnamese learner.
 
-**Initial Level:** The user's starting CEFR level is ${userLevel}. Begin the conversation at this level.
+**Initial Level:** The user's starting CEFR level is ${selectedLevel}. Begin the conversation at this level.
 
 **ADAPTIVE BEHAVIOR (CRITICAL):**
 1.  **Analyze Continuously:** As the user speaks, constantly analyze their vocabulary range, grammatical accuracy, and the complexity of their sentence structures.
@@ -327,6 +333,20 @@ Start the conversation by saying "Hello! How are you today?".`;
                 <h2 className="text-3xl font-bold text-slate-800">AI Luyện Nói</h2>
                 <p className="text-slate-600 mt-4 mb-6">Thực hành từ vựng bằng cách nói chuyện trực tiếp với AI. AI sẽ đưa ra một vài từ, và nhiệm vụ của bạn là sử dụng chúng trong cuộc hội thoại!</p>
                 
+                <div className="mb-6">
+                    <label htmlFor="difficulty-select" className="block text-sm font-medium text-slate-700 mb-1 text-left">Chọn độ khó</label>
+                    <select
+                        id="difficulty-select"
+                        value={difficulty}
+                        onChange={(e) => setDifficulty(e.target.value as any)}
+                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="beginner">Mới bắt đầu</option>
+                        <option value="intermediate">Trung bình</option>
+                        <option value="advanced">Nâng cao</option>
+                    </select>
+                </div>
+
                 <div className="flex items-center justify-center mb-8">
                     <label className="flex items-center cursor-pointer">
                         <input 
