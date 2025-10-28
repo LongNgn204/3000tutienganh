@@ -316,7 +316,7 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'passport', type: 'n', pronunciation: '/ˈpæspɔːrt/', vietnamese: 'hộ chiếu', example: 'Don\'t forget your passport. (Đừng quên hộ chiếu.)' },
       { english: 'journey', type: 'n', pronunciation: '/ˈdʒɜːrni/', vietnamese: 'chuyến đi', example: 'It was a long journey. (Đó là một chuyến đi dài.)' },
       { english: 'visit', type: 'v', pronunciation: '/ˈvɪzɪt/', vietnamese: 'thăm', example: 'We are going to visit our grandparents. (Chúng tôi sẽ đi thăm ông bà.)' },
-      { english: 'tourist', type: 'n', pronunciation: '/ˈtʊrɪst/', vietnamese: 'khách du lịch', example: 'Many tourists visit this city. (Nhiều khách du lịch đến thăm thành phố này.)' },
+      { english: 'tourist', type: 'n', pronunciation: '/ˈʊrɪst/', vietnamese: 'khách du lịch', example: 'Many tourists visit this city. (Nhiều khách du lịch đến thăm thành phố này.)' },
       { english: 'holiday', type: 'n', pronunciation: '/ˈhɑːlədeɪ/', vietnamese: 'kỳ nghỉ', example: 'Where are you going for your summer holiday? (Bạn sẽ đi đâu vào kỳ nghỉ hè?)' },
       { english: 'vacation', type: 'n', pronunciation: '/veɪˈkeɪʃn/', vietnamese: 'kỳ nghỉ', example: 'We are going on vacation to the beach. (Chúng tôi sẽ đi nghỉ ở bãi biển.)'},
       { english: 'map', type: 'n', pronunciation: '/mæp/', vietnamese: 'bản đồ', example: 'We need a map to find the way. (Chúng ta cần một tấm bản đồ để tìm đường.)' },
