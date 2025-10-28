@@ -58,4 +58,68 @@ export const VIDEO_LESSONS: VideoLesson[] = [
     youtubeId: "2MSo_hGM-3Y",
     thumbnail: "https://img.youtube.com/vi/2MSo_hGM-3Y/mqdefault.jpg"
   },
+  {
+    id: 'v7',
+    title: "Từ vựng tiếng Anh cơ bản cho người mới bắt đầu",
+    level: "A1",
+    description: "Học những từ vựng thiết yếu nhất để bắt đầu hành trình chinh phục tiếng Anh.",
+    youtubeId: "uA0y6_i-wSg",
+    thumbnail: "https://img.youtube.com/vi/uA0y6_i-wSg/mqdefault.jpg"
+  },
+  {
+    id: 'v8',
+    title: "Cách phát âm âm TH chuẩn như người bản xứ",
+    level: "A2",
+    description: "Hướng dẫn chi tiết cách đặt lưỡi và khẩu hình để phát âm chính xác âm TH.",
+    youtubeId: "h_4-Y_k1G-A",
+    thumbnail: "https://img.youtube.com/vi/h_4-Y_k1G-A/mqdefault.jpg"
+  },
+  {
+    id: 'v9',
+    title: "Học tiếng Anh qua phim Friends",
+    level: "B1",
+    description: "Luyện nghe và học từ vựng giao tiếp qua một cảnh phim hài hước và kinh điển.",
+    youtubeId: "SoE55pWzP5o",
+    thumbnail: "https://img.youtube.com/vi/SoE55pWzP5o/mqdefault.jpg"
+  },
+  {
+    id: 'v10',
+    title: "10 lỗi ngữ pháp phổ biến người học hay mắc phải",
+    level: "B2",
+    description: "Nhận biết và sửa những lỗi ngữ pháp thường gặp để viết và nói chính xác hơn.",
+    youtubeId: "pplDWUo2S-I",
+    thumbnail: "https://img.youtube.com/vi/pplDWUo2S-I/mqdefault.jpg"
+  },
+  {
+    id: 'v11',
+    title: "Làm chủ âm Schwa /ə/ - Âm thanh phổ biến nhất",
+    level: "B1",
+    description: "Học cách phát âm âm schwa, âm thanh quan trọng và xuất hiện nhiều nhất trong tiếng Anh.",
+    youtubeId: "kznEutbY4_4",
+    thumbnail: "https://img.youtube.com/vi/kznEutbY4_4/mqdefault.jpg"
+  },
+  {
+    id: 'v12',
+    title: "15 Cụm Động từ (Phrasal Verbs) người Việt hay dùng",
+    level: "B1",
+    description: "Nắm vững các cụm động từ phổ biến được giải thích rõ ràng bằng tiếng Việt.",
+    youtubeId: "Zz-f1-_Y-pA",
+    thumbnail: "https://img.youtube.com/vi/Zz-f1-_Y-pA/mqdefault.jpg"
+  },
+  {
+    id: 'v13',
+    title: "Luyện nghe tiếng Anh qua truyện ngắn 'The Stranger'",
+    level: "B2",
+    description: "Cải thiện kỹ năng nghe và từ vựng của bạn qua một câu chuyện ngắn hấp dẫn có phụ đề.",
+    youtubeId: "JqAMm5g-c_w",
+    thumbnail: "https://img.youtube.com/vi/JqAMm5g-c_w/mqdefault.jpg"
+  },
+  {
+    id: 'v14',
+    title: "Kỹ năng thuyết trình: Nói để người khác muốn nghe",
+    level: "C1",
+    description: "Học các kỹ năng và bí quyết để có một bài nói chuyện, thuyết trình lôi cuốn và mạnh mẽ từ chuyên gia Julian Treasure.",
+    youtubeId: "eIho2S0ZahI",
+    thumbnail: "https://img.youtube.com/vi/eIho2S0ZahI/mqdefault.jpg"
+  },
 ];

@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'rea
 import Header from './components/Header';
 import { WORD_CATEGORIES as CONSTANT_WORD_CATEGORIES, ALL_WORDS as CONSTANT_ALL_WORDS, TYPE_COLORS } from './constants';
 import { CHALLENGES } from './challengesData';
-import type { User, StudyProgress, ViewMode, PlacementTestResult, StudyRecord, DailyProgress, DailyGoal, Category, Word } from './types';
+import type { User, StudyProgress, ViewMode, PlacementTestResult, StudyRecord, DailyProgress, DailyGoal, Category, Word, ForumPost, ForumReply } from './types';
 import Footer from './components/Footer';
 import * as api from './services/api';
 import * as srsService from './services/srsService';
+import { FORUM_TOPICS, FORUM_POSTS_DATA } from './forumData';
 
 // Lazy load components for better performance
 const Sidebar = lazy(() => import('./components/Sidebar'));
@@ -31,6 +32,7 @@ const LeaderboardView = lazy(() => import('./components/LeaderboardView'));
 const ChallengesView = lazy(() => import('./components/ChallengesView'));
 const VideoLessonsView = lazy(() => import('./components/VideoLessonsView'));
 const CommunityForumView = lazy(() => import('./components/CommunityForumView'));
+const ForumTopicView = lazy(() => import('./components/ForumTopicView'));
 
 
 const Loader: React.FC = () => (
@@ -53,6 +55,10 @@ const App: React.FC = () => {
   const [wordCategories, setWordCategories] = useState<Category[]>(CONSTANT_WORD_CATEGORIES);
   const [allWords, setAllWords] = useState<Word[]>(CONSTANT_ALL_WORDS);
 
+  // Forum State
+  const [forumTopics, setForumTopics] = useState(FORUM_TOPICS);
+  const [forumPosts, setForumPosts] = useState(FORUM_POSTS_DATA);
+  const [viewingTopicId, setViewingTopicId] = useState<string | null>(null);
 
   const mainContentRef = useRef<HTMLDivElement>(null);
 
@@ -285,11 +291,40 @@ const App: React.FC = () => {
     });
   };
 
-  const navigateTo = (mode: ViewMode, options?: { initialFilter: 'review' | 'new' }) => {
+  // Forum Handlers
+  const handleAddNewPost = (newPost: ForumPost) => {
+    setForumPosts(prev => ({
+      ...prev,
+      [newPost.topicId]: [newPost, ...(prev[newPost.topicId] || [])]
+    }));
+    handleGoalUpdate('post_in_forum', 1);
+    navigateTo('forum-topic', { topicId: newPost.topicId });
+  };
+
+  const handleAddNewReply = (topicId: string, postId: string, newReply: ForumReply) => {
+    setForumPosts(prev => {
+      const newPostsInTopic = (prev[topicId] || []).map(post => {
+        if (post.id === postId) {
+          return { ...post, replies: [...post.replies, newReply] };
+        }
+        return post;
+      });
+      return { ...prev, [topicId]: newPostsInTopic };
+    });
+  };
+
+
+  const navigateTo = (mode: ViewMode, options?: { initialFilter?: 'review' | 'new', topicId?: string }) => {
     if (options?.initialFilter) {
       setInitialFlashcardFilter(options.initialFilter);
     } else {
       setInitialFlashcardFilter(null);
+    }
+
+    if (options?.topicId) {
+      setViewingTopicId(options.topicId);
+    } else {
+      setViewingTopicId(null);
     }
     setViewMode(mode);
     setIsMobileSidebarOpen(false);
@@ -344,7 +379,23 @@ const App: React.FC = () => {
            case 'video-lessons':
             return <VideoLessonsView onGoalUpdate={() => handleGoalUpdate('complete_video_lesson', 1)} />;
           case 'community-forum':
-            return <CommunityForumView onGoalUpdate={() => handleGoalUpdate('post_in_forum', 1)} />;
+            return <CommunityForumView 
+                      topics={forumTopics}
+                      navigateTo={navigateTo}
+                      onGoalUpdate={() => handleGoalUpdate('post_in_forum', 1)}
+                      onAddNewPost={handleAddNewPost}
+                      currentUser={currentUser}
+                    />;
+          case 'forum-topic':
+            if (!viewingTopicId) return <CommunityForumView topics={forumTopics} navigateTo={navigateTo} onGoalUpdate={() => handleGoalUpdate('post_in_forum', 1)} onAddNewPost={handleAddNewPost} currentUser={currentUser} />;
+            return <ForumTopicView
+                      topicId={viewingTopicId}
+                      topics={forumTopics}
+                      posts={forumPosts[viewingTopicId] || []}
+                      currentUser={currentUser}
+                      navigateTo={navigateTo}
+                      onAddNewReply={handleAddNewReply}
+                   />;
           case 'placement-test':
             return <PlacementTestView onTestSubmit={handlePlacementTestSubmit} />;
           case 'placement-test-result':

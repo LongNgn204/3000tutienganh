@@ -24,6 +24,7 @@ const VIEW_TITLES: Record<ViewMode, string> = {
     'challenges': 'Thử thách hàng tuần',
     'video-lessons': 'Bài giảng Video',
     'community-forum': 'Diễn đàn Cộng đồng',
+    'forum-topic': 'Chủ đề Diễn đàn',
 };
 
 const Header: React.FC<{

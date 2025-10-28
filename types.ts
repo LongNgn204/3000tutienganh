@@ -84,7 +84,7 @@ export interface StudyProgress {
   [wordEnglish: string]: StudyRecord;
 }
 
-export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading' | 'writing' | 'role-play' | 'welcome' | 'landing' | 'leaderboard' | 'challenges' | 'video-lessons' | 'community-forum';
+export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading' | 'writing' | 'role-play' | 'welcome' | 'landing' | 'leaderboard' | 'challenges' | 'video-lessons' | 'community-forum' | 'forum-topic';
 
 // Content Library Types
 export interface ReadingArticleQuestion {
@@ -113,4 +113,33 @@ export interface ListeningExercise {
   level: CEFRLevel;
   transcript: string;
   questions: ListeningExerciseQuestion[];
+}
+
+// Forum Types
+export interface ForumReply {
+    id: string;
+    author: string;
+    timestamp: string;
+    content: string;
+}
+
+export interface ForumPost {
+    id: string;
+    topicId: string;
+    author: string;
+    timestamp: string;
+    title: string;
+    content: string;
+    replies: ForumReply[];
+}
+
+export interface ForumTopic {
+    id: string;
+    title: string;
+    description: string;
+    postCount: number;
+    lastPost: {
+        author: string;
+        timestamp: string;
+    }
 }

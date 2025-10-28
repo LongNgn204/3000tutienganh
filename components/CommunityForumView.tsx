@@ -1,15 +1,38 @@
 import React, { useState } from 'react';
-import { FORUM_TOPICS } from '../forumData';
+import type { ForumTopic, ViewMode, ForumPost, User } from '../types';
 
 interface NewPostModalProps {
+    topics: ForumTopic[];
+    currentUser: User;
     onClose: () => void;
-    onSubmit: () => void;
+    onAddNewPost: (post: ForumPost) => void;
+    onGoalUpdate: () => void;
 }
 
-const NewPostModal: React.FC<NewPostModalProps> = ({ onClose, onSubmit }) => {
+const NewPostModal: React.FC<NewPostModalProps> = ({ topics, currentUser, onClose, onAddNewPost, onGoalUpdate }) => {
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [topicId, setTopicId] = useState(topics[0]?.id || '');
+    const [error, setError] = useState('');
+
     const handleSubmit = () => {
-        // In a real app, you'd handle form data here
-        onSubmit();
+        if (!title.trim() || !content.trim() || !topicId) {
+            setError('Vui lòng nhập đầy đủ tiêu đề, nội dung và chọn chủ đề.');
+            return;
+        }
+
+        const newPost: ForumPost = {
+            id: `p${Date.now()}`,
+            topicId,
+            author: currentUser.name,
+            timestamp: 'Vừa xong',
+            title: title.trim(),
+            content: content.trim(),
+            replies: []
+        };
+        
+        onAddNewPost(newPost);
+        onGoalUpdate();
         onClose();
     };
 
@@ -20,11 +43,27 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ onClose, onSubmit }) => {
                     <h2 className="text-2xl font-bold text-slate-800">Tạo bài viết mới</h2>
                 </div>
                 <div className="p-6 space-y-4">
+                     {error && <p className="text-red-500 bg-red-50 p-3 rounded-md text-sm">{error}</p>}
+                    <div>
+                        <label htmlFor="post-topic" className="block text-sm font-medium text-slate-700 mb-1">Chủ đề</label>
+                        <select
+                            id="post-topic"
+                            value={topicId}
+                            onChange={(e) => setTopicId(e.target.value)}
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                        >
+                            {topics.map(topic => (
+                                <option key={topic.id} value={topic.id}>{topic.title}</option>
+                            ))}
+                        </select>
+                    </div>
                     <div>
                         <label htmlFor="post-title" className="block text-sm font-medium text-slate-700 mb-1">Tiêu đề</label>
                         <input
                             type="text"
                             id="post-title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
                             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                             placeholder="Nhập tiêu đề bài viết..."
                         />
@@ -34,6 +73,8 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ onClose, onSubmit }) => {
                         <textarea
                             id="post-content"
                             rows={8}
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
                             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                             placeholder="Bạn đang nghĩ gì?"
                         ></textarea>
@@ -50,17 +91,15 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ onClose, onSubmit }) => {
 
 
 interface CommunityForumViewProps {
+    topics: ForumTopic[];
+    navigateTo: (mode: ViewMode, options?: { topicId?: string }) => void;
     onGoalUpdate: () => void;
+    onAddNewPost: (post: ForumPost) => void;
+    currentUser: User;
 }
 
-const CommunityForumView: React.FC<CommunityForumViewProps> = ({ onGoalUpdate }) => {
+const CommunityForumView: React.FC<CommunityForumViewProps> = ({ topics, navigateTo, onGoalUpdate, onAddNewPost, currentUser }) => {
     const [isNewPostModalOpen, setIsNewPostModalOpen] = useState(false);
-
-    const handleNewPostSubmit = () => {
-        onGoalUpdate();
-        // In a real app, you'd refresh the topic list or show a success message
-        alert("Bài viết của bạn đã được đăng! (Đây là chức năng giả lập)");
-    };
 
     return (
         <>
@@ -82,8 +121,8 @@ const CommunityForumView: React.FC<CommunityForumViewProps> = ({ onGoalUpdate })
 
                 <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
                     <div className="divide-y divide-slate-200">
-                        {FORUM_TOPICS.map((topic) => (
-                            <div key={topic.id} className="p-6 hover:bg-slate-50 transition-colors cursor-pointer">
+                        {topics.map((topic) => (
+                            <div key={topic.id} onClick={() => navigateTo('forum-topic', { topicId: topic.id })} className="p-6 hover:bg-slate-50 transition-colors cursor-pointer">
                                 <div className="flex justify-between items-center">
                                     <div className="flex-1 pr-8">
                                         <h3 className="text-lg font-bold text-indigo-700">{topic.title}</h3>
@@ -105,7 +144,13 @@ const CommunityForumView: React.FC<CommunityForumViewProps> = ({ onGoalUpdate })
                     </div>
                 </div>
             </div>
-            {isNewPostModalOpen && <NewPostModal onClose={() => setIsNewPostModalOpen(false)} onSubmit={handleNewPostSubmit} />}
+            {isNewPostModalOpen && <NewPostModal 
+                                      topics={topics}
+                                      currentUser={currentUser}
+                                      onClose={() => setIsNewPostModalOpen(false)} 
+                                      onAddNewPost={onAddNewPost}
+                                      onGoalUpdate={onGoalUpdate}
+                                   />}
         </>
     );
 };
