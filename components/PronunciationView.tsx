@@ -144,14 +144,27 @@ Example for a good attempt:
                 contents: prompt
             });
             
-            const jsonText = response.text.replace(/```json|```/g, '').trim();
-            const parsedFeedback = JSON.parse(jsonText);
-            setFeedback(parsedFeedback);
-            onGoalUpdate();
+            const jsonText = response.text?.replace(/```json|```/g, '').trim();
+            if (!jsonText) {
+                throw new Error("AI đã trả về một phản hồi trống.");
+            }
+            
+            try {
+                const parsedFeedback = JSON.parse(jsonText);
+                if (typeof parsedFeedback.score !== 'number' || typeof parsedFeedback.comment !== 'string' || !Array.isArray(parsedFeedback.specifics)) {
+                     throw new Error("AI đã trả về một cấu trúc dữ liệu không hợp lệ.");
+                }
+                setFeedback(parsedFeedback);
+                onGoalUpdate();
+            } catch (parseError) {
+                console.error("JSON Parsing Error:", parseError, "Raw text:", jsonText);
+                throw new Error("AI đã trả về phản hồi không hợp lệ. Vui lòng thử lại.");
+            }
 
         } catch (err) {
-            console.error("Gemini API Error:", err);
-            setError("Rất tiếc, AI không thể phản hồi lúc này. Vui lòng thử lại sau.");
+            console.error("Gemini API or Parsing Error:", err);
+            const errorMessage = (err instanceof Error) ? err.message : "Rất tiếc, AI không thể phản hồi lúc này. Vui lòng thử lại sau.";
+            setError(errorMessage);
         } finally {
             setStatus('feedback');
         }
@@ -160,7 +173,7 @@ Example for a good attempt:
     const handleMicClick = () => {
         if (status === 'listening') {
             recognitionRef.current?.stop();
-        } else {
+        } else if (status === 'idle' || status === 'feedback') {
             recognitionRef.current?.start();
         }
     };
@@ -200,8 +213,10 @@ Example for a good attempt:
                 <div className="flex flex-col items-center justify-center gap-4 mb-6">
                     <button 
                         onClick={handleMicClick}
+                        disabled={status === 'analyzing'}
                         className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg transition-colors
                             ${status === 'listening' ? 'bg-red-500 hover:bg-red-600 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'}
+                            disabled:bg-slate-400 disabled:cursor-not-allowed
                         `}
                         aria-label={status === 'listening' ? 'Dừng ghi âm' : 'Bắt đầu ghi âm'}
                     >
@@ -212,6 +227,7 @@ Example for a good attempt:
                     <p className="font-semibold text-slate-600 h-6">
                        {status === 'listening' && 'Đang lắng nghe...'}
                        {status === 'analyzing' && 'AI đang phân tích...'}
+                       {(status === 'idle' || status === 'feedback') && 'Nhấn để bắt đầu ghi âm'}
                     </p>
                 </div>
                 
@@ -232,7 +248,7 @@ Example for a good attempt:
                                     <span>Đang chờ phản hồi...</span>
                                 </div>
                             )}
-                            {feedback && (
+                            {feedback && status === 'feedback' && (
                                 <div className="mt-2 space-y-4">
                                     <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-200">
                                         <p className="text-md text-slate-800 font-medium flex-grow">{feedback.comment}</p>
@@ -253,10 +269,11 @@ Example for a good attempt:
                                     )}
                                 </div>
                             )}
+                             {error && status === 'feedback' && <p className="text-red-500 bg-red-50 p-3 rounded-md text-center mt-2">{error}</p>}
                         </div>
                     </div>
                 )}
-                 {error && <p className="text-red-500 bg-red-50 p-3 rounded-md text-center mt-4">{error}</p>}
+                 {error && status !== 'feedback' && <p className="text-red-500 bg-red-50 p-3 rounded-md text-center mt-4">{error}</p>}
             </div>
         </div>
     );

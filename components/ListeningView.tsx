@@ -63,9 +63,15 @@ const ListeningQuiz: React.FC<{ exercise: ListeningExercise, onComplete: () => v
 const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate }) => {
     const [mode, setMode] = useState<'selection' | 'guided' | 'random-speak'>('selection');
     const [selectedExercise, setSelectedExercise] = useState<ListeningExercise | null>(null);
-    const [randomSentence, setRandomSentence] = useState('');
     const [isFetching, setIsFetching] = useState(false);
     const [showTranscript, setShowTranscript] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    
+    // State for random listening mode
+    const [numRandomSentences, setNumRandomSentences] = useState(10);
+    const [randomSentences, setRandomSentences] = useState<string[]>([]);
+    const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
+    const [showSentenceText, setShowSentenceText] = useState(false);
 
     const handleSelectExercise = (exercise: ListeningExercise) => {
         setSelectedExercise(exercise);
@@ -73,21 +79,48 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
         setMode('guided');
     };
     
-    const getNewRandomSentence = async () => {
+    const handleStartRandomPractice = async () => {
         setMode('random-speak');
         setIsFetching(true);
-        setRandomSentence('');
+        setRandomSentences([]);
+        setCurrentSentenceIndex(0);
+        setShowSentenceText(false);
+        setError(null);
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'A2';
-            const prompt = `Create one simple, complete English sentence for a ${userLevel}-level Vietnamese learner to practice listening. Just return the sentence itself.`;
+            const prompt = `Create ${numRandomSentences} simple, complete English sentences for a ${userLevel}-level Vietnamese learner to practice listening. Return ONLY a valid JSON array of strings. Example: ["This is a sentence.", "Here is another one."].`;
             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            setRandomSentence(response.text.trim());
+            const jsonText = response.text.replace(/```json|```/g, '').trim();
+            const sentences = JSON.parse(jsonText);
+            if (Array.isArray(sentences) && sentences.length > 0) {
+                setRandomSentences(sentences);
+                onGoalUpdate();
+            } else {
+                throw new Error("AI did not return a valid array of sentences.");
+            }
         } catch (err) {
-            console.error("Gemini Sentence Generation Error:", err);
-            setRandomSentence("Could not fetch a new sentence.");
+            console.error("Gemini Sentences Generation Error:", err);
+            setError("Không thể tải câu mới. Vui lòng thử lại.");
+            setMode('selection');
         } finally {
             setIsFetching(false);
+        }
+    };
+
+    const handleNextSentence = () => {
+        if (currentSentenceIndex < randomSentences.length - 1) {
+            setCurrentSentenceIndex(prev => prev + 1);
+            setShowSentenceText(false);
+        } else {
+            setMode('selection');
+        }
+    };
+
+    const handlePrevSentence = () => {
+        if (currentSentenceIndex > 0) {
+            setCurrentSentenceIndex(prev => prev - 1);
+            setShowSentenceText(false);
         }
     };
     
@@ -100,6 +133,7 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
                     <h2 className="text-3xl font-bold text-slate-800">Luyện Nghe</h2>
                     <p className="text-lg text-slate-600 mt-2">Nâng cao kỹ năng nghe hiểu qua các bài tập thực tế.</p>
                 </div>
+                 {error && <p className="text-red-500 bg-red-50 p-3 rounded-md mb-6 text-center">{error}</p>}
                 <div className="grid md:grid-cols-2 gap-8">
                     <div className="bg-white p-8 rounded-2xl shadow-lg border text-center">
                         <h3 className="text-2xl font-bold text-slate-800">Luyện tập có hướng dẫn</h3>
@@ -116,7 +150,22 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
                      <div className="bg-white p-8 rounded-2xl shadow-lg border text-center flex flex-col justify-center items-center">
                         <h3 className="text-2xl font-bold text-slate-800">Luyện nghe ngẫu nhiên</h3>
                         <p className="text-slate-600 my-4">Nghe các câu ngẫu nhiên do AI tạo ra để thử thách khả năng nghe của bạn.</p>
-                        <button onClick={getNewRandomSentence} className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700">Bắt đầu</button>
+                        <div className="w-full mb-4">
+                            <label htmlFor="num-sentences" className="block text-sm font-medium text-slate-700 mb-1 text-left">Số lượng câu:</label>
+                            <select
+                                id="num-sentences"
+                                value={numRandomSentences}
+                                onChange={(e) => setNumRandomSentences(Number(e.target.value))}
+                                className="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            >
+                                <option value={5}>5 câu</option>
+                                <option value={10}>10 câu</option>
+                                <option value={15}>15 câu</option>
+                                <option value={20}>20 câu</option>
+                                <option value={30}>30 câu</option>
+                            </select>
+                        </div>
+                        <button onClick={handleStartRandomPractice} className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700">Bắt đầu</button>
                     </div>
                 </div>
             </div>
@@ -149,18 +198,46 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
                     )}
                     {mode === 'random-speak' && (
                         <div className="text-center">
-                             <h2 className="text-2xl font-bold text-slate-800 mb-4">Luyện nghe câu ngẫu nhiên</h2>
-                             {isFetching ? <p>Đang tạo câu...</p> : (
-                                <div className="flex items-center justify-center gap-4 bg-slate-100 p-6 rounded-lg">
-                                    <SpeakerButton textToSpeak={randomSentence} ariaLabel="Nghe câu"/>
-                                    <p className="text-xl font-semibold text-indigo-800">"{randomSentence}"</p>
+                             <h2 className="text-2xl font-bold text-slate-800 mb-2">Luyện nghe câu ngẫu nhiên</h2>
+                             {isFetching ? (
+                                <div className="min-h-[250px] flex flex-col justify-center items-center">
+                                    <div className="w-12 h-12 border-4 border-slate-200 border-b-indigo-500 rounded-full animate-spin"></div>
+                                    <p className="mt-4 text-slate-500">AI đang tạo {numRandomSentences} câu...</p>
                                 </div>
-                             )}
-                              <div className="mt-8">
-                                <button onClick={getNewRandomSentence} className="px-6 py-2 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-800">
-                                    Tạo câu khác
-                                </button>
-                            </div>
+                             ) : randomSentences.length > 0 ? (
+                                <div>
+                                    <p className="text-slate-500 mb-6">Câu {currentSentenceIndex + 1} / {randomSentences.length}</p>
+                                    
+                                    <div className="flex items-center justify-center gap-4 bg-slate-100 p-6 rounded-lg min-h-[100px]">
+                                        <SpeakerButton textToSpeak={randomSentences[currentSentenceIndex]} ariaLabel="Nghe câu"/>
+                                        {showSentenceText ? (
+                                            <p className="text-xl font-semibold text-indigo-800">{randomSentences[currentSentenceIndex]}</p>
+                                        ) : (
+                                            <div className="h-7 bg-slate-300 rounded-md w-3/4 animate-pulse"></div>
+                                        )}
+                                    </div>
+                                    
+                                    <button onClick={() => setShowSentenceText(prev => !prev)} className="mt-4 text-sm font-semibold text-indigo-600 hover:underline">
+                                        {showSentenceText ? 'Ẩn câu' : 'Hiện câu'}
+                                    </button>
+
+                                    <div className="mt-8 flex justify-between items-center">
+                                        <button
+                                            onClick={handlePrevSentence}
+                                            disabled={currentSentenceIndex === 0}
+                                            className="px-6 py-2 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Câu trước
+                                        </button>
+                                        <button
+                                            onClick={handleNextSentence}
+                                            className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700"
+                                        >
+                                            {currentSentenceIndex === randomSentences.length - 1 ? 'Hoàn thành' : 'Câu tiếp theo'}
+                                        </button>
+                                    </div>
+                                </div>
+                             ) : <p>Không có câu nào để hiển thị.</p>}
                         </div>
                     )}
                 </div>

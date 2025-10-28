@@ -64,9 +64,42 @@ const ReadingText: React.FC<{ text: string, onWordClick: (word: string, context:
 const ReadingQuiz: React.FC<{ article: ReadingArticle, onComplete: () => void }> = ({ article, onComplete }) => {
     const [answers, setAnswers] = useState<Record<number, string>>({});
     const [showResults, setShowResults] = useState(false);
+    const [explanations, setExplanations] = useState<Record<number, string> | null>(null);
+    const [isFetchingExplanations, setIsFetchingExplanations] = useState(false);
 
     const handleAnswer = (qIndex: number, option: string) => {
         setAnswers(prev => ({ ...prev, [qIndex]: option }));
+    };
+
+    const handleGetExplanations = async () => {
+        setIsFetchingExplanations(true);
+        setExplanations(null);
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const prompt = `As an English teacher, explain in Vietnamese why the correct answers to these multiple-choice questions are correct, based ONLY on the provided article. Return a valid JSON object where keys are the question indices (as strings: "0", "1", "2", etc.) and values are the concise explanations.
+
+Article:
+"""
+${article.content}
+"""
+
+Questions:
+${JSON.stringify(article.questions.map((q, index) => ({ index, question: q.question, correctAnswer: q.answer })))}
+`;
+            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+            const jsonText = response.text.replace(/```json|```/g, '').trim();
+            const parsedExplanations = JSON.parse(jsonText);
+            setExplanations(parsedExplanations);
+        } catch (err) {
+            console.error("Gemini Explanation Error:", err);
+            const errorExplanations: Record<number, string> = {};
+            article.questions.forEach((_, index) => {
+                errorExplanations[index] = 'Rất tiếc, không thể tải giải thích cho câu hỏi này.';
+            });
+            setExplanations(errorExplanations);
+        } finally {
+            setIsFetchingExplanations(false);
+        }
     };
 
     const score = Object.entries(answers).reduce((acc, [qIndex, answer]) => {
@@ -96,15 +129,31 @@ const ReadingQuiz: React.FC<{ article: ReadingArticle, onComplete: () => void }>
                             );
                         })}
                     </div>
+                    {showResults && explanations?.[qIndex] && (
+                        <div className="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded-md">
+                            <p className="text-sm font-semibold text-indigo-800">Giải thích:</p>
+                            <p className="text-sm text-indigo-700">{explanations[qIndex]}</p>
+                        </div>
+                    )}
                 </div>
             ))}
-            {!showResults && (
+            {!showResults ? (
                 <button onClick={() => setShowResults(true)} className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700">Kiểm tra đáp án</button>
-            )}
-            {showResults && (
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
+            ) : (
+                <div className="text-center p-4 bg-blue-50 rounded-lg space-y-4">
                     <h4 className="text-xl font-bold text-blue-800">Bạn đã trả lời đúng {score}/{article.questions.length} câu!</h4>
-                    <button onClick={onComplete} className="mt-4 px-6 py-2 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-800">Quay lại</button>
+                    <div className="flex justify-center gap-4">
+                        <button onClick={onComplete} className="px-6 py-2 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-800">Quay lại</button>
+                        {!explanations && (
+                             <button 
+                                onClick={handleGetExplanations} 
+                                disabled={isFetchingExplanations}
+                                className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-slate-400"
+                            >
+                                {isFetchingExplanations ? 'Đang tải...' : 'Giải thích đáp án'}
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
         </div>
@@ -114,7 +163,7 @@ const ReadingQuiz: React.FC<{ article: ReadingArticle, onComplete: () => void }>
 const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUpdate }) => {
     const [mode, setMode] = useState<'selection' | 'guided' | 'free-read'>('selection');
     const [selectedArticle, setSelectedArticle] = useState<ReadingArticle | null>(null);
-    const [freeReadArticle, setFreeReadArticle] = useState('');
+    const [freeReadArticle, setFreeReadArticle] = useState<ReadingArticle | null>(null);
     const [isFetchingFree, setIsFetchingFree] = useState(false);
     const [selectedWord, setSelectedWord] = useState<{ word: string, context: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -127,15 +176,29 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUp
     const getNewFreeArticle = async () => {
         setIsFetchingFree(true);
         setError(null);
-        setFreeReadArticle('');
+        setFreeReadArticle(null);
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'B1';
-            const prompt = `Generate a short reading passage (100-150 words) in English for a ${userLevel}-level learner. Just return the passage.`;
+            const prompt = `Generate a short English reading exercise for a ${userLevel}-level learner. It should include a title, a passage (100-150 words), and 3 multiple-choice questions with options and the correct answer.
+Return a single, valid JSON object with the following structure:
+{
+  "id": "ai-generated-${Date.now()}",
+  "title": "A short, engaging title",
+  "level": "${userLevel}",
+  "content": "The reading passage...",
+  "questions": [
+    { "question": "...", "options": ["...", "...", "..."], "answer": "..." }
+  ]
+}`;
             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            setFreeReadArticle(response.text);
+            const jsonText = response.text.replace(/```json|```/g, '').trim();
+            const article: ReadingArticle = JSON.parse(jsonText);
+            setFreeReadArticle(article);
+            onGoalUpdate();
         } catch (err) {
-            setError('Không thể tạo bài đọc mới.');
+            console.error("Gemini Free Article Generation Error:", err);
+            setError('Không thể tạo bài đọc mới. Vui lòng thử lại.');
         } finally {
             setIsFetchingFree(false);
         }
@@ -170,7 +233,7 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUp
                     </div>
                      <div className="bg-white p-8 rounded-2xl shadow-lg border text-center flex flex-col justify-center items-center">
                         <h3 className="text-2xl font-bold text-slate-800">Đọc tự do cùng AI</h3>
-                        <p className="text-slate-600 my-4">Tạo một bài đọc ngẫu nhiên về bất kỳ chủ đề nào và nhấp vào từ để được AI giải thích.</p>
+                        <p className="text-slate-600 my-4">Tạo một bài đọc ngẫu nhiên về bất kỳ chủ đề nào, trả lời câu hỏi và được AI giải thích đáp án.</p>
                         <button onClick={handleStartFreeRead} className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700">Tạo bài đọc ngẫu nhiên</button>
                     </div>
                 </div>
@@ -192,9 +255,17 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUp
             );
         }
         if (mode === 'free-read') {
-             if (isFetchingFree) return <p>Đang tạo bài đọc...</p>;
-             if (error) return <p className="text-red-500">{error}</p>;
-             return <ReadingText text={freeReadArticle} onWordClick={(word, context) => setSelectedWord({ word, context })} />;
+             if (isFetchingFree) return <div className="text-center p-8"><p>AI đang tạo bài đọc và câu hỏi...</p></div>;
+             if (error) return <p className="text-red-500 text-center p-8">{error}</p>;
+              if (freeReadArticle) {
+                 return (
+                    <div>
+                        <h2 className="text-3xl font-bold text-slate-800 mb-4">{freeReadArticle.title}</h2>
+                        <ReadingText text={freeReadArticle.content} onWordClick={(word, context) => setSelectedWord({ word, context })} />
+                        <ReadingQuiz article={freeReadArticle} onComplete={() => setMode('selection')}/>
+                    </div>
+                 );
+             }
         }
         return null;
     }
@@ -202,11 +273,11 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUp
     return (
         <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:px-8 py-8 w-full animate-fade-in">
             <div className="w-full max-w-3xl">
-                <button onClick={() => setMode('selection')} className="mb-6 font-semibold text-indigo-600 hover:underline">‹ Quay lại chọn chế độ</button>
+                <button onClick={() => { setMode('selection'); setFreeReadArticle(null); }} className="mb-6 font-semibold text-indigo-600 hover:underline">‹ Quay lại chọn chế độ</button>
                 <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200">
                     {renderContent()}
                 </div>
-                {mode === 'free-read' && (
+                {mode === 'free-read' && !isFetchingFree && (
                      <div className="text-center mt-6">
                         <button onClick={getNewFreeArticle} className="px-6 py-2 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-800">Tạo bài đọc khác</button>
                     </div>

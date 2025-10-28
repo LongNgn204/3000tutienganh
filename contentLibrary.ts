@@ -32,6 +32,30 @@ Every day, Lily sleeps on my bed. She likes to play with a small ball. When I co
                 },
             ],
         },
+        {
+            id: 'a1-favorite-food',
+            title: 'My Favorite Food',
+            level: 'A1',
+            content: `My favorite food is pizza. I like pizza with cheese and tomato. It is very delicious.
+My mother makes good pizza at home. We eat it on weekends. My brother likes pizza too. We eat it together. It is a happy time for my family.`,
+            questions: [
+                {
+                    question: 'What is the favorite food?',
+                    options: ['Pasta', 'Burger', 'Pizza', 'Salad'],
+                    answer: 'Pizza',
+                },
+                {
+                    question: 'Who makes the pizza?',
+                    options: ['Father', 'Mother', 'Brother', 'Sister'],
+                    answer: 'Mother',
+                },
+                {
+                    question: 'When do they eat pizza?',
+                    options: ['On Mondays', 'Every day', 'On weekends', 'On holidays'],
+                    answer: 'On weekends',
+                },
+            ],
+        },
         // A2 Level
         {
             id: 'a2-daily-routine',
@@ -55,6 +79,31 @@ I finish school at 4:00 PM. When I get home, I do my homework. In the evening, I
                     question: 'What does Alex do before going to bed?',
                     options: ['Watch TV', 'Play games', 'Read a book', 'Listen to music'],
                     answer: 'Read a book',
+                },
+            ],
+        },
+        {
+            id: 'a2-last-holiday',
+            title: 'My Last Holiday',
+            level: 'A2',
+            content: `Last summer, my family and I went to the beach. We stayed in a small hotel near the sea. The weather was wonderful. It was sunny and warm every day.
+In the morning, I went swimming in the sea. My brother and I built big sandcastles. In the afternoon, we visited some interesting places. In the evening, we had dinner at a local restaurant. The food was fresh and very tasty.
+I had a great time on my holiday. I took a lot of photos to remember the trip. I hope we can go back there again next year.`,
+            questions: [
+                {
+                    question: 'Where did they go for their holiday?',
+                    options: ['To the mountains', 'To the city', 'To the beach', 'To the countryside'],
+                    answer: 'To the beach',
+                },
+                {
+                    question: 'What was the weather like?',
+                    options: ['Cold and rainy', 'Cloudy and windy', 'Sunny and warm', 'It was snowing'],
+                    answer: 'Sunny and warm',
+                },
+                {
+                    question: 'What did they do in the morning?',
+                    options: ['Visited museums', 'Went shopping', 'Went swimming', 'Slept late'],
+                    answer: 'Went swimming',
                 },
             ],
         },
@@ -83,6 +132,31 @@ There are several advantages to remote work. Employees often have a more flexibl
                 },
             ],
         },
+        {
+            id: 'b1-benefits-exercise',
+            title: 'The Benefits of Regular Exercise',
+            level: 'B1',
+            content: `Regular exercise is one of the most important things you can do for your health. It offers a wide range of benefits, from improving your physical condition to boosting your mental well-being.
+Physically, exercise helps to control weight, reduce the risk of heart diseases, and manage blood sugar levels. It also strengthens your bones and muscles. Mentally, physical activity can improve your mood and reduce feelings of anxiety and depression. It can also help you sleep better.
+It is recommended to get at least 150 minutes of moderate aerobic activity or 75 minutes of vigorous activity a week. You can choose activities you enjoy, such as brisk walking, swimming, cycling, or dancing. The key is to be consistent.`,
+            questions: [
+                {
+                    question: 'Which of these is NOT mentioned as a physical benefit of exercise?',
+                    options: ['Controlling weight', 'Strengthening bones', 'Improving eyesight', 'Reducing heart disease risk'],
+                    answer: 'Improving eyesight',
+                },
+                {
+                    question: 'How can exercise affect your mental health?',
+                    options: ['It makes you feel more tired.', 'It can improve your mood.', 'It has no effect on mental health.', 'It increases stress levels.'],
+                    answer: 'It can improve your mood.',
+                },
+                {
+                    question: 'What is the key to getting benefits from exercise?',
+                    options: ['Doing it only on weekends', 'Choosing very difficult activities', 'Being consistent', 'Exercising for a very long time'],
+                    answer: 'Being consistent',
+                },
+            ],
+        },
         // B2 Level
         {
             id: 'b2-ai-impact',
@@ -105,6 +179,30 @@ However, the rapid advancement of AI also raises concerns. The most prominent is
                     question: 'What does the word "mitigating" mean in the last sentence?',
                     options: ['Increasing or amplifying', 'Ignoring or avoiding', 'Reducing the severity of', 'Understanding the cause of'],
                     answer: 'Reducing the severity of',
+                },
+            ],
+        },
+        {
+            id: 'b2-social-media',
+            title: 'The Two Sides of Social Media',
+            level: 'B2',
+            content: `Social media has fundamentally changed the way we communicate and interact. Platforms like Facebook, Instagram, and Twitter allow us to connect with friends and family across the globe, share our experiences, and access information instantly. They have also become powerful tools for social movements and political change.
+However, the pervasive nature of social media also presents significant challenges. Issues such as cyberbullying, the spread of misinformation, and the negative impact on mental health are growing concerns. The curated, often unrealistic, portrayals of life on social media can lead to anxiety and low self-esteem. Furthermore, addiction to these platforms can detract from real-world interactions and responsibilities. Balancing the benefits of connectivity with the potential harms is one of the key challenges of our digital age.`,
+            questions: [
+                {
+                    question: 'Which is mentioned as a positive aspect of social media?',
+                    options: ['It helps people feel less anxious.', 'It is a tool for social movements.', 'It guarantees all information is accurate.', 'It promotes real-world interactions.'],
+                    answer: 'It is a tool for social movements.',
+                },
+                {
+                    question: 'What is a negative mental health impact mentioned in the text?',
+                    options: ['Feeling more connected to family.', 'Becoming more politically active.', 'Gaining access to instant information.', 'Anxiety and low self-esteem.'],
+                    answer: 'Anxiety and low self-esteem.',
+                },
+                {
+                    question: 'What does the word "pervasive" mean?',
+                    options: ['New and innovative', 'Difficult to use', 'Spreading widely throughout an area', 'Private and secure'],
+                    answer: 'Spreading widely throughout an area',
                 },
             ],
         },
@@ -133,6 +231,30 @@ Conversely, critics of globalization point to its detrimental effects. They argu
                 },
             ],
         },
+        {
+            id: 'c1-lifelong-learning',
+            title: 'The Imperative of Lifelong Learning',
+            level: 'C1',
+            content: `In an era of rapid technological advancement and economic disruption, the concept of lifelong learning has transitioned from a mere ideal to a professional imperative. The notion that education concludes with a formal degree is increasingly obsolete. Today's workforce must continuously acquire new skills and knowledge—a process known as upskilling and reskilling—to remain relevant and competitive.
+This continuous educational journey is not solely about professional survival; it also fosters personal growth, cognitive flexibility, and adaptability. Engaging in new learning experiences stimulates the brain and can stave off cognitive decline in later life. Moreover, it cultivates a growth mindset, the belief that abilities can be developed through dedication and hard work. As the half-life of skills continues to shrink, embracing lifelong learning is not just advantageous, it is essential for navigating the complexities of the 21st century.`,
+            questions: [
+                {
+                    question: 'Why is the idea of education ending with a degree considered "obsolete"?',
+                    options: ['Because degrees are no longer valuable.', 'Because of the need to continuously learn new skills.', 'Because informal education is cheaper.', 'Because companies prefer employees without degrees.'],
+                    answer: 'Because of the need to continuously learn new skills.',
+                },
+                {
+                    question: 'Besides professional benefits, what is another advantage of lifelong learning mentioned?',
+                    options: ['It guarantees a higher salary.', 'It fosters cognitive flexibility.', 'It reduces the need for formal education.', 'It is a faster way to get a promotion.'],
+                    answer: 'It fosters cognitive flexibility.',
+                },
+                {
+                    question: 'What does the "half-life of skills" shrinking imply?',
+                    options: ['Skills are becoming easier to learn.', 'People are learning skills more slowly.', 'Skills are becoming irrelevant more quickly.', 'The number of available skills is decreasing.'],
+                    answer: 'Skills are becoming irrelevant more quickly.',
+                },
+            ],
+        },
         // C2 Level
         {
             id: 'c2-cognitive-bias',
@@ -155,6 +277,30 @@ Another potent bias is the availability heuristic, where people overestimate the
                     question: 'The example of the 90-year-old smoker illustrates which concept?',
                     options: ['Metacognition', 'Confirmation bias', 'Statistical analysis', 'The availability heuristic'],
                     answer: 'The availability heuristic',
+                },
+            ],
+        },
+        {
+            id: 'c2-minimalism',
+            title: 'The Philosophy of Minimalism',
+            level: 'C2',
+            content: `Minimalism, as a philosophy, extends far beyond the aesthetic of spartan interiors and decluttered spaces. At its core, it is an intentional promotion of the things we most value and the removal of everything that distracts us from them. It is a conscious rebuttal of the compulsory consumption that underpins much of modern society. This is not to say it is an ascetic existence devoid of pleasure, but rather a re-evaluation of what constitutes a rich life.
+The minimalist credo posits that by paring down our possessions, commitments, and even digital noise, we can create the space for more meaningful pursuits: relationships, personal growth, and contribution. This intentionality can be profoundly liberating, freeing up not just physical space but also mental and financial resources. However, it is a deeply personal journey; one person's essential is another's superfluity. Therefore, minimalism is not a rigid set of rules, but a versatile framework for designing a more deliberate life.`,
+            questions: [
+                {
+                    question: 'What is the fundamental principle of minimalism according to the text?',
+                    options: ['Having as few possessions as possible.', 'Living an ascetic and simple life.', 'Prioritizing what is valuable and removing distractions.', 'Rejecting modern technology and consumption.'],
+                    answer: 'Prioritizing what is valuable and removing distractions.',
+                },
+                {
+                    question: 'What does the author mean by "one person\'s essential is another\'s superfluity"?',
+                    options: ['Everyone should own the same essential items.', 'Minimalism has strict rules everyone must follow.', 'What is considered necessary varies from person to person.', 'Superfluous items are more valuable than essential ones.'],
+                    answer: 'What is considered necessary varies from person to person.',
+                },
+                {
+                    question: 'According to the text, minimalism is best described as...',
+                    options: ['a rigid set of rules.', 'an aesthetic style.', 'a financial strategy.', 'a versatile framework.'],
+                    answer: 'a versatile framework.',
                 },
             ],
         },
@@ -190,6 +336,29 @@ A: That's great!`,
                 },
             ],
         },
+        {
+            id: 'a1-daily-activities',
+            title: 'My Day',
+            level: 'A1',
+            transcript: `Hello, my name is Maria. I wake up at 7 AM. I eat breakfast. I like toast and juice. Then, I go to school. My school is big. I like my teacher. After school, I play in the park with my friends. In the evening, I do my homework. I go to bed at 9 PM.`,
+            questions: [
+                {
+                    question: 'What does Maria eat for breakfast?',
+                    options: ['Toast and juice', 'Eggs and milk', 'Cereal', 'Fruit'],
+                    answer: 'Toast and juice',
+                },
+                {
+                    question: 'Where does Maria play after school?',
+                    options: ['At home', 'In the park', 'At school', `At her friend's house`],
+                    answer: 'In the park',
+                },
+                {
+                    question: 'What time does Maria go to bed?',
+                    options: ['7 AM', '9 PM', '8 PM', '10 PM'],
+                    answer: '9 PM',
+                },
+            ],
+        },
         // A2 Level
         {
             id: 'a2-ordering-food',
@@ -217,6 +386,41 @@ Waiter: Certainly. So that's one chicken soup, one grilled fish, and a water. I'
                     question: 'What does the customer want to drink?',
                     options: ['Juice', 'Soda', 'Water', 'Coffee'],
                     answer: 'Water',
+                },
+            ],
+        },
+         {
+            id: 'a2-at-the-airport',
+            title: 'At the Airport',
+            level: 'A2',
+            transcript: `Agent: "Good morning. Where are you flying to today?"
+Passenger: "I'm flying to New York."
+Agent: "May I see your passport, please?"
+Passenger: "Here you are."
+Agent: "Thank you. Are you checking any bags?"
+Passenger: "Yes, just this one."
+Agent: "Okay. Please place it on the scale. Your flight is at gate B7, and it will begin boarding at 10:30 AM. Your seat number is 15A."
+Passenger: "Gate B7 at 10:30. Got it. Thank you!"`,
+            questions: [
+                {
+                    question: 'Where is the passenger going?',
+                    options: ['London', 'Paris', 'New York', 'Tokyo'],
+                    answer: 'New York',
+                },
+                {
+                    question: 'How many bags is the passenger checking?',
+                    options: ['None', 'One', 'Two', 'Three'],
+                    answer: 'One',
+                },
+                {
+                    question: 'Which gate is the flight from?',
+                    options: ['A15', 'B7', '10B', '30A'],
+                    answer: 'B7',
+                },
+                {
+                    question: 'What time does boarding begin?',
+                    options: ['10:30 AM', '7:00 AM', '15:00', 'B7'],
+                    answer: '10:30 AM',
                 },
             ],
         },
@@ -250,6 +454,41 @@ Anna: Just some comfortable shoes, warm clothes, and maybe a camera. The views a
                 },
             ],
         },
+        {
+            id: 'b1-making-plans',
+            title: 'Making Plans for a Movie',
+            level: 'B1',
+            transcript: `Chris: "Hey, Lisa. Are you free on Friday night? There's a new sci-fi movie I really want to see."
+Lisa: "Friday night? I think so. What movie is it?"
+Chris: "It's called 'Galaxy Runner'. It's getting great reviews. It's playing at the City Cinema."
+Lisa: "Oh, I've heard of that one! What time were you thinking?"
+Chris: "There's a showing at 7:00 PM and another at 9:30 PM. I prefer the earlier one, if that works for you."
+Lisa: "7:00 PM is perfect. That gives us time to get some dinner beforehand. Do you want to meet at the Italian place next to the cinema around 6:00?"
+Chris: "That's a great idea. So, meet at 'Pasta Place' at 6:00, then the movie at 7:00. I'll buy the tickets online now."
+Lisa: "Sounds like a plan! See you on Friday."`,
+            questions: [
+                 {
+                    question: 'What type of movie do they plan to watch?',
+                    options: ['Comedy', 'Horror', 'Romance', 'Sci-fi'],
+                    answer: 'Sci-fi',
+                },
+                {
+                    question: 'Which showtime does Chris prefer?',
+                    options: ['6:00 PM', '7:00 PM', '9:30 PM', 'Friday night'],
+                    answer: '7:00 PM',
+                },
+                {
+                    question: 'What do they decide to do before the movie?',
+                    options: ['Go shopping', 'Get dinner', 'Go for a walk', 'Meet at the cinema'],
+                    answer: 'Get dinner',
+                },
+                {
+                    question: 'Who is going to buy the movie tickets?',
+                    options: ['Lisa', 'Chris', 'They will buy them at the cinema', 'They already have tickets'],
+                    answer: 'Chris',
+                },
+            ],
+        },
         // B2 Level
         {
             id: 'b2-job-interview-feedback',
@@ -279,6 +518,39 @@ David: Yes, they said they would be in touch within a week. So, it's a waiting g
                 },
             ],
         },
+        {
+            id: 'b2-environmental-issues',
+            title: 'Discussing Environmental Issues',
+            level: 'B2',
+            transcript: `Emily: "I was just reading an article about plastic waste. It's quite alarming how much ends up in our oceans."
+Mark: "I know, it's a huge problem. I've been trying to reduce my own plastic use, but it's difficult when so many things are packaged in it."
+Emily: "Exactly. I think the real change has to come from large corporations. They need to be held accountable and invest in sustainable alternatives."
+Mark: "I agree, but individual action is still important. It sends a message. For example, I've started using a reusable water bottle and coffee cup. It's a small thing, but it adds up."
+Emily: "That's true. I've been trying to do the same. I also think better recycling infrastructure is crucial. In my neighborhood, they don't even collect all types of plastic."
+Mark: "It really requires a multi-faceted approach, doesn't it? Government policies, corporate responsibility, and individual effort all have to work together."`,
+            questions: [
+                {
+                    question: 'What is the main topic of the conversation?',
+                    options: ['Ocean life', 'Corporate profits', 'Plastic waste', 'Recycling technology'],
+                    answer: 'Plastic waste',
+                },
+                {
+                    question: 'Where does Emily believe the most significant change must originate?',
+                    options: ['From individuals', 'From large corporations', 'From the government', 'From schools'],
+                    answer: 'From large corporations',
+                },
+                {
+                    question: 'What is one individual action Mark has taken?',
+                    options: ['Writing to corporations', 'Protesting', 'Using reusable containers', 'Starting a recycling program'],
+                    answer: 'Using reusable containers',
+                },
+                {
+                    question: 'What does Mark mean by a "multi-faceted approach"?',
+                    options: ['A simple solution', 'A complicated problem', 'An approach involving many different aspects', 'A focus on individual action'],
+                    answer: 'An approach involving many different aspects',
+                },
+            ],
+        },
         // C1 Level
         {
             id: 'c1-ai-debate',
@@ -304,6 +576,73 @@ Tom: The difference is that AI has the potential for autonomous decision-making.
                     question: 'What is the core of Tom\'s argument against Sarah\'s historical comparison?',
                     options: ['That AI cannot create new jobs.', 'That AI is fundamentally different because it can make its own decisions.', 'That technological revolutions are always harmful.', 'That the ethical issues are not important.'],
                     answer: 'That AI is fundamentally different because it can make its own decisions.',
+                },
+            ],
+        },
+        {
+            id: 'c1-work-presentation',
+            title: 'Feedback on a Work Presentation',
+            level: 'C1',
+            transcript: `Manager: "Hi, Alex. Do you have a moment? I wanted to give you some feedback on your presentation this morning."
+Alex: "Of course. Please, have a seat. I'd appreciate your thoughts."
+Manager: "Overall, it was very well-structured. The data was compelling, and your key takeaways were clear. You've clearly put a lot of work into the analysis, and it shows."
+Alex: "Thank you. I'm glad the analysis came across clearly."
+Manager: "It did. One area for development I'd suggest is your delivery. At times, you seemed to be reading directly from your notes, which made it slightly less engaging. Try to internalize the key points so you can speak more freely and make more eye contact with the audience."
+Alex: "That's a fair point. I get a bit nervous and rely on my notes too much. I'll work on that."
+Manager: "Also, while the data was excellent, you could perhaps preemptively address potential counterarguments. For example, why our proposed strategy is more cost-effective than the alternative. But these are minor refinements. On the whole, it was a solid piece of work."`,
+            questions: [
+                {
+                    question: "What was the manager's overall impression of the presentation?",
+                    options: ['It was poorly structured', 'It was very good', 'It lacked sufficient data', 'It was too long'],
+                    answer: 'It was very good',
+                },
+                {
+                    question: "What specific area for improvement did the manager mention regarding Alex's delivery?",
+                    options: ['Speaking too quickly', 'Using too much jargon', 'Reading from notes too often', 'Not being loud enough'],
+                    answer: 'Reading from notes too often',
+                },
+                {
+                    question: 'What does the manager suggest Alex do to make the content even stronger?',
+                    options: ['Use more data', 'Address potential counterarguments', 'Make the slides more colorful', 'Shorten the presentation'],
+                    answer: 'Address potential counterarguments',
+                },
+                {
+                    question: 'What does "preemptively address" mean?',
+                    options: ['To ignore opposing views', 'To deal with something before it becomes a problem', 'To agree with all arguments', 'To discuss something after it has happened'],
+                    answer: 'To deal with something before it becomes a problem',
+                },
+            ],
+        },
+        // C2 Level
+        {
+            id: 'c2-philosophy-discussion',
+            title: 'A Short Philosophical Discussion',
+            level: 'C2',
+            transcript: `Sophia: "I've been contemplating the distinction between pleasure and happiness. They're often used interchangeably, but they seem fundamentally different."
+Leo: "An interesting dichotomy. I would posit that pleasure is ephemeral, a fleeting sensory experience, like eating a fine meal. Happiness, conversely, is a more durable state of contentment—what Aristotle might call 'eudaimonia'."
+Sophia: "Precisely. So, a life pursuing pleasure—hedonism—might not necessarily culminate in a life of happiness. It could lead to a perpetual, unsatisfying chase."
+Leo: "Indeed. Perhaps happiness is less about the accumulation of pleasurable moments and more about living a life of purpose and virtue, even if that involves struggle. The contentment derived from overcoming a challenge, for instance, is a far cry from simple sensory pleasure."
+Sophia: "So, happiness is a byproduct, not a goal in itself. It's the result of a life lived meaningfully. That resonates. It reframes the entire pursuit."`,
+            questions: [
+                {
+                    question: 'How does Leo define the primary difference between pleasure and happiness?',
+                    options: ['Pleasure is mental, happiness is physical', 'Pleasure is short-lived, happiness is more lasting', 'Pleasure is negative, happiness is positive', 'There is no difference'],
+                    answer: 'Pleasure is short-lived, happiness is more lasting',
+                },
+                {
+                    question: 'What is the potential outcome of a life dedicated solely to pursuing pleasure (hedonism)?',
+                    options: ['A state of permanent happiness', 'A fulfilling and virtuous life', 'An unsatisfying and continuous search', 'A life free from struggle'],
+                    answer: 'An unsatisfying and continuous search',
+                },
+                {
+                    question: 'According to the dialogue, what is happiness a result of?',
+                    options: ['Accumulating wealth', 'Living a meaningful life', 'Avoiding all challenges', 'Experiencing constant pleasure'],
+                    answer: 'Living a meaningful life',
+                },
+                {
+                    question: 'What does the word "ephemeral" mean?',
+                    options: ['Long-lasting and durable', 'Spiritual and profound', 'Lasting for a very short time', 'Causing great satisfaction'],
+                    answer: 'Lasting for a very short time',
                 },
             ],
         },
