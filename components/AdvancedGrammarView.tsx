@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import type { User } from '../types';
 
 interface AdvancedGrammarViewProps {
@@ -43,19 +43,25 @@ const AdvancedGrammarView: React.FC<AdvancedGrammarViewProps> = ({ currentUser, 
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'B1';
             const prompt = `Create an advanced grammar challenge for a ${userLevel}-level English learner. The challenge could be error correction, sentence transformation (e.g., active to passive), or using a specific grammar structure.
-Return a single, valid JSON object with two keys:
-1. "question": A string describing the task for the user (e.g., "Find and correct the mistake in the sentence below." or "Rewrite the following sentence using the passive voice.").
-2. "task": The sentence for the user to work with.
-
-Example response: {"question": "Rewrite this sentence using the past perfect tense.", "task": "When she arrived, the movie started."}`;
+The JSON object should have two keys: "question" (the task for the user) and "task" (the sentence to work with).`;
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            question: { type: Type.STRING, description: "The instruction for the user, e.g., 'Rewrite this sentence...'" },
+                            task: { type: Type.STRING, description: "The sentence the user needs to work on." }
+                        },
+                        required: ['question', 'task']
+                    }
+                }
             });
             
-            const jsonText = response.text.replace(/```json|```/g, '').trim();
-            const parsedChallenge = JSON.parse(jsonText);
+            const parsedChallenge = JSON.parse(response.text);
             setChallenge(parsedChallenge);
             setStatus('ready');
 
@@ -83,18 +89,26 @@ Example response: {"question": "Rewrite this sentence using the past perfect ten
 - The original sentence/task was: "${challenge.task}"
 - The user's answer is: "${userAnswer}"
 
-Please provide your evaluation in a single, valid JSON object with three keys:
-1. "isCorrect": A boolean (true if the user's answer is grammatically correct and fulfills the task, otherwise false).
-2. "correctAnswer": A string containing the most appropriate correct answer.
-3. "explanation": A string containing a clear, concise explanation in Vietnamese about the grammar rule, explaining why the user's answer is right or wrong and why the correct answer is correct.`;
+Your JSON response must have three keys: "isCorrect" (boolean), "correctAnswer" (string), and "explanation" (a clear explanation in Vietnamese).`;
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            isCorrect: { type: Type.BOOLEAN },
+                            correctAnswer: { type: Type.STRING },
+                            explanation: { type: Type.STRING, description: "Explanation in Vietnamese." }
+                        },
+                        required: ['isCorrect', 'correctAnswer', 'explanation']
+                    }
+                }
             });
 
-            const jsonText = response.text.replace(/```json|```/g, '').trim();
-            const parsedFeedback = JSON.parse(jsonText);
+            const parsedFeedback = JSON.parse(response.text);
             setFeedback(parsedFeedback);
             setStatus('feedback');
             onGoalUpdate();

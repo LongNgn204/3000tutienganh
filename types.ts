@@ -108,7 +108,7 @@ export interface StudyProgress {
   [wordEnglish: string]: StudyRecord;
 }
 
-export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading' | 'writing' | 'role-play' | 'welcome' | 'landing' | 'leaderboard' | 'challenges' | 'video-lessons' | 'community-forum' | 'forum-topic' | 'study-plan-wizard';
+export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading' | 'writing' | 'role-play' | 'welcome' | 'landing' | 'leaderboard' | 'challenges' | 'video-lessons' | 'community-forum' | 'forum-topic' | 'study-plan-wizard' | 'ipa-chart';
 
 // Content Library Types
 export interface ReadingArticleQuestion {

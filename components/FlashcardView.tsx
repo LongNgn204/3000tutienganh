@@ -12,6 +12,8 @@ interface FlashcardViewProps {
   onResetStudyProgress: (wordKeys: string[]) => void;
   initialStudyFilter: 'review' | 'new' | null;
   onInitialFilterConsumed: () => void;
+  initialCategory: string | null;
+  onInitialCategoryConsumed: () => void;
 }
 
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -25,11 +27,22 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
     onUpdateStudyProgress,
     onResetStudyProgress,
     initialStudyFilter,
-    onInitialFilterConsumed
+    onInitialFilterConsumed,
+    initialCategory,
+    onInitialCategoryConsumed
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [studyFilter, setStudyFilter] = useState<'review' | 'new'>('review');
+  const [studyFilter, setStudyFilter] = useState<'review' | 'new'>(() => {
+    // If a filter is passed on initial render, use it.
+    if (initialStudyFilter) {
+      return initialStudyFilter;
+    }
+    // Otherwise, check if there are any words to review across all categories.
+    // If yes, default to 'review'. If no, default to 'new'.
+    const { wordsToReview: initialReviewWords } = srsService.getWordsForSession(words, studyProgress);
+    return initialReviewWords.length > 0 ? 'review' : 'new';
+  });
   const [wordSet, setWordSet] = useState<Word[]>([]);
 
   useEffect(() => {
@@ -38,6 +51,13 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
       onInitialFilterConsumed();
     }
   }, [initialStudyFilter, onInitialFilterConsumed]);
+
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+      onInitialCategoryConsumed();
+    }
+  }, [initialCategory, onInitialCategoryConsumed]);
 
   const categoryFilteredWords = useMemo(() => {
     if (selectedCategory === 'all') return words;

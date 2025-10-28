@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import type { User } from '../types';
 
 interface AIWritingViewProps {
@@ -41,14 +41,24 @@ const AIWritingView: React.FC<AIWritingViewProps> = ({ currentUser, onGoalUpdate
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'B1';
-            const prompt = `Generate a simple and engaging writing prompt for a ${userLevel}-level English learner from Vietnam. The topic should be about daily life, hobbies, or personal experiences.
-Return a single, valid JSON object with two keys:
-1. "topic": A string containing the writing prompt in English (e.g., "Describe your favorite holiday and what you like to do on that day.").
-2. "level": The CEFR level the prompt is suitable for (e.g., "${userLevel}").`;
+            const prompt = `Generate a simple and engaging writing prompt for a ${userLevel}-level English learner from Vietnam. The topic should be about daily life, hobbies, or personal experiences.`;
 
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            const jsonText = response.text.replace(/```json|```/g, '').trim();
-            const parsedTopic = JSON.parse(jsonText);
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            topic: { type: Type.STRING, description: "The writing prompt in English." },
+                            level: { type: Type.STRING, description: `The CEFR level for the prompt, which should be ${userLevel}.` }
+                        },
+                        required: ['topic', 'level']
+                    }
+                }
+            });
+            const parsedTopic = JSON.parse(response.text);
             setTopic(parsedTopic);
             setStatus('ready');
 
@@ -70,34 +80,43 @@ Return a single, valid JSON object with two keys:
         setFeedback(null);
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const prompt = `As an English teacher evaluating a piece of writing from a Vietnamese learner, please provide feedback on the following text.
+            const prompt = `As an English teacher evaluating a piece of writing from a Vietnamese learner, please provide feedback on the following text. All feedback content must be in Vietnamese.
 - Writing Prompt: "${topic.topic}"
-- User's Text: "${userText}"
+- User's Text: "${userText}"`;
 
-Provide your feedback in a single, valid JSON object with three keys, all with content in Vietnamese:
-1. "overall": A string with a general, encouraging comment on the user's writing.
-2. "corrections": An array of objects. Each object should have three keys: "original" (the incorrect phrase from the user's text), "corrected" (the corrected version), and "explanation" (a brief explanation of the grammar/spelling error). If there are no errors, return an empty array [].
-3. "suggestions": An array of strings with suggestions for improvement, such as using better vocabulary or more complex sentence structures.
-
-Example response:
-{
-  "overall": "Viết tốt lắm! Bạn đã diễn đạt được ý tưởng của mình một cách rõ ràng.",
-  "corrections": [
-    {
-      "original": "I am go to school",
-      "corrected": "I go to school",
-      "explanation": "Sau 'am' chúng ta dùng V-ing (I am going) cho thì hiện tại tiếp diễn, hoặc dùng động từ thường (go) cho thì hiện tại đơn."
-    }
-  ],
-  "suggestions": [
-    "Thay vì dùng 'very good', bạn có thể thử dùng 'excellent' hoặc 'fantastic'.",
-    "Thử kết hợp hai câu đơn thành một câu phức để bài viết mượt mà hơn."
-  ]
-}`;
-
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            const jsonText = response.text.replace(/```json|```/g, '').trim();
-            const parsedFeedback = JSON.parse(jsonText);
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            overall: { type: Type.STRING, description: "General, encouraging comment in Vietnamese." },
+                            corrections: {
+                                type: Type.ARRAY,
+                                description: "Array of corrections. Empty if no errors.",
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        original: { type: Type.STRING },
+                                        corrected: { type: Type.STRING },
+                                        explanation: { type: Type.STRING, description: "Explanation in Vietnamese." }
+                                    },
+                                    required: ['original', 'corrected', 'explanation']
+                                }
+                            },
+                            suggestions: {
+                                type: Type.ARRAY,
+                                description: "Array of suggestions for improvement in Vietnamese.",
+                                items: { type: Type.STRING }
+                            }
+                        },
+                        required: ['overall', 'corrections', 'suggestions']
+                    }
+                }
+            });
+            const parsedFeedback = JSON.parse(response.text);
             setFeedback(parsedFeedback);
             setStatus('feedback');
             onGoalUpdate();

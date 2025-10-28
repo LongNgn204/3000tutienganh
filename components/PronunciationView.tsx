@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import type { Word, StudyProgress } from '../types';
 import SpeakerButton from './SpeakerButton';
 import * as srsService from '../services/srsService';
@@ -36,6 +36,8 @@ const PronunciationView: React.FC<PronunciationViewProps> = ({ words, studyProgr
     const [error, setError] = useState<string | null>(null);
     
     const recognitionRef = useRef<any>(null);
+    const statusRef = useRef(status);
+    statusRef.current = status;
 
     const getNewWord = () => {
         const reviewWords = srsService.getWordsToReview(words, studyProgress);
@@ -54,10 +56,9 @@ const PronunciationView: React.FC<PronunciationViewProps> = ({ words, studyProgr
         setStatus('idle');
     };
 
+    // Setup recognition instance once
     useEffect(() => {
-        if (words.length > 0) {
-            getNewWord();
-        }
+        if (recognitionRef.current) return;
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -69,6 +70,19 @@ const PronunciationView: React.FC<PronunciationViewProps> = ({ words, studyProgr
         recognition.continuous = false;
         recognition.lang = 'en-US';
         recognition.interimResults = true;
+        recognitionRef.current = recognition;
+
+        if (words.length > 0) {
+            getNewWord();
+        }
+
+    }, [words]);
+    
+    // This effect re-assigns event listeners whenever targetWord changes.
+    // This is crucial to prevent stale closures from capturing an old `targetWord` value.
+    useEffect(() => {
+        const recognition = recognitionRef.current;
+        if (!recognition) return;
 
         recognition.onstart = () => {
             setStatus('listening');
@@ -82,32 +96,38 @@ const PronunciationView: React.FC<PronunciationViewProps> = ({ words, studyProgr
                 if (event.results[i].isFinal) {
                   const finalTranscript = event.results[i][0].transcript;
                   setTranscript(finalTranscript);
-                  recognition.stop();
-                  callGeminiForFeedback(finalTranscript);
+                  // No longer call stop() here, let it happen naturally or on end
+                  callGeminiForFeedback(finalTranscript, targetWord);
                 } else {
                   interimTranscript += event.results[i][0].transcript;
                   setTranscript(interimTranscript);
                 }
             }
         };
-
+        
         recognition.onerror = (event: any) => {
             console.error('SpeechRecognition error:', event.error);
             setError('Đã xảy ra lỗi khi ghi âm. Vui lòng thử lại.');
             setStatus('idle');
         };
-
+        
         recognition.onend = () => {
-            if (status === 'listening') { // Ended without a final result
+            // Only reset to 'idle' if we weren't already analyzing.
+            // This handles cases where recognition times out or is manually stopped.
+            if (statusRef.current === 'listening') {
               setStatus('idle');
             }
         };
 
-        recognitionRef.current = recognition;
-    }, [words]);
+    }, [targetWord]);
 
-    const callGeminiForFeedback = async (userTranscript: string) => {
-        if (!targetWord) return;
+
+    const callGeminiForFeedback = async (userTranscript: string, currentWord: Word | null) => {
+        if (!currentWord) {
+            setError("Không có từ mục tiêu. Vui lòng thử lấy từ mới.");
+            setStatus('idle');
+            return;
+        }
         setStatus('analyzing');
         setError(null);
         setFeedback(null);
@@ -115,56 +135,63 @@ const PronunciationView: React.FC<PronunciationViewProps> = ({ words, studyProgr
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = `As an expert English pronunciation coach, evaluate a user's pronunciation for a Vietnamese learner.
-- The target word is: "${targetWord.english}" (phonetics: ${targetWord.pronunciation}).
+- The target word is: "${currentWord.english}" (phonetics: ${currentWord.pronunciation}).
 - The user said: "${userTranscript}".
 
-Please provide your evaluation in a valid JSON object with three keys:
-1. "score": An integer from 0 to 100 on how accurate the pronunciation was.
-2. "comment": A short, overall constructive feedback in Vietnamese.
-3. "specifics": An array of objects, where each object has "phoneme" (the specific sound) and "feedback" (a short comment in Vietnamese on that sound). If pronunciation is perfect, return an empty array [].
-
-Example for a mistake: 
-{
-  "score": 65,
-  "comment": "Khá tốt! Bạn cần chú ý một vài âm cuối.",
-  "specifics": [
-    { "phoneme": "/t/", "feedback": "Âm /t/ ở cuối từ 'cat' chưa được bật ra rõ ràng." }
-  ]
-}
-
-Example for a good attempt:
-{
-  "score": 95,
-  "comment": "Rất tốt! Phát âm của bạn rất rõ ràng và chính xác.",
-  "specifics": []
-}`;
+Provide an overall score, a constructive comment, and specific feedback on phonemes if there are mistakes. All feedback should be in Vietnamese. If pronunciation is perfect, the specifics array should be empty.`;
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
-                contents: prompt
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            score: { 
+                                type: Type.INTEGER,
+                                description: "An integer from 0 to 100 on how accurate the pronunciation was."
+                            },
+                            comment: { 
+                                type: Type.STRING,
+                                description: "A short, overall constructive feedback in Vietnamese."
+                            },
+                            specifics: {
+                                type: Type.ARRAY,
+                                description: "An array of objects with specific feedback on phonemes. Empty if perfect.",
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        phoneme: { 
+                                            type: Type.STRING,
+                                            description: "The specific phoneme or sound that needs improvement."
+                                        },
+                                        feedback: { 
+                                            type: Type.STRING,
+                                            description: "A short comment in Vietnamese on that sound."
+                                        },
+                                    },
+                                    required: ['phoneme', 'feedback']
+                                },
+                            },
+                        },
+                        required: ['score', 'comment', 'specifics']
+                    },
+                },
             });
             
-            const jsonText = response.text?.replace(/```json|```/g, '').trim();
+            const jsonText = response.text.trim();
             if (!jsonText) {
                 throw new Error("AI đã trả về một phản hồi trống.");
             }
             
-            try {
-                const parsedFeedback = JSON.parse(jsonText);
-                if (typeof parsedFeedback.score !== 'number' || typeof parsedFeedback.comment !== 'string' || !Array.isArray(parsedFeedback.specifics)) {
-                     throw new Error("AI đã trả về một cấu trúc dữ liệu không hợp lệ.");
-                }
-                setFeedback(parsedFeedback);
-                onGoalUpdate();
-            } catch (parseError) {
-                console.error("JSON Parsing Error:", parseError, "Raw text:", jsonText);
-                throw new Error("AI đã trả về phản hồi không hợp lệ. Vui lòng thử lại.");
-            }
+            const parsedFeedback = JSON.parse(jsonText);
+            setFeedback(parsedFeedback);
+            onGoalUpdate();
 
         } catch (err) {
             console.error("Gemini API or Parsing Error:", err);
-            const errorMessage = (err instanceof Error) ? err.message : "Rất tiếc, AI không thể phản hồi lúc này. Vui lòng thử lại sau.";
-            setError(errorMessage);
+            setError("Rất tiếc, AI không thể phản hồi lúc này. Vui lòng thử lại sau.");
         } finally {
             setStatus('feedback');
         }

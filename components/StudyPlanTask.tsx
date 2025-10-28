@@ -37,9 +37,18 @@ const StudyPlanTaskItem: React.FC<StudyPlanTaskItemProps> = ({ task, onStartTask
 
     const handleStart = () => {
         const viewMode = TASK_TYPE_TO_VIEW_MODE[task.type];
-        let options = {};
-        if (task.type === 'flashcard_review') options = { initialFilter: 'review' };
-        if (task.type === 'flashcard_new') options = { initialFilter: 'new' };
+        const options: { initialFilter?: 'review' | 'new', initialCategory?: string } = {};
+
+        if (task.type === 'flashcard_review') {
+            options.initialFilter = 'review';
+        }
+        if (task.type === 'flashcard_new') {
+            options.initialFilter = 'new';
+        }
+        
+        if ((task.type === 'flashcard_new' || task.type === 'flashcard_review') && task.targetId) {
+            options.initialCategory = task.targetId;
+        }
         
         onStartTask(viewMode, options);
         onCompleteTask(task.id); 

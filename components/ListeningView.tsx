@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { User, ListeningExercise, CEFRLevel } from '../types';
 import SpeakerButton from './SpeakerButton';
 import { CONTENT_LIBRARY } from '../contentLibrary';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 
 interface ListeningViewProps {
   currentUser: User | null;
@@ -89,10 +89,22 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'A2';
-            const prompt = `Create ${numRandomSentences} simple, complete English sentences for a ${userLevel}-level Vietnamese learner to practice listening. Return ONLY a valid JSON array of strings. Example: ["This is a sentence.", "Here is another one."].`;
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            const jsonText = response.text.replace(/```json|```/g, '').trim();
-            const sentences = JSON.parse(jsonText);
+            const prompt = `Create ${numRandomSentences} simple, complete English sentences for a ${userLevel}-level Vietnamese learner to practice listening.`;
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.ARRAY,
+                        description: `An array of ${numRandomSentences} sentences.`,
+                        items: {
+                            type: Type.STRING
+                        }
+                    }
+                }
+            });
+            const sentences = JSON.parse(response.text);
             if (Array.isArray(sentences) && sentences.length > 0) {
                 setRandomSentences(sentences);
                 onGoalUpdate();

@@ -127,6 +127,9 @@ const Sidebar: React.FC<{
             <NavButton onClick={() => navigateTo('pronunciation')} isActive={viewMode === 'pronunciation'} label="Luyện Phát Âm">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-12 0H3a7.001 7.001 0 006 6.93V17H7a1 1 0 100 2h6a1 1 0 100-2h-2v-2.07z" clipRule="evenodd" /></svg>
             </NavButton>
+             <NavButton onClick={() => navigateTo('ipa-chart')} isActive={viewMode === 'ipa-chart'} label="Bảng IPA">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3a1 1 0 000 2h1.158l2.256 9.026A1 1 0 008.385 15h3.23a1 1 0 00.97-1.228L10.342 5H14a1 1 0 100-2H4z" /><path fillRule="evenodd" d="M4.05 3.95a1 1 0 011.414-1.414l10 10a1 1 0 01-1.414 1.414l-10-10z" clipRule="evenodd" /></svg>
+            </NavButton>
              <NavButton onClick={() => navigateTo('writing')} isActive={viewMode === 'writing'} label="Luyện Viết">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
             </NavButton>
@@ -145,7 +148,7 @@ const Sidebar: React.FC<{
             <NavButton onClick={() => navigateTo('video-lessons')} isActive={viewMode === 'video-lessons'} label="Bài giảng Video">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M3.5 2.75a.75.75 0 00-1.5 0v14.5a.75.75 0 001.5 0v-4.392l1.657-.348a6.44 6.44 0 015.686 0l1.657.348V17.25a.75.75 0 001.5 0V2.75a.75.75 0 00-1.5 0v4.392l-1.657.348a6.44 6.44 0 01-5.686 0L3.5 7.142V2.75z" /></svg>
             </NavButton>
-             <NavButton onClick={() => navigateTo('community-forum')} isActive={viewMode === 'community-forum' || viewMode === 'forum-topic'} label="Diễn đàn" disabled>
+             <NavButton onClick={() => navigateTo('community-forum')} isActive={viewMode === 'community-forum' || viewMode === 'forum-topic'} label="Diễn đàn">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5A1.5 1.5 0 0116.5 18h-13A1.5 1.5 0 012 16.5v-13z" /></svg>
             </NavButton>
         </NavGroup>

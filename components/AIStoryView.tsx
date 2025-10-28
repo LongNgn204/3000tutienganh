@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import type { Word, StudyProgress } from '../types';
 import SpeakerButton from './SpeakerButton';
 import * as srsService from '../services/srsService';
@@ -54,30 +54,30 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress, onGoalU
     setStoryVietnamese('');
 
     const wordList = selectedWords.map(w => w.english).join(', ');
-    const separator = "---VIETNAMESE_TRANSLATION---";
 
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const prompt = `Act as a creative storyteller for a Vietnamese person learning English. Write a very short, simple story (around 50-70 words) that MUST include the following words: ${wordList}. The story should be easy to understand and engaging. 
-First, write the English story.
-Then, on a new line, write the exact separator: "${separator}".
-Finally, on a new line, write the Vietnamese translation of the story.`;
+        const prompt = `Act as a creative storyteller for a Vietnamese person learning English. Create a very short, simple story (around 50-70 words) that MUST include the following words: ${wordList}. The story should be easy to understand and engaging. Provide both the English story and its Vietnamese translation.`;
         
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        storyEnglish: { type: Type.STRING, description: "The short story in English." },
+                        storyVietnamese: { type: Type.STRING, description: "The Vietnamese translation of the story." },
+                    },
+                    required: ['storyEnglish', 'storyVietnamese']
+                },
+            },
         });
         
-        const fullResponse = response.text;
-        
-        if (fullResponse.includes(separator)) {
-            const parts = fullResponse.split(separator);
-            setStoryEnglish(parts[0].trim());
-            setStoryVietnamese(parts[1]?.trim() || '');
-        } else {
-            setStoryEnglish(fullResponse.trim());
-            setStoryVietnamese('AI không cung cấp bản dịch.');
-        }
+        const storyData = JSON.parse(response.text);
+        setStoryEnglish(storyData.storyEnglish);
+        setStoryVietnamese(storyData.storyVietnamese);
         onGoalUpdate();
 
     } catch (err) {

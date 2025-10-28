@@ -34,6 +34,7 @@ const VideoLessonsView = lazy(() => import('./components/VideoLessonsView'));
 const CommunityForumView = lazy(() => import('./components/CommunityForumView'));
 const ForumTopicView = lazy(() => import('./components/ForumTopicView'));
 const StudyPlanWizardView = lazy(() => import('./components/StudyPlanWizardView'));
+const IPAChartView = lazy(() => import('./components/IPAChartView'));
 
 
 const Loader: React.FC = () => (
@@ -51,6 +52,7 @@ const App: React.FC = () => {
   const [studyProgress, setStudyProgress] = useState<StudyProgress>({});
   const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
   const [initialFlashcardFilter, setInitialFlashcardFilter] = useState<'review' | 'new' | null>(null);
+  const [initialFlashcardCategory, setInitialFlashcardCategory] = useState<string | null>(null);
   const [testResultToShow, setTestResultToShow] = useState<PlacementTestResult | null>(null);
 
   const [wordCategories, setWordCategories] = useState<Category[]>(CONSTANT_WORD_CATEGORIES);
@@ -345,11 +347,17 @@ const App: React.FC = () => {
   };
 
 
-  const navigateTo = (mode: ViewMode, options?: { initialFilter?: 'review' | 'new', topicId?: string }) => {
+  const navigateTo = (mode: ViewMode, options?: { initialFilter?: 'review' | 'new', topicId?: string, initialCategory?: string }) => {
     if (options?.initialFilter) {
       setInitialFlashcardFilter(options.initialFilter);
     } else {
       setInitialFlashcardFilter(null);
+    }
+
+    if (options?.initialCategory) {
+        setInitialFlashcardCategory(options.initialCategory);
+    } else {
+        setInitialFlashcardCategory(null);
     }
 
     if (options?.topicId) {
@@ -398,6 +406,8 @@ const App: React.FC = () => {
             return <ConversationView allWords={allWords} studyProgress={studyProgress} currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_conversation', 1)} />;
           case 'pronunciation':
             return <PronunciationView words={allWords} studyProgress={studyProgress} onGoalUpdate={() => handleGoalUpdate('complete_pronunciation', 1)} />;
+          case 'ipa-chart':
+            return <IPAChartView onGoalUpdate={() => handleGoalUpdate('complete_pronunciation', 1)} />;
           case 'grammar':
             return <GrammarView />;
           case 'listening':
@@ -447,6 +457,8 @@ const App: React.FC = () => {
                   onResetStudyProgress={handleResetStudyProgress}
                   initialStudyFilter={initialFlashcardFilter}
                   onInitialFilterConsumed={() => setInitialFlashcardFilter(null)}
+                  initialCategory={initialFlashcardCategory}
+                  onInitialCategoryConsumed={() => setInitialFlashcardCategory(null)}
                 />;
           case 'quiz':
              return <QuizView allWords={allWords} wordsForQuiz={filteredWords} categories={wordCategories} onGoalUpdate={() => {}} />;

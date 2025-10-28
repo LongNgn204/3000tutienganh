@@ -9,6 +9,7 @@ const VIEW_TITLES: Record<ViewMode, string> = {
     'grammar': 'Cẩm nang Ngữ pháp',
     'conversation': 'Luyện Giao tiếp AI',
     'pronunciation': 'Luyện Phát Âm',
+    'ipa-chart': 'Bảng Phiên Âm IPA',
     'story': 'Viết truyện cùng AI',
     'placement-test': 'Kiểm tra trình độ',
     'placement-test-result': 'Kết quả kiểm tra',

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { GoogleGenAI } from "@google/genai";
+import React, { useState, useEffect } from 'react';
+import { GoogleGenAI, Type } from "@google/genai";
 import type { User, StudyPlan, UserStudyPlanInput, CEFRLevel } from '../types';
 import { CEFR_LEVEL_MAP } from '../cefr';
 
@@ -16,10 +16,20 @@ const steps = [
     { id: 5, title: "Xác nhận & Tạo" }
 ];
 
+const loadingMessages = [
+    "Phân tích mục tiêu học tập của bạn...",
+    "Đánh giá các kỹ năng ưu tiên...",
+    "Xây dựng lịch trình học tập cho 7 ngày...",
+    "Phân bổ các hoạt động phù hợp...",
+    "Sắp xếp các bài ôn tập thông minh...",
+    "Hoàn tất lộ trình!"
+];
+
 const StudyPlanWizardView: React.FC<StudyPlanWizardViewProps> = ({ currentUser, onCreatePlan }) => {
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [generationStatus, setGenerationStatus] = useState(loadingMessages[0]);
 
     // Form state
     const [goal, setGoal] = useState<string>('Giao tiếp công việc');
@@ -32,6 +42,23 @@ const StudyPlanWizardView: React.FC<StudyPlanWizardViewProps> = ({ currentUser, 
         "Đọc & Viết",
     ]);
     const [draggedSkill, setDraggedSkill] = useState<string | null>(null);
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (isLoading) {
+            let index = 0;
+            setGenerationStatus(loadingMessages[index]);
+            timer = setInterval(() => {
+                index++;
+                if (index < loadingMessages.length) {
+                    setGenerationStatus(loadingMessages[index]);
+                } else {
+                    clearInterval(timer);
+                }
+            }, 2000);
+        }
+        return () => clearInterval(timer);
+    }, [isLoading]);
 
 
     const handleDragStart = (e: React.DragEvent<HTMLLIElement>, skill: string) => {
@@ -74,54 +101,62 @@ const StudyPlanWizardView: React.FC<StudyPlanWizardViewProps> = ({ currentUser, 
             const prompt = `Act as an expert language learning curriculum designer for a Vietnamese learner. Based on the user's profile and goals, create a personalized 7-day study plan.
 
 User Profile:
+- Current CEFR Level: ${currentUser.level}
 - Target CEFR Level: ${planInput.targetLevel}
 - Goal: ${planInput.goal}
 - Time per day: ${planInput.timePerDay} minutes
 - Skill Priority Order: ${planInput.skillPriorities.join(', ')}
 
-Available Activity Types:
-- 'flashcard_review': Review learned words using SRS.
-- 'flashcard_new': Learn new words.
-- 'reading': Do a guided reading exercise.
-- 'listening': Do a guided listening exercise.
-- 'conversation': Practice speaking with the AI tutor.
-- 'pronunciation': Practice pronunciation of a specific word.
-- 'role-play': Practice a specific real-life scenario.
-- 'grammar': Review a grammar topic.
-- 'quiz': Take a vocabulary quiz.
-- 'writing': Do an AI-guided writing exercise.
-
 Instructions:
 1. Create a plan for 7 days, labeled "day1" through "day7".
-2. Each day should have a list of tasks. The total duration of tasks for a day should not exceed the user's "Time per day".
-3. Distribute tasks based on the user's skill priorities. The highest priority skills should appear more frequently.
-4. Each task must be a JSON object with 'id', 'description' (in Vietnamese), 'type', 'duration' (in minutes), and 'completed' (set to false).
-5. For 'reading', 'listening', and 'role-play', you can optionally add a 'targetId' field with a suggested topic (e.g., 'a2-daily-routine' for reading, 'order-coffee' for role-play).
+2. Each day's total task duration MUST NOT exceed the user's "Time per day".
+3. Distribute tasks based on skill priorities. Higher priority skills should appear more frequently.
+4. Each task must have 'id', 'description' (in Vietnamese), 'type', 'duration' (in minutes), and 'completed' (set to false).
+5. For tasks of type 'flashcard_new' or 'flashcard_review', you MUST include a 'targetId' field. The 'targetId' should be the ID of a relevant vocabulary category (e.g., "a1-greetings", "b1-work"). The 'description' must also reflect this topic, for example: "Học 10 từ vựng mới về chủ đề Công việc".
+6. Return ONLY the valid JSON object.`;
 
-Return ONLY a valid JSON object representing the 7-day plan. Do not include any other text or markdown formatting.
-
-Example for one day:
-"day1": [
-  { "id": "task-20240728-1", "description": "Ôn tập 20 từ vựng cần xem lại", "type": "flashcard_review", "duration": 10, "completed": false },
-  { "id": "task-20240728-2", "description": "Luyện nói về chủ đề công việc", "type": "conversation", "duration": 15, "completed": false },
-  { "id": "task-20240728-3", "description": "Xem lại thì Hiện tại Hoàn thành", "type": "grammar", "duration": 5, "completed": false }
-]`;
+            const taskSchema = {
+                type: Type.OBJECT,
+                properties: {
+                    id: { type: Type.STRING, description: "A unique ID for the task, e.g., task-YYYYMMDD-N" },
+                    description: { type: Type.STRING, description: "Task description in Vietnamese." },
+                    type: { type: Type.STRING, description: "The type of activity." },
+                    duration: { type: Type.INTEGER, description: "Duration in minutes." },
+                    completed: { type: Type.BOOLEAN },
+                    targetId: { type: Type.STRING, description: "Optional ID for specific content, required for flashcard tasks." }
+                },
+                required: ['id', 'description', 'type', 'duration', 'completed']
+            };
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            day1: { type: Type.ARRAY, items: taskSchema },
+                            day2: { type: Type.ARRAY, items: taskSchema },
+                            day3: { type: Type.ARRAY, items: taskSchema },
+                            day4: { type: Type.ARRAY, items: taskSchema },
+                            day5: { type: Type.ARRAY, items: taskSchema },
+                            day6: { type: Type.ARRAY, items: taskSchema },
+                            day7: { type: Type.ARRAY, items: taskSchema },
+                        },
+                        required: ['day1', 'day2', 'day3', 'day4', 'day5', 'day6', 'day7']
+                    }
+                }
             });
 
-            const jsonText = response.text.replace(/```json|```/g, '').trim();
-            const plan: StudyPlan = JSON.parse(jsonText);
+            const plan: StudyPlan = JSON.parse(response.text);
             
             onCreatePlan(plan, planInput);
 
         } catch (err) {
             console.error("Gemini Plan Generation Error:", err);
             setError("Rất tiếc, AI không thể tạo lộ trình học lúc này. Vui lòng thử lại sau.");
-        } finally {
-            setIsLoading(false);
+            setIsLoading(false); // Make sure loading stops on error
         }
     };
     
@@ -232,8 +267,21 @@ Example for one day:
                 </div>
 
                 <div className="p-8 min-h-[300px]">
-                    {error && <p className="text-red-600 bg-red-50 p-3 rounded-md mb-4">{error}</p>}
-                    {renderStepContent()}
+                     {isLoading ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center animate-fade-in">
+                             <svg className="animate-spin h-12 w-12 text-indigo-600 mb-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p className="font-semibold text-lg text-slate-700 transition-all duration-500">{generationStatus}</p>
+                            <p className="text-slate-500 mt-2">AI đang xây dựng kế hoạch tốt nhất cho bạn...</p>
+                        </div>
+                    ) : (
+                         <>
+                            {error && <p className="text-red-600 bg-red-50 p-3 rounded-md mb-4">{error}</p>}
+                            {renderStepContent()}
+                         </>
+                    )}
                 </div>
 
                 <div className="p-6 bg-slate-50 rounded-b-2xl flex justify-between items-center">
@@ -257,7 +305,7 @@ Example for one day:
                             disabled={isLoading}
                             className="px-6 py-2 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-slate-400"
                         >
-                            {isLoading ? "AI đang tạo..." : "Tạo lộ trình"}
+                            Tạo lộ trình
                         </button>
                     )}
                 </div>

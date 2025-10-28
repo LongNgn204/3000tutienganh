@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { GoogleGenAI, LiveServerMessage, Modality, Blob } from "@google/genai";
+import { GoogleGenAI, LiveServerMessage, Modality, Blob, Type } from "@google/genai";
 import { SCENARIOS } from './rolePlayScenarios';
 import type { User } from '../types';
 import SpeakerButton from './SpeakerButton';
@@ -116,30 +116,33 @@ const AIRolePlayView: React.FC<AIRolePlayViewProps> = ({ currentUser, onGoalUpda
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const transcriptText = transcript.map(t => `${t.author === 'ai' ? 'AI' : 'User'}: ${t.content}`).join('\n');
-            const prompt = `As an English teacher, provide feedback for a student who completed a role-play scenario.
+            const prompt = `As an English teacher, provide feedback for a student who completed a role-play scenario. All feedback content must be in Vietnamese.
 - Scenario: ${selectedScenario.title}
 - Student's Goal: ${selectedScenario.goal}
 - Conversation Transcript:
-${transcriptText}
-
-Provide your feedback in a single, valid JSON object with three keys, all with content in Vietnamese:
-1. "goalAchieved": A boolean, true if the student successfully completed the main goal, false otherwise.
-2. "evaluation": A string containing a general, encouraging evaluation of the student's performance (grammar, vocabulary, fluency).
-3. "suggestions": An array of strings with 1-2 clear, actionable suggestions for improvement.
-
-Example response:
-{
-  "goalAchieved": true,
-  "evaluation": "Làm tốt lắm! Bạn đã hoàn thành mục tiêu và giao tiếp một cách tự tin. Ngữ pháp của bạn khá ổn, chỉ có một vài lỗi nhỏ.",
-  "suggestions": [
-    "Để tự nhiên hơn, bạn có thể thử dùng 'Could I get...' thay vì 'I want...'.",
-    "Hãy chú ý phát âm âm cuối /t/ trong từ 'latte'."
-  ]
-}`;
+${transcriptText}`;
             
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            const jsonText = response.text.replace(/```json|```/g, '').trim();
-            const parsedFeedback = JSON.parse(jsonText);
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            goalAchieved: { type: Type.BOOLEAN },
+                            evaluation: { type: Type.STRING, description: "General evaluation in Vietnamese." },
+                            suggestions: {
+                                type: Type.ARRAY,
+                                description: "1-2 actionable suggestions in Vietnamese.",
+                                items: { type: Type.STRING }
+                            }
+                        },
+                        required: ['goalAchieved', 'evaluation', 'suggestions']
+                    }
+                }
+            });
+            const parsedFeedback = JSON.parse(response.text);
             setFeedback(parsedFeedback);
         } catch (err) {
             console.error("Feedback generation error:", err);

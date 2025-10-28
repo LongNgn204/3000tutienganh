@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import type { User, ReadingArticle, CEFRLevel } from '../types';
 import { CONTENT_LIBRARY } from '../contentLibrary';
 import { CEFR_LEVEL_MAP } from '../cefr';
@@ -76,7 +76,7 @@ const ReadingQuiz: React.FC<{ article: ReadingArticle, onComplete: () => void }>
         setExplanations(null);
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const prompt = `As an English teacher, explain in Vietnamese why the correct answers to these multiple-choice questions are correct, based ONLY on the provided article. Return a valid JSON object where keys are the question indices (as strings: "0", "1", "2", etc.) and values are the concise explanations.
+            const prompt = `As an English teacher, explain in Vietnamese why the correct answers to these multiple-choice questions are correct, based ONLY on the provided article. Return a JSON array of strings, with each string being the explanation for one question, in order.
 
 Article:
 """
@@ -86,10 +86,24 @@ ${article.content}
 Questions:
 ${JSON.stringify(article.questions.map((q, index) => ({ index, question: q.question, correctAnswer: q.answer })))}
 `;
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            const jsonText = response.text.replace(/```json|```/g, '').trim();
-            const parsedExplanations = JSON.parse(jsonText);
-            setExplanations(parsedExplanations);
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.ARRAY,
+                        description: "An array of explanation strings, one for each question in order.",
+                        items: { type: Type.STRING }
+                    }
+                }
+            });
+            const explanationsArray: string[] = JSON.parse(response.text);
+            const newExplanations: Record<number, string> = {};
+            explanationsArray.forEach((exp, index) => {
+                newExplanations[index] = exp;
+            });
+            setExplanations(newExplanations);
         } catch (err) {
             console.error("Gemini Explanation Error:", err);
             const errorExplanations: Record<number, string> = {};
@@ -180,20 +194,37 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUp
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'B1';
-            const prompt = `Generate a short English reading exercise for a ${userLevel}-level learner. It should include a title, a passage (100-150 words), and 3 multiple-choice questions with options and the correct answer.
-Return a single, valid JSON object with the following structure:
-{
-  "id": "ai-generated-${Date.now()}",
-  "title": "A short, engaging title",
-  "level": "${userLevel}",
-  "content": "The reading passage...",
-  "questions": [
-    { "question": "...", "options": ["...", "...", "..."], "answer": "..." }
-  ]
-}`;
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            const jsonText = response.text.replace(/```json|```/g, '').trim();
-            const article: ReadingArticle = JSON.parse(jsonText);
+            const prompt = `Generate a short English reading exercise for a ${userLevel}-level learner. It should include a title, a passage (100-150 words), and 3 multiple-choice questions with options and the correct answer.`;
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            id: { type: Type.STRING },
+                            title: { type: Type.STRING },
+                            level: { type: Type.STRING },
+                            content: { type: Type.STRING },
+                            questions: {
+                                type: Type.ARRAY,
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        question: { type: Type.STRING },
+                                        options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                        answer: { type: Type.STRING }
+                                    },
+                                    required: ['question', 'options', 'answer']
+                                }
+                            }
+                        },
+                        required: ['id', 'title', 'level', 'content', 'questions']
+                    }
+                }
+            });
+            const article: ReadingArticle = JSON.parse(response.text);
             setFreeReadArticle(article);
             onGoalUpdate();
         } catch (err) {
