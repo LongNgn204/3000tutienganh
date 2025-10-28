@@ -62,13 +62,14 @@ interface TranscriptItem {
 
 const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProgress, currentUser, onGoalUpdate }) => {
   const [stage, setStage] = useState<'setup' | 'chatting' | 'finished'>('setup');
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'listening' | 'error'>('disconnected');
   const [targetWords, setTargetWords] = useState<Word[]>([]);
   const [usedWords, setUsedWords] = useState<Set<string>>(new Set());
   const [transcript, setTranscript] = useState<TranscriptItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [enableVietnamese, setEnableVietnamese] = useState(true);
   const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'advanced'>('intermediate');
+  const [isMuted, setIsMuted] = useState(false);
 
   // Refs for managing Web Audio API and Gemini Live session
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
@@ -79,18 +80,29 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
   const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const nextAudioStartTimeRef = useRef<number>(0);
   const audioSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+  const outputNodeRef = useRef<GainNode | null>(null);
   
   // Refs for building transcriptions
   const currentInputTranscriptionRef = useRef('');
   const currentOutputTranscriptionRef = useRef('');
 
+  useEffect(() => {
+    if (outputNodeRef.current) {
+        outputNodeRef.current.gain.value = isMuted ? 0 : 1;
+    }
+  }, [isMuted]);
+
   const stopConversation = () => {
     // Disconnect microphone processing
     if (scriptProcessorRef.current && mediaStreamSourceRef.current) {
-        mediaStreamSourceRef.current.disconnect();
-        scriptProcessorRef.current.disconnect();
-        scriptProcessorRef.current = null;
+        try {
+            mediaStreamSourceRef.current.disconnect();
+            scriptProcessorRef.current.disconnect();
+        } catch (e) {
+            // Ignore errors if already disconnected
+        }
     }
+    scriptProcessorRef.current = null;
 
     // Stop microphone stream
     mediaStreamRef.current?.getTracks().forEach(track => track.stop());
@@ -99,6 +111,12 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
     // Close session
     sessionPromiseRef.current?.then(session => session.close());
     sessionPromiseRef.current = null;
+    
+    // Disconnect output node
+    if (outputNodeRef.current) {
+        outputNodeRef.current.disconnect();
+        outputNodeRef.current = null;
+    }
 
     // Close AudioContexts
     inputAudioContextRef.current?.close().catch(console.error);
@@ -181,6 +199,8 @@ Start the conversation by saying "Hello! How are you today?".`;
 
         inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
         outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        outputNodeRef.current = outputAudioContextRef.current.createGain();
+        outputNodeRef.current.connect(outputAudioContextRef.current.destination);
         
         sessionPromiseRef.current = ai.live.connect({
             model: 'gemini-2.5-flash-native-audio-preview-09-2025',
@@ -207,9 +227,9 @@ Start the conversation by saying "Hello! How are you today?".`;
                             session.sendRealtimeInput({ media: pcmBlob });
                         });
                     };
-                    source.connect(scriptProcessor);
+                    // This is important for the ScriptProcessor to work, but we don't connect the mic source to it yet.
                     scriptProcessor.connect(inputAudioContextRef.current!.destination);
-                    setConnectionStatus('connected');
+                    setConnectionStatus('connected'); // Now connected, but not listening
                     setStage('chatting');
                 },
                 onmessage: async (message: LiveServerMessage) => {
@@ -253,13 +273,13 @@ Start the conversation by saying "Hello! How are you today?".`;
                     }
 
                     const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
-                    if (base64Audio && outputAudioContextRef.current) {
+                    if (base64Audio && outputAudioContextRef.current && outputNodeRef.current) {
                         const outputCtx = outputAudioContextRef.current;
                         nextAudioStartTimeRef.current = Math.max(nextAudioStartTimeRef.current, outputCtx.currentTime);
                         const audioBuffer = await decodeAudioData(decode(base64Audio), outputCtx, 24000, 1);
                         const source = outputCtx.createBufferSource();
                         source.buffer = audioBuffer;
-                        source.connect(outputCtx.destination);
+                        source.connect(outputNodeRef.current);
                         source.addEventListener('ended', () => audioSourcesRef.current.delete(source));
                         source.start(nextAudioStartTimeRef.current);
                         nextAudioStartTimeRef.current += audioBuffer.duration;
@@ -288,42 +308,26 @@ Start the conversation by saying "Hello! How are you today?".`;
         setConnectionStatus('error');
     }
   };
+
+  const handleMicToggle = () => {
+    if (connectionStatus === 'connected') {
+        if (mediaStreamSourceRef.current && scriptProcessorRef.current) {
+            mediaStreamSourceRef.current.connect(scriptProcessorRef.current);
+            setConnectionStatus('listening');
+        }
+    } else if (connectionStatus === 'listening') {
+        if (mediaStreamSourceRef.current && scriptProcessorRef.current) {
+            try {
+                mediaStreamSourceRef.current.disconnect(scriptProcessorRef.current);
+            } catch (e) { /* ignore */ }
+            setConnectionStatus('connected');
+        }
+    }
+  };
   
   const highlightUsedWords = (text: string) => {
     const wordRegex = new RegExp(`\\b(${targetWords.map(w => w.english).join('|')})\\b`, 'gi');
     return text.replace(wordRegex, '<strong class="bg-yellow-200/80 text-yellow-900 px-1 py-0.5 rounded">$1</strong>');
-  };
-
-  const renderMicButton = () => {
-     let icon;
-     let text;
-     let colorClass;
-
-     switch (connectionStatus) {
-        case 'connecting':
-            icon = <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
-            text = "Đang kết nối...";
-            colorClass = "bg-slate-400 cursor-not-allowed";
-            break;
-        case 'connected':
-            icon = <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-12 0H3a7.001 7.001 0 006 6.93V17H7a1 1 0 100 2h6a1 1 0 100-2h-2v-2.07z" clipRule="evenodd" /></svg>;
-            text = "AI đang lắng nghe...";
-            colorClass = "bg-blue-600 animate-pulse";
-            break;
-        default: // disconnected or error
-             icon = <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>;
-             text = "Đã ngắt kết nối";
-             colorClass = "bg-red-500";
-     }
-
-     return (
-        <div className="flex flex-col items-center gap-4">
-          <div className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg ${colorClass}`}>
-              {icon}
-          </div>
-          <p className="font-semibold text-slate-600">{text}</p>
-        </div>
-     );
   };
   
   if (stage === 'setup') {
@@ -442,15 +446,50 @@ Start the conversation by saying "Hello! How are you today?".`;
         </div>
         <div className="mt-4 flex flex-col items-center justify-center gap-4">
             {stage !== 'finished' ? (
-                renderMicButton()
+                <>
+                    <button
+                        onClick={handleMicToggle}
+                        disabled={connectionStatus !== 'connected' && connectionStatus !== 'listening'}
+                        className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg text-white transition-colors
+                            ${connectionStatus === 'listening' ? 'bg-red-500 hover:bg-red-600 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'}
+                            disabled:bg-slate-400 disabled:cursor-not-allowed
+                        `}
+                        aria-label={connectionStatus === 'listening' ? 'Dừng nói' : 'Nhấn để nói'}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                           <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-12 0H3a7.001 7.001 0 006 6.93V17H7a1 1 0 100 2h6a1 1 0 100-2h-2v-2.07z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+                    <p className="font-semibold text-slate-600 h-6">
+                        {connectionStatus === 'listening' && 'Đang ghi âm... Nhấn để dừng.'}
+                        {connectionStatus === 'connected' && 'Nhấn để nói'}
+                        {connectionStatus === 'connecting' && 'Đang kết nối...'}
+                        {connectionStatus === 'error' && 'Lỗi kết nối'}
+                    </p>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsMuted(prev => !prev)}
+                            disabled={connectionStatus === 'disconnected' || connectionStatus === 'connecting'}
+                            className="px-4 py-2 text-sm flex items-center gap-2 rounded-lg bg-slate-200 text-slate-600 disabled:opacity-50 hover:bg-slate-300"
+                        >
+                            {isMuted ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.929 5.757a1 1 0 011.414 0A5.983 5.983 0 0116 10a5.983 5.983 0 01-1.657 4.243 1 1 0 01-1.414-1.415A3.984 3.984 0 0014 10a3.984 3.984 0 00-1.071-2.828 1 1 0 010-1.415z" /></svg>
+                            )}
+                            {isMuted ? "Bật tiếng" : "Tắt tiếng"}
+                        </button>
+                        <button onClick={stopConversation} className="px-4 py-2 text-sm flex items-center gap-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200">
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" /></svg>
+                            Kết thúc
+                        </button>
+                    </div>
+                </>
             ) : (
                 <button onClick={stopConversation} className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors">
                     Chơi lại
                 </button>
             )}
-             <button onClick={stopConversation} className="text-sm text-slate-500 hover:text-slate-700">
-                Kết thúc phiên
-            </button>
         </div>
     </div>
   );

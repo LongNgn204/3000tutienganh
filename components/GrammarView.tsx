@@ -39,7 +39,7 @@ Hãy trả về dưới dạng danh sách markdown, mỗi ví dụ trên một d
 Chỉ trả về danh sách ví dụ, không thêm bất kỳ lời dẫn hay giải thích nào khác.`;
 
             const responseStream = await ai.models.generateContentStream({
-                model: 'gem-2.5-flash',
+                model: 'gemini-2.5-flash',
                 contents: prompt
             });
 

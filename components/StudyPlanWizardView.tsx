@@ -26,23 +26,42 @@ const StudyPlanWizardView: React.FC<StudyPlanWizardViewProps> = ({ currentUser, 
     const [targetLevel, setTargetLevel] = useState<CEFRLevel>(currentUser.level);
     const [timePerDay, setTimePerDay] = useState<number>(30);
     const [skillPriorities, setSkillPriorities] = useState<string[]>([
+        "Từ vựng & Ngữ pháp",
         "Nói & Giao tiếp",
         "Nghe & Phát âm",
-        "Từ vựng & Ngữ pháp",
         "Đọc & Viết",
     ]);
+    const [draggedSkill, setDraggedSkill] = useState<string | null>(null);
 
-    const handleDragStart = (e: React.DragEvent<HTMLLIElement>, index: number) => {
-        e.dataTransfer.setData("skillIndex", index.toString());
+
+    const handleDragStart = (e: React.DragEvent<HTMLLIElement>, skill: string) => {
+        e.dataTransfer.setData("skillName", skill);
+        setDraggedSkill(skill);
     };
 
-    const handleDrop = (e: React.DragEvent<HTMLLIElement>, dropIndex: number) => {
-        const dragIndex = parseInt(e.dataTransfer.getData("skillIndex"));
+    const handleDrop = (e: React.DragEvent<HTMLLIElement>, dropSkill: string) => {
+        e.preventDefault();
+        const draggedSkillName = e.dataTransfer.getData("skillName");
+        
+        const dragIndex = skillPriorities.findIndex(s => s === draggedSkillName);
+        const dropIndex = skillPriorities.findIndex(s => s === dropSkill);
+
+        if (dragIndex === -1 || dropIndex === -1 || dragIndex === dropIndex) {
+            setDraggedSkill(null);
+            return;
+        };
+
         const newSkills = [...skillPriorities];
         const [removed] = newSkills.splice(dragIndex, 1);
         newSkills.splice(dropIndex, 0, removed);
         setSkillPriorities(newSkills);
+        setDraggedSkill(null);
     };
+
+    const handleDragEnd = () => {
+        setDraggedSkill(null);
+    };
+
 
     const generatePlan = async () => {
         setIsLoading(true);
@@ -150,12 +169,15 @@ Example for one day:
                                 <li
                                     key={skill}
                                     draggable
-                                    onDragStart={(e) => handleDragStart(e, index)}
+                                    onDragStart={(e) => handleDragStart(e, skill)}
                                     onDragOver={(e) => e.preventDefault()}
-                                    onDrop={(e) => handleDrop(e, index)}
-                                    className="p-4 border-2 border-slate-300 rounded-lg font-semibold flex items-center gap-4 cursor-grab active:cursor-grabbing bg-white"
+                                    onDrop={(e) => handleDrop(e, skill)}
+                                    onDragEnd={handleDragEnd}
+                                    className={`p-4 border-2 rounded-lg font-semibold flex items-center gap-4 cursor-grab active:cursor-grabbing bg-white transition-all duration-200 hover:border-indigo-400 hover:bg-indigo-50 
+                                        ${draggedSkill === skill ? 'opacity-40 scale-105 shadow-2xl' : 'border-slate-300'}
+                                    `}
                                 >
-                                    <span className="font-bold text-indigo-600">{index + 1}</span>
+                                    <span className="font-bold text-indigo-600 w-4 text-center">{index + 1}</span>
                                     <span>{skill}</span>
                                 </li>
                             ))}
