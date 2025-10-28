@@ -23,7 +23,7 @@ const NavButton: React.FC<{
             {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 rounded-r-full"></div>}
             <span className={`h-5 w-5 ${isActive ? 'text-indigo-600' : disabled ? 'text-slate-400' : 'text-slate-500'}`}>{children}</span>
             {label}
-            {disabled && <span className="ml-auto text-xs font-bold bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full">Đang phát triển</span>}
+            {disabled && <span className="ml-auto text-xs font-bold bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full">Sắp ra mắt</span>}
         </button>
     </li>
 );
@@ -135,6 +135,18 @@ const Sidebar: React.FC<{
             </NavButton>
              <NavButton onClick={() => navigateTo('role-play')} isActive={viewMode === 'role-play'} label="Tình huống nhập vai">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zM6 8a2 2 0 11-4 0 2 2 0 014 0zM1.49 15.326a.75.75 0 011.02.043 8.002 8.002 0 0111.985 0 .75.75 0 011.02-.043 9.502 9.502 0 00-14.025 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14.51 15.326a.75.75 0 011.02.043A8.003 8.003 0 0117 18.25a.75.75 0 11-1.44.438 6.503 6.503 0 00-11.12 0 .75.75 0 11-1.44-.438 8.003 8.003 0 012.92-2.88.75.75 0 011.02.043z" /></svg>
+            </NavButton>
+        </NavGroup>
+
+        <NavGroup title="Công cụ AI & Nâng cao">
+            <NavButton onClick={() => navigateTo('ai-chat-tutor')} isActive={viewMode === 'ai-chat-tutor'} label="Trợ lý AI">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7 2a1 1 0 00-1 1v1.132a4.002 4.002 0 00-1.095 1.433l-.001.002-.001.002A3.982 3.982 0 002.25 8.25c0 1.84.992 3.444 2.5 4.236V15a1 1 0 001 1h8a1 1 0 001-1v-2.514c1.508-.792 2.5-2.396 2.5-4.236 0-1.54-.83-2.91-2.02-3.68l-.001-.002-.001-.002A4.002 4.002 0 0014 4.132V3a1 1 0 00-1-1H7zm-3.5 7.14A2.484 2.484 0 013.75 8.25c0-1.15.75-2.14 1.8-2.399l.06-.013a2.502 2.502 0 012.38-2.38l.014-.06A2.484 2.484 0 019.14 3.5h1.72c.86 0 1.6.49 1.95 1.22l.014.06a2.502 2.502 0 012.38 2.38l.06.013c1.05.259 1.8 1.25 1.8 2.399a2.484 2.484 0 01-1.14 2.065V14h-7v-2.86a2.484 2.484 0 01-1.14-2.065z" clipRule="evenodd" /></svg>
+            </NavButton>
+            <NavButton onClick={() => navigateTo('progress-dashboard')} isActive={viewMode === 'progress-dashboard'} label="Báo cáo Tiến độ">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" /></svg>
+            </NavButton>
+             <NavButton onClick={() => navigateTo('vstep-exam')} isActive={viewMode === 'vstep-exam'} label="Thi thử VSTEP">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm3.293 11.707a1 1 0 001.414 0L10 12.414l1.293 1.293a1 1 0 101.414-1.414L11.414 11l1.293-1.293a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414L8.586 11 7.293 12.293a1 1 0 000 1.414z" clipRule="evenodd" /></svg>
             </NavButton>
         </NavGroup>
         

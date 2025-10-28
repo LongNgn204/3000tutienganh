@@ -108,7 +108,7 @@ export interface StudyProgress {
   [wordEnglish: string]: StudyRecord;
 }
 
-export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading' | 'writing' | 'role-play' | 'welcome' | 'landing' | 'leaderboard' | 'challenges' | 'video-lessons' | 'community-forum' | 'forum-topic' | 'study-plan-wizard' | 'ipa-chart';
+export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading' | 'writing' | 'role-play' | 'welcome' | 'landing' | 'leaderboard' | 'challenges' | 'video-lessons' | 'community-forum' | 'forum-topic' | 'study-plan-wizard' | 'ipa-chart' | 'ai-chat-tutor' | 'progress-dashboard' | 'vstep-exam';
 
 // Content Library Types
 export interface ReadingArticleQuestion {
@@ -166,4 +166,48 @@ export interface ForumTopic {
         author: string;
         timestamp: string;
     }
+}
+
+// VSTEP Exam Types
+export interface VstepQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: string;
+}
+
+export interface VstepListeningPart {
+  partNumber: number;
+  instructions: string;
+  audioScript: string;
+  questions: VstepQuestion[];
+}
+
+export interface VstepReadingPassage {
+  passageNumber: number;
+  passageText: string;
+  questions: VstepQuestion[];
+}
+
+export interface VstepWritingTask {
+  taskNumber: number;
+  prompt: string;
+}
+
+export interface VstepSpeakingPart {
+  partNumber: number;
+  topic: string;
+  prompts: string[];
+}
+
+export interface VstepExam {
+  listening: VstepListeningPart[];
+  reading: VstepReadingPassage[];
+  writing: VstepWritingTask[];
+  speaking: VstepSpeakingPart[];
+}
+
+export interface SkillProgress {
+    skill: string;
+    completed: number;
+    total: number;
 }

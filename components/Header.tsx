@@ -27,6 +27,9 @@ const VIEW_TITLES: Record<ViewMode, string> = {
     'community-forum': 'Diễn đàn Cộng đồng',
     'forum-topic': 'Chủ đề Diễn đàn',
     'study-plan-wizard': 'Tạo Lộ Trình Học Tập',
+    'ai-chat-tutor': 'Trợ lý AI',
+    'progress-dashboard': 'Báo cáo Tiến độ',
+    'vstep-exam': 'Thi thử VSTEP',
 };
 
 const Header: React.FC<{

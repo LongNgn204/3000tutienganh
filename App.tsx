@@ -35,6 +35,9 @@ const CommunityForumView = lazy(() => import('./components/CommunityForumView'))
 const ForumTopicView = lazy(() => import('./components/ForumTopicView'));
 const StudyPlanWizardView = lazy(() => import('./components/StudyPlanWizardView'));
 const IPAChartView = lazy(() => import('./components/IPAChartView'));
+const AIChatTutorView = lazy(() => import('./components/AIChatTutorView'));
+const ProgressDashboardView = lazy(() => import('./components/ProgressDashboardView'));
+const VstepExamView = lazy(() => import('./components/VstepExamView'));
 
 
 const Loader: React.FC = () => (
@@ -462,6 +465,12 @@ const App: React.FC = () => {
                 />;
           case 'quiz':
              return <QuizView allWords={allWords} wordsForQuiz={filteredWords} categories={wordCategories} onGoalUpdate={() => {}} />;
+          case 'ai-chat-tutor':
+            return <AIChatTutorView currentUser={currentUser} />;
+          case 'progress-dashboard':
+            return <ProgressDashboardView currentUser={currentUser} allWords={allWords} />;
+          case 'vstep-exam':
+            return <VstepExamView />;
           case 'list':
           default:
             return <WordList 
