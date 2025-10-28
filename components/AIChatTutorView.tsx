@@ -46,13 +46,12 @@ const AIChatTutorView: React.FC<AIChatTutorViewProps> = ({ currentUser }) => {
               config: { systemInstruction },
             });
             
-            // Send initial message via stream
+            setIsLoading(true);
+            setMessages([{ role: 'model', text: '' }]); // Placeholder for initial message
+
             const initialStream = await chatRef.current.sendMessageStream({ message: "Hello, introduce yourself briefly and ask me what I want to learn today."});
-            setIsLoading(false);
             
             let accumulatedText = '';
-            setMessages([{ role: 'model', text: '' }]);
-
             for await (const chunk of initialStream) {
                 accumulatedText += chunk.text;
                 setMessages([{ role: 'model', text: accumulatedText }]);
@@ -61,6 +60,7 @@ const AIChatTutorView: React.FC<AIChatTutorViewProps> = ({ currentUser }) => {
         } catch (err) {
             console.error("Chat initialization error:", err);
             setError("Không thể khởi tạo trợ lý AI. Vui lòng tải lại trang.");
+        } finally {
             setIsLoading(false);
         }
     };
@@ -68,7 +68,6 @@ const AIChatTutorView: React.FC<AIChatTutorViewProps> = ({ currentUser }) => {
   }, [currentUser.level]);
   
   useEffect(() => {
-    // Scroll to bottom when new messages are added
     if (chatContainerRef.current) {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
@@ -116,34 +115,26 @@ const AIChatTutorView: React.FC<AIChatTutorViewProps> = ({ currentUser }) => {
     <div className="flex-1 flex flex-col w-full max-w-4xl mx-auto p-4 h-[calc(100vh-180px)] animate-fade-in">
         <div className="flex-1 bg-white rounded-xl shadow-lg border p-4 flex flex-col">
             <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-6 pr-2">
-                {messages.map((msg, index) => (
-                    <div key={index} className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                        {msg.role === 'model' && (
-                            <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center flex-shrink-0 font-bold shadow">AI</div>
-                        )}
-                        <div className={`max-w-lg p-4 rounded-2xl shadow-sm ${msg.role === 'user' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-slate-100 text-slate-800 rounded-bl-none'}`}>
-                            {msg.role === 'model' && !msg.text && isLoading ? (
-                                <div className="flex items-center gap-2">
-                                   <span className="h-2.5 w-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                   <span className="h-2.5 w-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                   <span className="h-2.5 w-2.5 bg-indigo-500 rounded-full animate-bounce"></span>
+                {messages.map((msg, index) => {
+                    const isStreaming = msg.role === 'model' && isLoading && index === messages.length - 1;
+
+                    return (
+                        <div key={index} className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                            {msg.role === 'model' && (
+                                <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center flex-shrink-0 font-bold shadow">AI</div>
+                            )}
+                            <div className={`max-w-lg p-4 rounded-2xl shadow-sm ${msg.role === 'user' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-slate-100 text-slate-800 rounded-bl-none'}`}>
+                                <p className="leading-relaxed inline" dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.text) }} />
+                                {isStreaming && <span className="blinking-cursor" />}
+                            </div>
+                             {msg.role === 'user' && (
+                                <div className="w-10 h-10 rounded-full bg-slate-600 text-white flex items-center justify-center flex-shrink-0 font-bold shadow">
+                                    {currentUser.name.charAt(0).toUpperCase()}
                                 </div>
-                            ) : (
-                                <>
-                                    <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.text) }} />
-                                    {msg.role === 'model' && isLoading && index === messages.length - 1 && (
-                                        <span className="blinking-cursor"></span>
-                                    )}
-                                </>
                             )}
                         </div>
-                         {msg.role === 'user' && (
-                            <div className="w-10 h-10 rounded-full bg-slate-600 text-white flex items-center justify-center flex-shrink-0 font-bold shadow">
-                                {currentUser.name.charAt(0).toUpperCase()}
-                            </div>
-                        )}
-                    </div>
-                ))}
+                    );
+                })}
                  {error && <p className="text-red-500 text-center">{error}</p>}
             </div>
             <form onSubmit={handleSendMessage} className="mt-4 border-t pt-4">
@@ -161,7 +152,7 @@ const AIChatTutorView: React.FC<AIChatTutorViewProps> = ({ currentUser }) => {
                         disabled={isLoading || !input.trim()}
                         className="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-indigo-600 disabled:text-slate-400 hover:bg-indigo-100 rounded-full"
                     >
-                        <svg xmlns="http://www.w.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                     </button>
                 </div>
             </form>

@@ -110,7 +110,8 @@ export interface StudyProgress {
   [wordEnglish: string]: StudyRecord;
 }
 
-export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading' | 'writing' | 'role-play' | 'welcome' | 'landing' | 'leaderboard' | 'challenges' | 'video-lessons' | 'community-forum' | 'forum-topic' | 'study-plan-wizard' | 'ipa-chart' | 'ai-chat-tutor' | 'progress-dashboard' | 'vstep-exam';
+// FIX: Added 'study-plan-wizard' to the ViewMode type to match its usage in Header.tsx.
+export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading' | 'writing' | 'role-play' | 'welcome' | 'landing' | 'leaderboard' | 'challenges' | 'video-lessons' | 'community-forum' | 'forum-topic' | 'ipa-chart' | 'ai-chat-tutor' | 'progress-dashboard' | 'vstep-exam' | 'study-plan-wizard';
 
 // Content Library Types
 export interface ReadingArticleQuestion {

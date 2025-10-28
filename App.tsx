@@ -1,11 +1,15 @@
+
+
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import { WORD_CATEGORIES as CONSTANT_WORD_CATEGORIES, ALL_WORDS as CONSTANT_ALL_WORDS, TYPE_COLORS } from './constants';
 import { CHALLENGES } from './challengesData';
-import type { User, StudyProgress, ViewMode, PlacementTestResult, StudyRecord, DailyProgress, DailyGoal, Category, Word, ForumPost, ForumReply, StudyPlan, UserStudyPlanInput, CEFRLevel } from './types';
+import type { User, StudyProgress, ViewMode, PlacementTestResult, StudyRecord, DailyProgress, DailyGoal, Category, Word, ForumPost, ForumReply, StudyPlan, UserStudyPlanInput, CEFRLevel, ChallengeProgress } from './types';
 import * as api from './services/api';
 import * as srsService from './services/srsService';
 import { FORUM_TOPICS, FORUM_POSTS_DATA } from './forumData';
+import { GoogleGenAI, Type } from '@google/genai';
+import { CONTENT_LIBRARY } from './contentLibrary';
 
 // Lazy load components for better performance
 const Sidebar = lazy(() => import('./components/Sidebar'));
@@ -32,495 +36,398 @@ const ChallengesView = lazy(() => import('./components/ChallengesView'));
 const VideoLessonsView = lazy(() => import('./components/VideoLessonsView'));
 const CommunityForumView = lazy(() => import('./components/CommunityForumView'));
 const ForumTopicView = lazy(() => import('./components/ForumTopicView'));
-const StudyPlanWizardView = lazy(() => import('./components/StudyPlanWizardView'));
 const IPAChartView = lazy(() => import('./components/IPAChartView'));
 const AIChatTutorView = lazy(() => import('./components/AIChatTutorView'));
 const ProgressDashboardView = lazy(() => import('./components/ProgressDashboardView'));
 const VstepExamView = lazy(() => import('./components/VstepExamView'));
 
 
-const Loader: React.FC = () => (
-    <div className="flex-1 flex items-center justify-center h-full">
-        <div className="w-14 h-14 border-4 border-slate-200 border-b-indigo-500 rounded-full animate-spin"></div>
-    </div>
-);
-
 const App: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState<string>(CONSTANT_WORD_CATEGORIES[0]?.id || '');
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('landing');
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [studyProgress, setStudyProgress] = useState<StudyProgress>({});
-  const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
-  const [initialFlashcardFilter, setInitialFlashcardFilter] = useState<'review' | 'new' | null>(null);
-  const [initialFlashcardCategory, setInitialFlashcardCategory] = useState<string | null>(null);
-  const [initialContentId, setInitialContentId] = useState<string | null>(null);
-  const [testResultToShow, setTestResultToShow] = useState<PlacementTestResult | null>(null);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [viewMode, setViewMode] = useState<ViewMode>('landing');
+    const [wordCategories, setWordCategories] = useState<Category[]>(CONSTANT_WORD_CATEGORIES);
+    const [allWords, setAllWords] = useState<Word[]>(CONSTANT_ALL_WORDS);
+    const [studyProgress, setStudyProgress] = useState<StudyProgress>({});
+    const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
+    const [challengeProgress, setChallengeProgress] = useState<ChallengeProgress>({});
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+    
+    // State for specific views
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeWordListCategory, setActiveWordListCategory] = useState(wordCategories[0]?.id || 'all');
+    const [initialFlashcardFilter, setInitialFlashcardFilter] = useState<'review' | 'new' | null>(null);
+    const [initialFlashcardCategory, setInitialFlashcardCategory] = useState<string | null>(null);
+    const [initialContentId, setInitialContentId] = useState<string | null>(null);
+    const [forumPosts, setForumPosts] = useState<Record<string, ForumPost[]>>(FORUM_POSTS_DATA);
+    const [activeForumTopicId, setActiveForumTopicId] = useState<string | null>(null);
 
-  const [wordCategories, setWordCategories] = useState<Category[]>(CONSTANT_WORD_CATEGORIES);
-  const [allWords, setAllWords] = useState<Word[]>(CONSTANT_ALL_WORDS);
 
-  // Forum State
-  const [forumTopics, setForumTopics] = useState(FORUM_TOPICS);
-  const [forumPosts, setForumPosts] = useState(FORUM_POSTS_DATA);
-  const [viewingTopicId, setViewingTopicId] = useState<string | null>(null);
+    const mainContentRef = useRef<HTMLDivElement>(null);
 
-  const mainContentRef = useRef<HTMLDivElement>(null);
-
-  const initializeDailyProgress = (user: User): DailyProgress => {
-      const today = new Date().toISOString().split('T')[0];
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-      const lastProgress = user.dailyProgress;
-      let newStreak = 1;
-
-      if (lastProgress) {
-          if (lastProgress.date === today) {
-              return lastProgress;
-          }
-          if (lastProgress.date === yesterdayStr) {
-              const allGoalsMet = lastProgress.goals.every(g => g.current >= g.target);
-              if (allGoalsMet) {
-                  newStreak = lastProgress.streak + 1;
-              } else {
-                  newStreak = 0;
-              }
-          } else {
-              newStreak = 1;
-          }
-      }
-
-      const newGoals: DailyGoal[] = [
-          { id: 'g1', description: 'Học 10 từ mới', type: 'learn_new', target: 10, current: 0 },
-          { id: 'g2', description: 'Ôn tập 15 từ SRS', type: 'review_srs', target: 15, current: 0 },
-          { id: 'g3', description: 'Hoàn thành 1 bài đọc có hướng dẫn', type: 'complete_reading', target: 1, current: 0 },
-          { id: 'g4', description: 'Hoàn thành 1 bài nghe có hướng dẫn', type: 'complete_listening', target: 1, current: 0 },
-          { id: 'g5', description: 'Luyện giao tiếp 1 lần', type: 'complete_conversation', target: 1, current: 0 },
-          { id: 'g6', description: 'Hoàn thành 1 tình huống nhập vai', type: 'complete_roleplay', target: 1, current: 0 },
-          { id: 'g7', description: 'Hoàn thành 1 thử thách', type: 'complete_challenge', target: 1, current: 0 },
-          { id: 'g8', description: 'Xem 1 bài giảng video', type: 'complete_video_lesson', target: 1, current: 0 },
-          { id: 'g9', description: 'Đăng 1 bài trong diễn đàn', type: 'post_in_forum', target: 1, current: 0 },
-      ];
-
-      return { date: today, streak: newStreak, goals: newGoals };
-  };
-
-  useEffect(() => {
-    const verifySession = async () => {
-        const { user } = await api.checkSession();
-        if (user) {
-            handleLoginSuccess(user);
-        } else {
-            setViewMode('landing');
-        }
-    };
-    verifySession();
-  }, []);
-
-  const handleLoginSuccess = (user: User) => {
-      setCurrentUser(user);
-      setStudyProgress(user.studyProgress || {});
-      const newDailyProgress = initializeDailyProgress(user);
-      setDailyProgress(newDailyProgress);
-      api.updateDailyProgress(user.name, newDailyProgress);
-
-      const customWords = user.customWords || [];
-      if (customWords.length > 0) {
-        const customCategory: Category = {
-            id: 'custom-words',
-            name: 'Từ của bạn',
-            level: user.level,
-            words: customWords
+    // Initial load - check for existing session
+    useEffect(() => {
+        const checkUserSession = async () => {
+            const { user } = await api.checkSession();
+            if (user) {
+                handleLoginSuccess(user, true); // Don't show welcome screen on session restore
+            }
+            // Add a small delay to prevent loader flashing
+            setTimeout(() => setIsLoading(false), 300);
         };
-        setWordCategories([customCategory, ...CONSTANT_WORD_CATEGORIES]);
-        setAllWords([...customWords, ...CONSTANT_ALL_WORDS]);
-      } else {
-          setWordCategories(CONSTANT_WORD_CATEGORIES);
-          setAllWords(CONSTANT_ALL_WORDS);
-      }
+        checkUserSession();
+    }, []);
 
-      setViewMode('dashboard');
-  };
-
-  const handleRegister = async (name: string, password: string): Promise<{ success: boolean, message?: string }> => {
-    const result = await api.register(name, password);
-    if (result.success && result.user) {
-        // handleLoginSuccess will set up words, progress etc.
-        handleLoginSuccess(result.user);
-        setViewMode('welcome');
-    }
-    return result;
-  };
-
-  const handleLogin = async (name: string, password: string): Promise<{ success: boolean, message?: string }> => {
-    const result = await api.login(name, password);
-    if (result.success && result.user) {
-        handleLoginSuccess(result.user);
-        return { success: true };
-    }
-    return { success: false, message: result.message };
-  };
-
-  const handlePlacementTestSubmit = (result: PlacementTestResult) => {
-      setTestResultToShow(result);
-      setViewMode('placement-test-result');
-  };
-
-  const handlePlacementTestComplete = async () => {
-    if (!currentUser) return;
-    
-    const finalLevel = testResultToShow?.level || 'A2';
-    const finalResult = testResultToShow || { level: 'A2', analysis: { score: 0, totalQuestions: 0, incorrectQuestions: [], performanceByLevel: {} } };
-
-    const result = await api.completePlacementTest(currentUser.name, { ...finalResult, level: finalLevel });
-
-    if (result.success && result.user) {
-        setCurrentUser(result.user); 
-        setStudyProgress(result.user.studyProgress || {});
-    } else {
-        console.error("Failed to complete placement test:", result.message);
-    }
-
-    setTestResultToShow(null);
-    setViewMode('dashboard'); 
-  };
-
-  const handleWelcomeComplete = () => {
-    setViewMode('dashboard');
-  };
-  
-  const handleCreateStudyPlan = async (plan: StudyPlan, planInput: UserStudyPlanInput) => {
-    if (!currentUser) return;
-    const updatedUser = { ...currentUser, studyPlan: plan, studyPlanInput: planInput };
-    setCurrentUser(updatedUser);
-    await api.updateUser(updatedUser);
-    setViewMode('dashboard');
-  };
-
-  const handleLogout = () => {
-    api.logout();
-    setCurrentUser(null);
-    setStudyProgress({});
-    setDailyProgress(null);
-    setWordCategories(CONSTANT_WORD_CATEGORIES);
-    setAllWords(CONSTANT_ALL_WORDS);
-    setViewMode('landing');
-  };
-
-  const handleLevelChange = async (newLevel: CEFRLevel) => {
-    if (!currentUser || currentUser.level === newLevel) return;
-
-    const wantsNewPlan = confirm(
-      `Thay đổi trình độ có thể làm lộ trình học hiện tại của bạn không còn phù hợp. Bạn có muốn tạo một lộ trình học mới cho trình độ ${newLevel} không?`
-    );
-
-    const updatedUser: User = { 
-      ...currentUser, 
-      level: newLevel,
-      studyPlan: wantsNewPlan ? undefined : currentUser.studyPlan,
-      studyPlanInput: wantsNewPlan ? undefined : currentUser.studyPlanInput
-    };
-    
-    setCurrentUser(updatedUser);
-    await api.updateUser(updatedUser);
-
-    if (wantsNewPlan) {
-      setViewMode('study-plan-wizard');
-    }
-  };
-  
-  const handleUpdateStudyProgress = async (wordEnglish: string, performance: 'again' | 'good' | 'easy') => {
-    if (!currentUser) return;
-
-    const currentRecord = studyProgress[wordEnglish] || srsService.getInitialRecord();
-    const isNewWord = !studyProgress[wordEnglish];
-    const newRecord = srsService.calculateNextReview(currentRecord, performance);
-    
-    const newProgress = { ...studyProgress, [wordEnglish]: newRecord };
-    setStudyProgress(newProgress);
-    await api.updateProgress(currentUser.name, newProgress);
-
-    if (performance !== 'again' && isNewWord) {
-      handleGoalUpdate('learn_new', 1);
-    }
-    handleGoalUpdate('review_srs', 1);
-  };
-
-  const handleGoalUpdate = async (type: DailyGoal['type'], amount: number) => {
-    if (!currentUser) return;
-    let updatedUser = { ...currentUser };
-    let userChanged = false;
-
-    if (dailyProgress) {
-        const newGoals = dailyProgress.goals.map(goal => {
-            if (goal.type === type) {
-                return { ...goal, current: Math.min(goal.target, goal.current + amount) };
-            }
-            return goal;
-        });
-        const newDailyProgress = { ...dailyProgress, goals: newGoals };
-        setDailyProgress(newDailyProgress);
-        await api.updateDailyProgress(currentUser.name, newDailyProgress);
-    }
-
-    const newChallengeProgress = { ...(currentUser.challengeProgress || {}) };
-    CHALLENGES.forEach(challenge => {
-        if (challenge.goalType === type) {
-            const progress = newChallengeProgress[challenge.id] || { current: 0, completed: false };
-            if (!progress.completed) {
-                progress.current = Math.min(challenge.target, progress.current + amount);
-                if (progress.current >= challenge.target) {
-                    progress.completed = true;
-                    handleGoalUpdate('complete_challenge', 1);
-                }
-                newChallengeProgress[challenge.id] = progress;
-                userChanged = true;
-            }
+    const navigateTo = (mode: ViewMode, options: any = {}) => {
+        setViewMode(mode);
+        if (mainContentRef.current) {
+            mainContentRef.current.scrollTop = 0;
         }
-    });
+        if (options.initialFilter) {
+            setInitialFlashcardFilter(options.initialFilter);
+        }
+        if (options.initialCategory) {
+            setInitialFlashcardCategory(options.initialCategory);
+        }
+        if (options.targetId) {
+            setInitialContentId(options.targetId);
+        }
+        if (options.topicId) {
+            setActiveForumTopicId(options.topicId);
+        }
+        setIsSidebarOpen(false); // Close sidebar on navigation
+    };
 
-    if (userChanged) {
-        updatedUser.challengeProgress = newChallengeProgress;
+    const handleLoginSuccess = (user: User, isSessionRestore = false) => {
+        setCurrentUser(user);
+        setStudyProgress(user.studyProgress || {});
+        setDailyProgress(user.dailyProgress || null);
+        setChallengeProgress(user.challengeProgress || {});
+        
+        // Combine constant words with user's custom words
+        const combinedCategories = [...CONSTANT_WORD_CATEGORIES];
+        if (user.customWords && user.customWords.length > 0) {
+            combinedCategories.push({
+                id: 'custom',
+                name: 'Từ của bạn',
+                level: user.level, // Or a generic level
+                words: user.customWords
+            });
+        }
+        setWordCategories(combinedCategories);
+        setAllWords(combinedCategories.flatMap(cat => cat.words));
+        
+        // Navigation logic
+        if (!user.placementTestResult) {
+            navigateTo('placement-test');
+        } else if (isSessionRestore) {
+             navigateTo('dashboard');
+        } else {
+            navigateTo('welcome');
+        }
+
+        // Auto-generate study plan if one doesn't exist
+        if (user.placementTestResult && !user.studyPlan) {
+            generateAndSaveAutomaticStudyPlan(user);
+        }
+    };
+
+    const handleRegisterSuccess = (user: User) => {
+        handleLoginSuccess(user); // Treat register as an immediate login
+    };
+
+    const handleLogout = () => {
+        api.logout();
+        setCurrentUser(null);
+        setViewMode('landing');
+    };
+
+    const updateAndSaveUser = async (updatedUser: User) => {
         setCurrentUser(updatedUser);
         await api.updateUser(updatedUser);
-    }
-  }
-  
-  const handleResetStudyProgress = async (wordKeys: string[]) => {
-      if (!currentUser) return;
-      const newProgress = { ...studyProgress };
-      wordKeys.forEach(key => {
-          delete newProgress[key];
-      });
-      setStudyProgress(newProgress);
-      await api.updateProgress(currentUser.name, newProgress);
-  };
+    };
 
-  const handleAddNewWord = async (newWordData: Omit<Word, 'color'>) => {
-    if (!currentUser) return;
-    
-    const newWord: Word = {
-        ...newWordData,
-        color: TYPE_COLORS[newWordData.type] || TYPE_COLORS['n/v'],
+    const handleUpdateStudyProgress = async (wordEnglish: string, performance: 'again' | 'good' | 'easy') => {
+        const currentRecord = studyProgress[wordEnglish] || srsService.getInitialRecord();
+        const newRecord = srsService.calculateNextReview(currentRecord, performance);
+        
+        const updatedProgress = { ...studyProgress, [wordEnglish]: newRecord };
+        setStudyProgress(updatedProgress);
+        
+        if(currentUser) {
+            const updatedUser = { ...currentUser, studyProgress: updatedProgress };
+            setCurrentUser(updatedUser); // Optimistic update
+            await api.updateUser(updatedUser); // Persist
+            handleGoalUpdate(performance === 'again' ? 'review_srs' : (currentRecord.srsLevel === 0 ? 'learn_new' : 'review_srs'));
+        }
     };
     
-    const updatedCustomWords = [...(currentUser.customWords || []), newWord];
-    const updatedUser = { ...currentUser, customWords: updatedCustomWords };
-    
-    setCurrentUser(updatedUser);
-    await api.updateUser(updatedUser);
-    
-    // Update the main word lists state
-    setAllWords(prev => [newWord, ...prev]);
-    setWordCategories(prev => {
-        const customCategoryIndex = prev.findIndex(c => c.id === 'custom-words');
-        if (customCategoryIndex !== -1) {
-            const newCategories = [...prev];
-            newCategories[customCategoryIndex].words = updatedCustomWords;
-            return newCategories;
-        } else {
-            return [{ id: 'custom-words', name: 'Từ của bạn', level: currentUser.level, words: updatedCustomWords }, ...prev];
-        }
-    });
-  };
+    const generateAndSaveAutomaticStudyPlan = async (user: User) => {
+        if (!user) return;
+        setIsGeneratingPlan(true);
 
-  // Forum Handlers
-  const handleAddNewPost = (newPost: ForumPost) => {
-    setForumPosts(prev => ({
-      ...prev,
-      [newPost.topicId]: [newPost, ...(prev[newPost.topicId] || [])]
-    }));
-    handleGoalUpdate('post_in_forum', 1);
-    navigateTo('forum-topic', { topicId: newPost.topicId });
-  };
-
-  const handleAddNewReply = (topicId: string, postId: string, newReply: ForumReply) => {
-    setForumPosts(prev => {
-      const newPostsInTopic = (prev[topicId] || []).map(post => {
-        if (post.id === postId) {
-          return { ...post, replies: [...post.replies, newReply] };
-        }
-        return post;
-      });
-      return { ...prev, [topicId]: newPostsInTopic };
-    });
-  };
-
-
-  const navigateTo = (mode: ViewMode, options?: { initialFilter?: 'review' | 'new', topicId?: string, initialCategory?: string, targetId?: string }) => {
-    setInitialFlashcardFilter(options?.initialFilter || null);
-    setInitialFlashcardCategory(options?.initialCategory || null);
-    setViewingTopicId(options?.topicId || null);
-    setInitialContentId(options?.targetId || null);
-    
-    setViewMode(mode);
-    setIsMobileSidebarOpen(false);
-  };
-
-  const filteredWords = useMemo(() => {
-      if (!searchQuery) return allWords;
-      const lowercasedQuery = searchQuery.toLowerCase();
-      return allWords.filter(word =>
-          word.english.toLowerCase().includes(lowercasedQuery) ||
-          word.vietnamese.toLowerCase().includes(lowercasedQuery)
-      );
-  }, [searchQuery, allWords]);
-
-
-  const renderView = () => {
-    if(currentUser) {
-        // Show study plan wizard if user has completed placement test but has no plan yet
-        if (currentUser.placementTestResult && !currentUser.studyPlan && viewMode !== 'study-plan-wizard') {
-            setViewMode('study-plan-wizard');
+        const cefrOrder: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+        const userLevelIndex = cefrOrder.indexOf(user.level);
+        const relevantLevels: CEFRLevel[] = [user.level];
+        if (userLevelIndex < cefrOrder.length - 1) {
+            relevantLevels.push(cefrOrder[userLevelIndex + 1]);
         }
 
-        switch(viewMode) {
-          case 'dashboard':
-            return <DashboardView 
-                      currentUser={currentUser} 
-                      studyProgress={studyProgress}
-                      dailyProgress={dailyProgress}
-                      categories={wordCategories}
-                      allWords={allWords}
-                      navigateTo={navigateTo}
-                   />;
-          case 'study-plan-wizard':
-             return <StudyPlanWizardView currentUser={currentUser} onCreatePlan={handleCreateStudyPlan} />;
-          case 'welcome':
-            return <WelcomeView currentUser={currentUser} onComplete={handleWelcomeComplete} />;
-          case 'story':
-            return <AIStoryView words={allWords} studyProgress={studyProgress} onGoalUpdate={() => {}} />;
-          case 'conversation':
-            return <ConversationView allWords={allWords} studyProgress={studyProgress} currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_conversation', 1)} />;
-          case 'pronunciation':
-            return <PronunciationView words={allWords} studyProgress={studyProgress} onGoalUpdate={() => handleGoalUpdate('complete_pronunciation', 1)} />;
-          case 'ipa-chart':
-            return <IPAChartView onGoalUpdate={() => handleGoalUpdate('complete_pronunciation', 1)} />;
-          case 'grammar':
-            return <GrammarView />;
-          case 'listening':
-            return <ListeningView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_listening', 1)} initialContentId={initialContentId} onInitialContentConsumed={() => setInitialContentId(null)}/>;
-          case 'advanced-grammar':
-            return <AdvancedGrammarView currentUser={currentUser} onGoalUpdate={() => {}} />;
-          case 'reading':
-            return <ReadingRoomView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_reading', 1)} initialContentId={initialContentId} onInitialContentConsumed={() => setInitialContentId(null)} />;
-          case 'writing':
-            return <AIWritingView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_writing', 1)} />;
-          case 'role-play':
-            return <AIRolePlayView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_roleplay', 1)} />;
-          case 'leaderboard':
-            return <LeaderboardView currentUser={currentUser} />;
-          case 'challenges':
-            return <ChallengesView currentUser={currentUser} />;
-           case 'video-lessons':
-            return <VideoLessonsView onGoalUpdate={() => handleGoalUpdate('complete_video_lesson', 1)} />;
-          case 'community-forum':
-            return <CommunityForumView 
-                      topics={forumTopics}
-                      navigateTo={navigateTo}
-                      onGoalUpdate={() => handleGoalUpdate('post_in_forum', 1)}
-                      onAddNewPost={handleAddNewPost}
-                      currentUser={currentUser}
-                    />;
-          case 'forum-topic':
-            if (!viewingTopicId) return <CommunityForumView topics={forumTopics} navigateTo={navigateTo} onGoalUpdate={() => handleGoalUpdate('post_in_forum', 1)} onAddNewPost={handleAddNewPost} currentUser={currentUser} />;
-            return <ForumTopicView
-                      topicId={viewingTopicId}
-                      topics={forumTopics}
-                      posts={forumPosts[viewingTopicId] || []}
-                      currentUser={currentUser}
-                      navigateTo={navigateTo}
-                      onAddNewReply={handleAddNewReply}
-                   />;
-          case 'placement-test':
-            return <PlacementTestView onTestSubmit={handlePlacementTestSubmit} />;
-          case 'placement-test-result':
-            return <PlacementTestResultView result={testResultToShow!} onComplete={handlePlacementTestComplete} />;
-          case 'flashcard':
-            return <FlashcardView 
-                  words={filteredWords} 
-                  categories={wordCategories}
-                  studyProgress={studyProgress}
-                  onUpdateStudyProgress={handleUpdateStudyProgress}
-                  onResetStudyProgress={handleResetStudyProgress}
-                  initialStudyFilter={initialFlashcardFilter}
-                  onInitialFilterConsumed={() => setInitialFlashcardFilter(null)}
-                  initialCategory={initialFlashcardCategory}
-                  onInitialCategoryConsumed={() => setInitialFlashcardCategory(null)}
-                />;
-          case 'quiz':
-             return <QuizView allWords={allWords} wordsForQuiz={filteredWords} categories={wordCategories} onGoalUpdate={() => {}} />;
-          case 'ai-chat-tutor':
-            return <AIChatTutorView currentUser={currentUser} />;
-          case 'progress-dashboard':
-            return <ProgressDashboardView currentUser={currentUser} allWords={allWords} />;
-          case 'vstep-exam':
-            return <VstepExamView />;
-          case 'list':
-          default:
-            return <WordList 
-                      categories={wordCategories}
-                      searchQuery={searchQuery}
-                      setSearchQuery={setSearchQuery}
-                      activeCategory={activeCategory}
-                      setActiveCategory={setActiveCategory}
-                      mainContentRef={mainContentRef}
-                      onAddNewWord={handleAddNewWord}
-                    />
+        // FIX: Use the imported constant `CONSTANT_WORD_CATEGORIES` instead of the state variable `wordCategories`.
+        const availableFlashcards = CONSTANT_WORD_CATEGORIES
+            .filter(cat => relevantLevels.includes(cat.level))
+            .map(cat => `{id: "${cat.id}", name: "${cat.name}"}`);
+            
+        const availableReadings = CONTENT_LIBRARY.reading
+            .filter(art => relevantLevels.includes(art.level))
+            .map(art => `{id: "${art.id}", title: "${art.title}"}`);
+
+        const availableListenings = CONTENT_LIBRARY.listening
+            .filter(ex => relevantLevels.includes(ex.level))
+            .map(ex => `{id: "${ex.id}", title: "${ex.title}"}`);
+
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const prompt = `Act as an expert language learning curriculum designer for a Vietnamese learner. Based on the user's CEFR level and a list of available content, create a personalized 7-day study plan.
+
+User's CEFR Level: ${user.level}
+Time per day: 30 minutes (default)
+
+**Available Content Catalog (pre-filtered for the user's level):**
+- Flashcard Categories: [${availableFlashcards.join(', ')}]
+- Reading Articles: [${availableReadings.join(', ')}]
+- Listening Exercises: [${availableListenings.join(', ')}]
+
+**CRITICAL Instructions:**
+1.  Create a balanced plan for 7 days ("day1" to "day7").
+2.  Total duration for each day should be around 30 minutes.
+3.  For tasks of type 'flashcard_new', 'flashcard_review', 'reading', or 'listening', you MUST include a 'targetId'.
+4.  The 'targetId' **MUST BE CHOSEN EXCLUSIVELY** from the "Available Content Catalog".
+5.  The 'description' **MUST CORRESPOND** to the title/name for the chosen 'targetId'.
+6.  Return ONLY the valid JSON object.`;
+
+            const taskSchema = {
+                type: Type.OBJECT,
+                properties: {
+                    id: { type: Type.STRING }, description: { type: Type.STRING },
+                    type: { type: Type.STRING }, duration: { type: Type.INTEGER },
+                    completed: { type: Type.BOOLEAN }, targetId: { type: Type.STRING }
+                },
+                required: ['id', 'description', 'type', 'duration', 'completed']
+            };
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash', contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            day1: { type: Type.ARRAY, items: taskSchema }, day2: { type: Type.ARRAY, items: taskSchema },
+                            day3: { type: Type.ARRAY, items: taskSchema }, day4: { type: Type.ARRAY, items: taskSchema },
+                            day5: { type: Type.ARRAY, items: taskSchema }, day6: { type: Type.ARRAY, items: taskSchema },
+                            day7: { type: Type.ARRAY, items: taskSchema },
+                        },
+                        required: ['day1', 'day2', 'day3', 'day4', 'day5', 'day6', 'day7']
+                    }
+                }
+            });
+
+            const plan: StudyPlan = JSON.parse(response.text);
+            const updatedUser = { ...user, studyPlan: plan };
+            await updateAndSaveUser(updatedUser);
+
+        } catch (err) {
+            console.error("Automatic Study Plan Generation Error:", err);
+            // Optionally set an error state to show on the dashboard
+        } finally {
+            setIsGeneratingPlan(false);
         }
-    }
+    };
+
+    const handlePlacementTestComplete = async (result: PlacementTestResult) => {
+        if (!currentUser) return;
+        const updatedUser: User = { ...currentUser, level: result.level, placementTestResult: result, studyPlan: undefined }; // Reset plan on re-test
+        await updateAndSaveUser(updatedUser);
+        await generateAndSaveAutomaticStudyPlan(updatedUser); // Generate new plan automatically
+        navigateTo('placement-test-result');
+    };
+
+    const handleLevelChange = async (newLevel: CEFRLevel) => {
+        if (!currentUser || currentUser.level === newLevel) return;
+        if (confirm(`Bạn có chắc muốn đổi trình độ sang ${newLevel} không? Lộ trình học hiện tại sẽ được thay thế.`)) {
+            const updatedUser = { ...currentUser, level: newLevel, studyPlan: undefined };
+            await updateAndSaveUser(updatedUser);
+            await generateAndSaveAutomaticStudyPlan(updatedUser);
+        }
+    };
     
-    switch(viewMode) {
-        case 'auth':
-            return <AuthView onLogin={handleLogin} onRegister={handleRegister} />;
-        case 'landing':
-        default:
-            return <LandingView onStart={() => setViewMode('auth')} />;
-    }
-  };
+    const handleGoalUpdate = async (type: DailyGoal['type']) => {
+        // This function will be called from child components after a learning activity is completed.
+        // It updates both daily goals and weekly challenges.
+        if (!currentUser) return;
 
-  if (!currentUser) {
-    return (
-        <Suspense fallback={<div id="initial-loader"><div className="spinner"></div></div>}>
-            {renderView()}
-        </Suspense>
-    );
-  }
+        let currentChallengeProgress = { ...(currentUser.challengeProgress || {}) };
+        
+        CHALLENGES.forEach(challenge => {
+            if (challenge.goalType === type) {
+                const progress = currentChallengeProgress[challenge.id] || { current: 0, completed: false };
+                if (!progress.completed) {
+                    progress.current += 1;
+                    if (progress.current >= challenge.target) {
+                        progress.completed = true;
+                        // Maybe trigger a notification here in the future
+                    }
+                    currentChallengeProgress[challenge.id] = progress;
+                }
+            }
+        });
 
-  return (
-    <div className={`min-h-screen text-slate-800 flex ${isMobileSidebarOpen ? 'sidebar-open' : ''}`}>
-      <Suspense fallback={<div></div>}>
-        <Sidebar 
-          viewMode={viewMode} 
-          navigateTo={navigateTo}
-          currentUser={currentUser}
-          onLogoutClick={handleLogout}
-          onLevelChange={handleLevelChange}
-        />
-      </Suspense>
-      <div 
-        className="fixed inset-0 bg-black/50 z-30 lg:hidden sidebar-overlay opacity-0 pointer-events-none transition-opacity"
-        onClick={() => setIsMobileSidebarOpen(false)}
-      ></div>
+        const updatedUser = { ...currentUser, challengeProgress: currentChallengeProgress };
+        await updateAndSaveUser(updatedUser); // Save the updated progress
+    };
+    
+    const filteredWordsForQuiz = useMemo(() => {
+        if (!searchQuery) return allWords;
+        const lowercasedQuery = searchQuery.toLowerCase();
+        return allWords.filter(word =>
+            word.english.toLowerCase().includes(lowercasedQuery) ||
+            word.vietnamese.toLowerCase().includes(lowercasedQuery)
+        );
+    }, [searchQuery, allWords]);
+    
 
-      <div className="flex flex-col flex-1 lg:pl-64">
-        <Header 
-          viewMode={viewMode}
-          onMenuClick={() => setIsMobileSidebarOpen(true)}
-        />
-        <main className="flex-1 flex flex-col">
-          <Suspense fallback={<Loader />}>
-            <div className="flex-grow w-full max-w-screen-2xl mx-auto flex flex-col">
-              {renderView()}
+    if (isLoading) {
+        return (
+            <div id="initial-loader">
+                <div className="spinner"></div>
             </div>
+        );
+    }
+
+    if (viewMode === 'landing') {
+        return <Suspense fallback={<div/>}><LandingView onStart={() => navigateTo('auth')} /></Suspense>;
+    }
+    
+    if (!currentUser) {
+        return (
+          <Suspense fallback={<div/>}>
+            <AuthView
+              onLogin={async (name, password) => {
+                const result = await api.login(name, password);
+                if (result.success && result.user) handleLoginSuccess(result.user);
+                return result;
+              }}
+              onRegister={async (name, password) => {
+                 const result = await api.register(name, password);
+                if (result.success && result.user) handleRegisterSuccess(result.user);
+                return result;
+              }}
+            />
           </Suspense>
-        </main>
-      </div>
-    </div>
-  );
+        );
+    }
+    
+    const renderView = () => {
+        switch (viewMode) {
+            case 'dashboard':
+                return <DashboardView currentUser={currentUser} studyProgress={studyProgress} dailyProgress={dailyProgress} categories={wordCategories} allWords={allWords} navigateTo={navigateTo} isGeneratingPlan={isGeneratingPlan} />;
+            case 'list':
+                return <WordList 
+                    categories={wordCategories} 
+                    searchQuery={searchQuery} 
+                    setSearchQuery={setSearchQuery}
+                    activeCategory={activeWordListCategory}
+                    setActiveCategory={setActiveWordListCategory}
+                    mainContentRef={mainContentRef}
+                    onAddNewWord={async () => {}} // Placeholder for now
+                />;
+            case 'flashcard':
+                 return <FlashcardView 
+                    words={allWords} 
+                    categories={wordCategories}
+                    studyProgress={studyProgress} 
+                    onUpdateStudyProgress={handleUpdateStudyProgress}
+                    onResetStudyProgress={() => {}} // Placeholder
+                    initialStudyFilter={initialFlashcardFilter}
+                    onInitialFilterConsumed={() => setInitialFlashcardFilter(null)}
+                    initialCategory={initialFlashcardCategory}
+                    onInitialCategoryConsumed={() => setInitialFlashcardCategory(null)}
+                 />;
+            case 'quiz':
+                return <QuizView allWords={allWords} wordsForQuiz={filteredWordsForQuiz} categories={wordCategories} onGoalUpdate={() => handleGoalUpdate('complete_quiz')} />;
+            case 'grammar':
+                return <GrammarView />;
+            case 'conversation':
+                return <ConversationView allWords={allWords} studyProgress={studyProgress} currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_conversation')} />;
+            case 'pronunciation':
+                return <PronunciationView words={allWords} studyProgress={studyProgress} onGoalUpdate={() => handleGoalUpdate('complete_pronunciation')} />;
+            case 'story':
+                return <AIStoryView words={allWords} studyProgress={studyProgress} onGoalUpdate={() => handleGoalUpdate('complete_story')} />;
+            case 'placement-test':
+                return <PlacementTestView onTestSubmit={handlePlacementTestComplete} />;
+            case 'placement-test-result':
+                return currentUser.placementTestResult ? <PlacementTestResultView result={currentUser.placementTestResult} onComplete={() => navigateTo('dashboard')} /> : null;
+            case 'listening':
+                return <ListeningView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_listening')} initialContentId={initialContentId} onInitialContentConsumed={() => setInitialContentId(null)} />;
+            case 'advanced-grammar':
+                return <AdvancedGrammarView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_adv_grammar')} />;
+            case 'reading':
+                return <ReadingRoomView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_reading')} initialContentId={initialContentId} onInitialContentConsumed={() => setInitialContentId(null)} />;
+            case 'writing':
+                return <AIWritingView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_writing')} />;
+            case 'role-play':
+                return <AIRolePlayView currentUser={currentUser} onGoalUpdate={() => handleGoalUpdate('complete_roleplay')} />;
+            case 'welcome':
+                return <WelcomeView currentUser={currentUser} onComplete={() => navigateTo('dashboard')} />;
+            case 'ipa-chart':
+                return <IPAChartView onGoalUpdate={() => handleGoalUpdate('complete_pronunciation')} />;
+            case 'challenges':
+                 return <ChallengesView currentUser={currentUser} />;
+            case 'ai-chat-tutor':
+                return <AIChatTutorView currentUser={currentUser} />;
+            case 'progress-dashboard':
+                return <ProgressDashboardView currentUser={currentUser} allWords={allWords} />;
+            case 'vstep-exam':
+                return <VstepExamView />;
+            default:
+                return <DashboardView currentUser={currentUser} studyProgress={studyProgress} dailyProgress={dailyProgress} categories={wordCategories} allWords={allWords} navigateTo={navigateTo} isGeneratingPlan={isGeneratingPlan} />;
+        }
+    };
+
+    return (
+        <div className={`flex h-screen ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+             <div 
+                className="fixed inset-0 bg-black/30 z-30 opacity-0 pointer-events-none transition-opacity lg:hidden sidebar-overlay"
+                onClick={() => setIsSidebarOpen(false)}
+             ></div>
+            <Suspense fallback={<div></div>}>
+                <Sidebar 
+                    viewMode={viewMode} 
+                    navigateTo={navigateTo}
+                    currentUser={currentUser}
+                    onLogoutClick={handleLogout}
+                    onLevelChange={handleLevelChange}
+                />
+            </Suspense>
+            <div className="flex-1 flex flex-col overflow-hidden">
+                <Header 
+                    viewMode={viewMode}
+                    onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                />
+                <main ref={mainContentRef} className="flex-1 overflow-y-auto bg-slate-100">
+                    <Suspense fallback={
+                        <div className="flex items-center justify-center h-full">
+                            <div className="w-14 h-14 border-4 border-slate-200 border-b-indigo-500 rounded-full animate-spin"></div>
+                        </div>
+                    }>
+                        {renderView()}
+                    </Suspense>
+                </main>
+            </div>
+        </div>
+    );
 };
 
 export default App;

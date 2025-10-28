@@ -20,20 +20,36 @@ const PlacementTestPrompt: React.FC<{ onStart: () => void }> = ({ onStart }) => 
     </div>
 );
 
-const CreateStudyPlanPrompt: React.FC<{ onStart: () => void }> = ({ onStart }) => (
-    <div className="bg-gradient-to-r from-green-500 to-teal-600 text-white p-6 rounded-2xl shadow-lifted flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
-        <div className="text-center sm:text-left">
-            <h3 className="text-xl font-bold">Xây dựng lộ trình học cho riêng bạn!</h3>
-            <p className="opacity-90 mt-1">Trả lời vài câu hỏi để AI tạo kế hoạch học tập chi tiết trong 7 ngày.</p>
+const GeneratingPlanState: React.FC = () => {
+    const messages = [
+        "Phân tích trình độ của bạn...",
+        "Xây dựng lịch trình học tối ưu...",
+        "Lựa chọn các bài tập phù hợp...",
+        "Hoàn tất lộ trình!"
+    ];
+    const [message, setMessage] = useState(messages[0]);
+
+    useEffect(() => {
+        let index = 0;
+        const intervalId = setInterval(() => {
+            index = (index + 1) % messages.length;
+            setMessage(messages[index]);
+        }, 2500);
+        return () => clearInterval(intervalId);
+    }, []);
+
+    return (
+        <div className="bg-white p-6 rounded-2xl shadow-lifted border border-slate-200 flex flex-col items-center justify-center text-center min-h-[400px]">
+            <svg className="animate-spin h-12 w-12 text-indigo-600 mb-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <h3 className="text-xl font-bold text-slate-800">AI đang tự động tạo lộ trình cho bạn...</h3>
+            <p className="text-slate-500 mt-2 transition-all duration-300">{message}</p>
         </div>
-        <button
-            onClick={onStart}
-            className="px-5 py-2.5 bg-white text-teal-600 font-bold rounded-lg hover:bg-teal-50 transition-all flex-shrink-0 shadow-sm"
-        >
-            Tạo lộ trình ngay
-        </button>
-    </div>
-);
+    );
+};
+
 
 const SuggestedActivityCard: React.FC<{ 
     icon: React.ReactNode; 
@@ -145,9 +161,10 @@ interface DashboardViewProps {
   categories: Category[];
   allWords: Word[];
   navigateTo: (mode: ViewMode, options?: any) => void;
+  isGeneratingPlan: boolean;
 }
 
-const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgress, dailyProgress, categories, allWords, navigateTo }) => {
+const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgress, dailyProgress, categories, allWords, navigateTo, isGeneratingPlan }) => {
     
     const [currentPlan, setCurrentPlan] = useState<StudyPlan | null>(null);
     const [activeTab, setActiveTab] = useState<'today' | 'week'>('today');
@@ -155,6 +172,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgres
     useEffect(() => {
         if (currentUser?.studyPlan) {
             setCurrentPlan(currentUser.studyPlan);
+        } else {
+            setCurrentPlan(null); // Reset if user has no plan
         }
     }, [currentUser?.studyPlan]);
 
@@ -174,8 +193,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgres
             }
             return prevPlan;
         });
-        // Note: This update is local to the dashboard. To persist it, a function
-        // from App.tsx would be needed to update the main currentUser state.
     };
 
     const weeklyProgress = useMemo(() => {
@@ -221,34 +238,15 @@ const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgres
         return allSuggestions.filter(s => !todaysTaskViews.has(s.view as ViewMode));
     }, [currentUser?.studyPlanInput, currentPlan]);
 
-    if (!currentUser) {
-      return (
-        <div className="flex-1 flex items-center justify-center text-center py-20 px-4 animate-fade-in-up">
-          <div>
-            <h2 className="text-3xl font-bold text-slate-700">Chào mừng đến với Học Tiếng Anh Cùng AI</h2>
-            <p className="text-slate-500 mt-2 max-w-md mx-auto">Vui lòng đăng nhập để bắt đầu lộ trình học được cá nhân hóa dành riêng cho bạn.</p>
-          </div>
-        </div>
-      );
-    }
+    if (!currentUser) return null;
 
     const showPlacementTestPrompt = !currentUser.placementTestResult;
-    const showStudyPlanPrompt = currentUser.placementTestResult && !currentUser.studyPlan;
     const hasStudyPlan = !!currentPlan;
 
     return (
         <div className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
              <div className="relative bg-gradient-to-br from-indigo-600 to-blue-700 text-white p-8 rounded-2xl shadow-xl animate-fade-in-up mb-8 overflow-hidden">
-                <div
-                    aria-hidden="true"
-                    className="absolute inset-0 -z-10"
-                    style={{
-                        backgroundImage: `
-                            radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 20%),
-                            radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 20%)
-                        `,
-                    }}
-                />
+                <div aria-hidden="true" className="absolute inset-0 -z-10" style={{ backgroundImage: `radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 20%), radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 20%)` }}/>
                 <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
                     Chào mừng trở lại, {currentUser.name}!
                 </h2>
@@ -263,11 +261,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({ currentUser, studyProgres
                     {showPlacementTestPrompt && (
                         <PlacementTestPrompt onStart={() => navigateTo('placement-test')} />
                     )}
-                    {showStudyPlanPrompt && (
-                        <CreateStudyPlanPrompt onStart={() => navigateTo('study-plan-wizard')} />
-                    )}
                     
-                    {hasStudyPlan && currentPlan && (
+                    {isGeneratingPlan && <GeneratingPlanState />}
+                    
+                    {!isGeneratingPlan && hasStudyPlan && currentPlan && (
                         <>
                             <div className="bg-white p-6 rounded-2xl shadow-lifted border border-slate-200">
                                 <div className="flex flex-col sm:flex-row items-center gap-6 mb-6">
