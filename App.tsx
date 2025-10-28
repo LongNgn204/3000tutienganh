@@ -40,6 +40,7 @@ const IPAChartView = lazy(() => import('./components/IPAChartView'));
 const AIChatTutorView = lazy(() => import('./components/AIChatTutorView'));
 const ProgressDashboardView = lazy(() => import('./components/ProgressDashboardView'));
 const VstepExamView = lazy(() => import('./components/VstepExamView'));
+const StudyPlanWizardView = lazy(() => import('./components/StudyPlanWizardView'));
 
 
 const App: React.FC = () => {
@@ -175,7 +176,6 @@ const App: React.FC = () => {
             relevantLevels.push(cefrOrder[userLevelIndex + 1]);
         }
 
-        // FIX: Use the imported constant `CONSTANT_WORD_CATEGORIES` instead of the state variable `wordCategories`.
         const availableFlashcards = CONSTANT_WORD_CATEGORIES
             .filter(cat => relevantLevels.includes(cat.level))
             .map(cat => `{id: "${cat.id}", name: "${cat.name}"}`);
@@ -418,7 +418,7 @@ Time per day: 30 minutes (default)
                     onToggle={toggleSidebar}
                 />
             </Suspense>
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
                 <Header 
                     viewMode={viewMode}
                     onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
