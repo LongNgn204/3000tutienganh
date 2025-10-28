@@ -1,3 +1,5 @@
+// Fix: Removed circular import. A file cannot import types from itself.
+
 export interface Word {
   english: string;
   type: string;

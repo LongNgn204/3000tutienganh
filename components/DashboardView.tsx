@@ -75,23 +75,25 @@ const QuoteCard: React.FC = () => {
     }, []);
 
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-lifted border border-slate-200 flex flex-col h-full">
-            <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 14.95a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM4 10a1 1 0 01-1-1V7a1 1 0 112 0v2a1 1 0 01-1 1zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zM10 6a4 4 0 100 8 4 4 0 000-8z" /></svg>
+        <div className="bg-white p-4 rounded-2xl shadow-lifted border border-slate-200 flex flex-col">
+            <div className="flex justify-between items-center gap-3">
+                 <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 14.95a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM4 10a1 1 0 01-1-1V7a1 1 0 112 0v2a1 1 0 01-1 1zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zM10 6a4 4 0 100 8 4 4 0 000-8z" /></svg>
+                    </div>
+                    <h3 className="text-base font-bold text-slate-700">Câu Hay Mỗi Ngày</h3>
                  </div>
-                <h3 className="text-lg font-bold text-slate-700">Câu Hay Mỗi Ngày</h3>
+                 <button onClick={getNewQuote} className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 flex-shrink-0">
+                    Xem câu khác
+                </button>
             </div>
-            <div className="flex-grow mt-4 flex flex-col justify-center">
+            <div className="mt-3 pt-3 border-t border-slate-200">
                 <blockquote className="text-center">
-                    <p className="font-semibold text-indigo-700 text-lg italic">"{quote.quote}"</p>
+                    <p className="font-semibold text-indigo-700 text-base italic">"{quote.quote}"</p>
                     {quote.author && <cite className="block text-right text-slate-500 text-sm mt-2 not-italic">— {quote.author}</cite>}
                 </blockquote>
-                {quote.translation && <p className="text-xs text-slate-500 mt-3 italic bg-slate-100 p-2 rounded-md border text-center">{quote.translation}</p>}
+                {quote.translation && <p className="text-xs text-slate-500 mt-2 italic bg-slate-100 p-2 rounded-md border text-center">{quote.translation}</p>}
             </div>
-            <button onClick={getNewQuote} className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 mt-4 self-start">
-                Xem câu khác
-            </button>
         </div>
     );
 }

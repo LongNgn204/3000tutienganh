@@ -32,6 +32,15 @@ const Flashcard: React.FC<FlashcardProps> = ({ word, onAnswer, studyRecord }) =>
 
   const currentStyle = cardStyles[getCardStatus()];
 
+  // Function to adjust font size based on word length
+  const getFontSizeForWord = (wordText: string) => {
+    const len = wordText.length;
+    if (len <= 8) return 'text-6xl md:text-7xl';
+    if (len <= 14) return 'text-5xl md:text-6xl';
+    if (len <= 20) return 'text-4xl md:text-5xl';
+    return 'text-3xl md:text-4xl';
+  };
+
   const AnswerButton: React.FC<{
     onClick: (e: React.MouseEvent) => void;
     colorClasses: string;
@@ -73,7 +82,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ word, onAnswer, studyRecord }) =>
 
         {/* Main Content (The Word) */}
         <div className="flex-grow flex items-center justify-center cursor-pointer">
-            <h2 className="text-6xl md:text-7xl font-extrabold text-slate-800 tracking-tight text-center">{word.english}</h2>
+            <h2 className={`${getFontSizeForWord(word.english)} font-extrabold text-slate-800 tracking-tight text-center break-words`}>{word.english}</h2>
         </div>
         
         {/* Bottom Part (Meaning & Actions) */}

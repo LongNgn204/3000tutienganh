@@ -184,6 +184,31 @@ Provide brutally honest feedback in Vietnamese as a JSON object. A score of 100 
                 </p>
             </div>
             
+            <div className="bg-amber-50 border-2 border-amber-200 p-6 rounded-2xl mb-10 text-left prose max-w-none">
+                <h3 className="text-xl font-bold text-amber-800 not-prose">Mẹo học phát âm</h3>
+                <div className="grid md:grid-cols-2 gap-x-8 gap-y-4 mt-4">
+                    <div>
+                        <h4 className="font-bold text-slate-700">Lưu ý về Trọng âm</h4>
+                        <p>
+                            Ký hiệu <code>/ˈ/</code> đứng <strong>trước</strong> âm tiết được nhấn trọng âm chính trong một từ. Âm tiết này sẽ được đọc to hơn, dài hơn và cao hơn một chút so với các âm tiết khác. Ví dụ, trong từ <code>teacher /ˈtiːtʃər/</code>, trọng âm rơi vào âm tiết đầu tiên "tea".
+                        </p>
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-slate-700">Phân biệt các âm tương tự</h4>
+                        <ul className="pl-0 space-y-2">
+                            <li className="list-none">
+                                <strong><code>/i:/</code> (dài) vs <code>/ɪ/</code> (ngắn):</strong> Âm <code>/i:/</code> giống như khi bạn cười và nói "cheese", miệng căng sang hai bên. Âm <code>/ɪ/</code> thì thả lỏng hơn, nhanh và ngắn, như trong từ "sit".
+                                <br/><em>Ví dụ: <code>see</code> /siː/ vs <code>sit</code> /sɪt/</em>
+                            </li>
+                            <li className="list-none">
+                                <strong><code>/u:/</code> (dài) vs <code>/ʊ/</code> (ngắn):</strong> Âm <code>/u:/</code> có khẩu hình miệng chu ra phía trước, kéo dài, như trong từ "food". Âm <code>/ʊ/</code> ngắn và thả lỏng hơn, như trong từ "good".
+                                <br/><em>Ví dụ: <code>food</code> /fuːd/ vs <code>good</code> /ɡʊd/</em>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 <div className="xl:col-span-2 space-y-8">
                     {renderPhonemeGrid('vowel', 'Nguyên âm (Vowels)')}

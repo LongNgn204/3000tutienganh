@@ -83,13 +83,17 @@ The JSON object should have two keys: "question" (the task for the user) and "ta
         setFeedback(null);
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const userLevel = currentUser?.level || 'B1';
-            const prompt = `You are a meticulous grammar professor. Your student has submitted an answer to a grammar challenge. Be precise and academic in your evaluation.
-- The challenge was: "${challenge.question}"
-- The original sentence/task was: "${challenge.task}"
-- The user's answer is: "${userAnswer}"
+            const prompt = `Act as a very strict and meticulous university grammar professor from England. Your student, a Vietnamese learner, has submitted an answer. Your feedback must be precise, academic, and unforgiving of errors. All explanations must be in Vietnamese.
+- The Challenge: "${challenge.question}"
+- Original Task: "${challenge.task}"
+- Student's Answer: "${userAnswer}"
 
-Your JSON response must... "explanation" (provide a detailed, rule-based explanation in Vietnamese about *why* the user's answer is wrong and *why* the correct answer is correct. Mention the specific grammar rule by name if possible. Also explain any subtle nuances if applicable.).`;
+Evaluate the answer and provide a JSON response. In the 'explanation', you MUST:
+1. State clearly if the answer is correct or incorrect.
+2. If incorrect, pinpoint the exact error.
+3. Provide the perfectly corrected sentence.
+4. Explain the specific grammatical rule that was violated, using its formal name (e.g., 'Subject-Verb Agreement', 'Incorrect Tense Usage', 'Misplaced Modifier').
+5. Explain WHY the rule applies here and why the student's answer was wrong.`;
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
@@ -101,7 +105,7 @@ Your JSON response must... "explanation" (provide a detailed, rule-based explana
                         properties: {
                             isCorrect: { type: Type.BOOLEAN },
                             correctAnswer: { type: Type.STRING },
-                            explanation: { type: Type.STRING, description: "Detailed, rule-based explanation in Vietnamese." }
+                            explanation: { type: Type.STRING, description: "Detailed, rule-based explanation in Vietnamese, referencing the specific grammar rule by name." }
                         },
                         required: ['isCorrect', 'correctAnswer', 'explanation']
                     }

@@ -122,9 +122,19 @@ const AIChatTutorView: React.FC<AIChatTutorViewProps> = ({ currentUser }) => {
                             <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center flex-shrink-0 font-bold shadow">AI</div>
                         )}
                         <div className={`max-w-lg p-4 rounded-2xl shadow-sm ${msg.role === 'user' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-slate-100 text-slate-800 rounded-bl-none'}`}>
-                            <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.text) }} />
-                            {msg.role === 'model' && isLoading && index === messages.length - 1 && (
-                                <span className="blinking-cursor"></span>
+                            {msg.role === 'model' && !msg.text && isLoading ? (
+                                <div className="flex items-center gap-2">
+                                   <span className="h-2.5 w-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                   <span className="h-2.5 w-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                   <span className="h-2.5 w-2.5 bg-indigo-500 rounded-full animate-bounce"></span>
+                                </div>
+                            ) : (
+                                <>
+                                    <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.text) }} />
+                                    {msg.role === 'model' && isLoading && index === messages.length - 1 && (
+                                        <span className="blinking-cursor"></span>
+                                    )}
+                                </>
                             )}
                         </div>
                          {msg.role === 'user' && (
@@ -134,16 +144,6 @@ const AIChatTutorView: React.FC<AIChatTutorViewProps> = ({ currentUser }) => {
                         )}
                     </div>
                 ))}
-                 {isLoading && messages.length > 0 && messages[messages.length-1].role === 'user' && (
-                    <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center flex-shrink-0 font-bold shadow">AI</div>
-                        <div className="max-w-lg p-4 rounded-2xl shadow-sm bg-slate-100 text-slate-800 rounded-bl-none flex items-center gap-2">
-                           <span className="h-2.5 w-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                           <span className="h-2.5 w-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                           <span className="h-2.5 w-2.5 bg-indigo-500 rounded-full animate-bounce"></span>
-                        </div>
-                    </div>
-                )}
                  {error && <p className="text-red-500 text-center">{error}</p>}
             </div>
             <form onSubmit={handleSendMessage} className="mt-4 border-t pt-4">
@@ -161,7 +161,7 @@ const AIChatTutorView: React.FC<AIChatTutorViewProps> = ({ currentUser }) => {
                         disabled={isLoading || !input.trim()}
                         className="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-indigo-600 disabled:text-slate-400 hover:bg-indigo-100 rounded-full"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                        <svg xmlns="http://www.w.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                     </button>
                 </div>
             </form>

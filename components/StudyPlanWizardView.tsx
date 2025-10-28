@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import type { User, StudyPlan, UserStudyPlanInput, CEFRLevel } from '../types';
 import { CEFR_LEVEL_MAP } from '../cefr';
+import { WORD_CATEGORIES } from '../constants';
+import { CONTENT_LIBRARY } from '../contentLibrary';
 
 interface StudyPlanWizardViewProps {
     currentUser: User;
@@ -96,9 +98,27 @@ const StudyPlanWizardView: React.FC<StudyPlanWizardViewProps> = ({ currentUser, 
 
         const planInput: UserStudyPlanInput = { goal, timePerDay, skillPriorities, targetLevel };
         
+        // Prepare available content IDs for the AI, filtered by user's level
+        const cefrOrder: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+        const userLevelIndex = cefrOrder.indexOf(currentUser.level);
+        const relevantLevels: CEFRLevel[] = [currentUser.level];
+        if (userLevelIndex < cefrOrder.length - 1) {
+            relevantLevels.push(cefrOrder[userLevelIndex + 1]);
+        }
+
+        const availableFlashcardIds = WORD_CATEGORIES
+            .filter(cat => relevantLevels.includes(cat.level))
+            .map(cat => cat.id);
+        const availableReadingIds = CONTENT_LIBRARY.reading
+            .filter(art => relevantLevels.includes(art.level))
+            .map(art => art.id);
+        const availableListeningIds = CONTENT_LIBRARY.listening
+            .filter(ex => relevantLevels.includes(ex.level))
+            .map(ex => ex.id);
+        
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const prompt = `Act as an expert language learning curriculum designer for a Vietnamese learner. Based on the user's profile and goals, create a personalized 7-day study plan.
+            const prompt = `Act as an expert language learning curriculum designer for a Vietnamese learner. Based on the user's profile, goals, and a list of available content, create a personalized 7-day study plan.
 
 User Profile:
 - Current CEFR Level: ${currentUser.level}
@@ -107,14 +127,20 @@ User Profile:
 - Time per day: ${planInput.timePerDay} minutes
 - Skill Priority Order: ${planInput.skillPriorities.join(', ')}
 
+Available Content IDs (pre-filtered for the user's level):
+- Flashcard Categories: [${availableFlashcardIds.join(', ')}]
+- Reading Articles: [${availableReadingIds.join(', ')}]
+- Listening Exercises: [${availableListeningIds.join(', ')}]
+
 Instructions:
 1. Create a plan for 7 days, labeled "day1" through "day7".
 2. Each day's total task duration MUST NOT exceed the user's "Time per day".
 3. Distribute tasks based on skill priorities. Higher priority skills should appear more frequently.
 4. Each task must have 'id', 'description' (in Vietnamese), 'type', 'duration' (in minutes), and 'completed' (set to false).
-5. For tasks of type 'flashcard_new' or 'flashcard_review', you MUST include a 'targetId' field. The 'targetId' should be the ID of a relevant vocabulary category (e.g., "a1-greetings", "b1-work"). The 'description' must also reflect this topic, for example: "Học 10 từ vựng mới về chủ đề Công việc".
-6. For tasks of type 'reading' or 'listening', you MUST also include a 'targetId' field with a relevant content ID (e.g., "b1-remote-work" for reading, "a2-ordering-food" for listening). The description should match the content, for example: "Luyện đọc bài 'The Rise of Remote Work'".
-7. Return ONLY the valid JSON object.`;
+5. For tasks of type 'flashcard_new', 'flashcard_review', 'reading', or 'listening', you MUST include a 'targetId' field.
+6. The 'targetId' for these tasks MUST be chosen ONLY from the "Available Content IDs" lists provided above. These IDs have been pre-filtered to be appropriate for the user's level.
+7. The 'description' for these tasks MUST accurately reflect the chosen content. For example, if you choose 'targetId': 'b1-work' for a flashcard task, the description must be "Học từ vựng về chủ đề Công việc". If you choose 'targetId': 'b1-remote-work' for a reading task, the description must be "Luyện đọc bài 'The Rise of Remote Work'".
+8. Return ONLY the valid JSON object.`;
 
             const taskSchema = {
                 type: Type.OBJECT,
