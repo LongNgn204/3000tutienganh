@@ -98,23 +98,26 @@ const StudyPlanWizardView: React.FC<StudyPlanWizardViewProps> = ({ currentUser, 
 
         const planInput: UserStudyPlanInput = { goal, timePerDay, skillPriorities, targetLevel };
         
-        // Prepare available content IDs for the AI, filtered by user's level
+        // Prepare a detailed catalog of available content, filtered by user's level.
         const cefrOrder: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
         const userLevelIndex = cefrOrder.indexOf(currentUser.level);
+        // Include user's current level and one level above for a challenge.
         const relevantLevels: CEFRLevel[] = [currentUser.level];
         if (userLevelIndex < cefrOrder.length - 1) {
             relevantLevels.push(cefrOrder[userLevelIndex + 1]);
         }
 
-        const availableFlashcardIds = WORD_CATEGORIES
+        const availableFlashcards = WORD_CATEGORIES
             .filter(cat => relevantLevels.includes(cat.level))
-            .map(cat => cat.id);
-        const availableReadingIds = CONTENT_LIBRARY.reading
+            .map(cat => `{id: "${cat.id}", name: "${cat.name}"}`);
+            
+        const availableReadings = CONTENT_LIBRARY.reading
             .filter(art => relevantLevels.includes(art.level))
-            .map(art => art.id);
-        const availableListeningIds = CONTENT_LIBRARY.listening
+            .map(art => `{id: "${art.id}", title: "${art.title}"}`);
+
+        const availableListenings = CONTENT_LIBRARY.listening
             .filter(ex => relevantLevels.includes(ex.level))
-            .map(ex => ex.id);
+            .map(ex => `{id: "${ex.id}", title: "${ex.title}"}`);
         
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -127,19 +130,19 @@ User Profile:
 - Time per day: ${planInput.timePerDay} minutes
 - Skill Priority Order: ${planInput.skillPriorities.join(', ')}
 
-Available Content IDs (pre-filtered for the user's level):
-- Flashcard Categories: [${availableFlashcardIds.join(', ')}]
-- Reading Articles: [${availableReadingIds.join(', ')}]
-- Listening Exercises: [${availableListeningIds.join(', ')}]
+**Available Content Catalog (pre-filtered for the user's level):**
+- Flashcard Categories: [${availableFlashcards.join(', ')}]
+- Reading Articles: [${availableReadings.join(', ')}]
+- Listening Exercises: [${availableListenings.join(', ')}]
 
-Instructions:
+**CRITICAL Instructions:**
 1. Create a plan for 7 days, labeled "day1" through "day7".
 2. Each day's total task duration MUST NOT exceed the user's "Time per day".
 3. Distribute tasks based on skill priorities. Higher priority skills should appear more frequently.
 4. Each task must have 'id', 'description' (in Vietnamese), 'type', 'duration' (in minutes), and 'completed' (set to false).
 5. For tasks of type 'flashcard_new', 'flashcard_review', 'reading', or 'listening', you MUST include a 'targetId' field.
-6. The 'targetId' for these tasks MUST be chosen ONLY from the "Available Content IDs" lists provided above. These IDs have been pre-filtered to be appropriate for the user's level.
-7. The 'description' for these tasks MUST accurately reflect the chosen content. For example, if you choose 'targetId': 'b1-work' for a flashcard task, the description must be "Học từ vựng về chủ đề Công việc". If you choose 'targetId': 'b1-remote-work' for a reading task, the description must be "Luyện đọc bài 'The Rise of Remote Work'".
+6. The 'targetId' for these tasks **MUST BE CHOSEN EXCLUSIVELY** from the "Available Content Catalog" provided above. **DO NOT invent new IDs or use IDs not present in the lists.**
+7. The 'description' for these tasks **MUST CORRESPOND** to the title/name provided in the catalog for the chosen 'targetId'. For example, if you select the reading 'targetId': 'b1-remote-work', the description MUST be "Luyện đọc bài 'The Rise of Remote Work'".
 8. Return ONLY the valid JSON object.`;
 
             const taskSchema = {
