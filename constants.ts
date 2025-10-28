@@ -124,6 +124,11 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'money', type: 'n', pronunciation: '/ˈmʌni/', vietnamese: 'tiền', example: 'I need to save more money. (Tôi cần tiết kiệm thêm tiền.)'},
       { english: 'watch', type: 'n', pronunciation: '/wɑːtʃ/', vietnamese: 'đồng hồ đeo tay', example: 'He has an expensive watch. (Anh ấy có một chiếc đồng hồ đắt tiền.)'},
       { english: 'bed', type: 'n', pronunciation: '/bed/', vietnamese: 'cái giường', example: 'It\'s time to go to bed. (Đã đến giờ đi ngủ.)'},
+      { english: 'spoon', type: 'n', pronunciation: '/spuːn/', vietnamese: 'cái thìa', example: 'I eat soup with a spoon. (Tôi ăn súp bằng thìa.)' },
+      { english: 'fork', type: 'n', pronunciation: '/fɔːrk/', vietnamese: 'cái nĩa', example: 'You use a fork to eat salad. (Bạn dùng nĩa để ăn salad.)' },
+      { english: 'knife', type: 'n', pronunciation: '/naɪf/', vietnamese: 'con dao', example: 'Be careful with that knife. (Hãy cẩn thận với con dao đó.)' },
+      { english: 'plate', type: 'n', pronunciation: '/pleɪt/', vietnamese: 'cái đĩa', example: 'Put the food on the plate. (Đặt thức ăn lên đĩa.)' },
+      { english: 'bottle', type: 'n', pronunciation: '/ˈbɑːtl/', vietnamese: 'cái chai', example: 'I have a bottle of water. (Tôi có một chai nước.)' },
     ],
   },
   {
@@ -145,6 +150,11 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
         { english: 'coffee', type: 'n', pronunciation: '/ˈkɔːfi/', vietnamese: 'cà phê', example: 'My father drinks coffee every morning. (Bố tôi uống cà phê mỗi sáng.)' },
         { english: 'tea', type: 'n', pronunciation: '/tiː/', vietnamese: 'trà', example: 'Would you like a cup of tea? (Bạn có muốn một tách trà không?)' },
         { english: 'juice', type: 'n', pronunciation: '/dʒuːs/', vietnamese: 'nước ép', example: 'I like orange juice. (Tôi thích nước cam ép.)' },
+        { english: 'sugar', type: 'n', pronunciation: '/ˈʃʊɡər/', vietnamese: 'đường', example: 'I put sugar in my coffee. (Tôi cho đường vào cà phê.)' },
+        { english: 'salt', type: 'n', pronunciation: '/sɔːlt/', vietnamese: 'muối', example: 'The soup needs more salt. (Món súp cần thêm muối.)' },
+        { english: 'butter', type: 'n', pronunciation: '/ˈbʌtər/', vietnamese: 'bơ', example: 'I like butter on my bread. (Tôi thích bơ trên bánh mì của mình.)' },
+        { english: 'soup', type: 'n', pronunciation: '/suːp/', vietnamese: 'súp, canh', example: 'Chicken soup is good when you are sick. (Súp gà rất tốt khi bạn bị ốm.)' },
+        { english: 'salad', type: 'n', pronunciation: '/ˈsæləd/', vietnamese: 'rau trộn', example: 'I had a salad for lunch. (Tôi đã ăn salad cho bữa trưa.)' },
     ]
   },
   {
@@ -210,6 +220,10 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'lion', type: 'n', pronunciation: '/ˈlaɪən/', vietnamese: 'sư tử', example: 'The lion is the king of the jungle. (Sư tử là vua của rừng xanh.)' },
       { english: 'tiger', type: 'n', pronunciation: '/ˈtaɪɡər/', vietnamese: 'con hổ', example: 'A tiger is a big cat. (Hổ là một loài mèo lớn.)' },
       { english: 'bear', type: 'n', pronunciation: '/ber/', vietnamese: 'con gấu', example: 'The bear is looking for honey. (Con gấu đang tìm mật ong.)' },
+      { english: 'elephant', type: 'n', pronunciation: '/ˈelɪfənt/', vietnamese: 'con voi', example: 'An elephant has a long trunk. (Một con voi có một cái vòi dài.)' },
+      { english: 'duck', type: 'n', pronunciation: '/dʌk/', vietnamese: 'con vịt', example: 'The duck is swimming in the pond. (Con vịt đang bơi trong ao.)' },
+      { english: 'sheep', type: 'n', pronunciation: '/ʃiːp/', vietnamese: 'con cừu', example: 'Sheep give us wool. (Cừu cho chúng ta len.)' },
+      { english: 'rabbit', type: 'n', pronunciation: '/ˈræbɪt/', vietnamese: 'con thỏ', example: 'A rabbit eats carrots. (Thỏ ăn cà rốt.)' },
     ]
   },
   {
@@ -360,6 +374,10 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'jacket', type: 'n', pronunciation: '/ˈdʒækɪt/', vietnamese: 'áo khoác', example: 'It\'s cold outside, wear a jacket. (Ngoài trời lạnh, hãy mặc áo khoác vào.)' },
       { english: 'shoes', type: 'n', pronunciation: '/ʃuːz/', vietnamese: 'giày', example: 'I need to buy new shoes for running. (Tôi cần mua giày mới để chạy bộ.)' },
       { english: 'hat', type: 'n', pronunciation: '/hæt/', vietnamese: 'mũ', example: 'He wears a hat to protect himself from the sun. (Anh ấy đội mũ để bảo vệ khỏi ánh nắng mặt trời.)' },
+      { english: 'socks', type: 'n', pronunciation: '/sɑːks/', vietnamese: 'tất, vớ', example: 'I need a new pair of socks. (Tôi cần một đôi tất mới.)' },
+      { english: 'coat', type: 'n', pronunciation: '/koʊt/', vietnamese: 'áo choàng', example: 'It is cold, you should wear a coat. (Trời lạnh, bạn nên mặc áo choàng.)' },
+      { english: 'sweater', type: 'n', pronunciation: '/ˈswetər/', vietnamese: 'áo len', example: 'My grandmother knitted this sweater for me. (Bà tôi đã đan chiếc áo len này cho tôi.)' },
+      { english: 'glasses', type: 'n', pronunciation: '/ˈɡlæsɪz/', vietnamese: 'kính mắt', example: 'I can\'t read without my glasses. (Tôi không thể đọc nếu không có kính.)' },
     ]
   },
   {
@@ -376,6 +394,9 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'post office', type: 'n', pronunciation: '/ˈpoʊst ɒfɪs/', vietnamese: 'bưu điện', example: 'You can buy stamps at the post office. (Bạn có thể mua tem ở bưu điện.)' },
       { english: 'library', type: 'n', pronunciation: '/ˈlaɪbreri/', vietnamese: 'thư viện', example: 'I like to borrow books from the library. (Tôi thích mượn sách từ thư viện.)' },
       { english: 'cinema', type: 'n', pronunciation: '/ˈsɪnəmə/', vietnamese: 'rạp chiếu phim', example: 'We are going to the cinema to watch a new movie. (Chúng tôi sẽ đến rạp chiếu phim để xem một bộ phim mới.)' },
+      { english: 'restaurant', type: 'n', pronunciation: '/ˈrestərɑːnt/', vietnamese: 'nhà hàng', example: 'We ate at an Italian restaurant. (Chúng tôi đã ăn ở một nhà hàng Ý.)' },
+      { english: 'cafe', type: 'n', pronunciation: '/kæˈfeɪ/', vietnamese: 'quán cà phê', example: 'Let\'s meet at the cafe on the corner. (Hãy gặp nhau ở quán cà phê ở góc phố.)' },
+      { english: 'museum', type: 'n', pronunciation: '/mjuˈziːəm/', vietnamese: 'bảo tàng', example: 'The city has a famous art museum. (Thành phố có một bảo tàng nghệ thuật nổi tiếng.)' },
     ]
   },
 
@@ -400,6 +421,10 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'career', type: 'n', pronunciation: '/kəˈrɪr/', vietnamese: 'sự nghiệp', example: 'She is focused on her career. (Cô ấy tập trung vào sự nghiệp của mình.)'},
       { english: 'company', type: 'n', pronunciation: '/ˈkʌmpəni/', vietnamese: 'công ty', example: 'He works for a large technology company. (Anh ấy làm việc cho một công ty công nghệ lớn.)'},
       { english: 'task', type: 'n', pronunciation: '/tæsk/', vietnamese: 'nhiệm vụ', example: 'My first task of the day is to check emails. (Nhiệm vụ đầu tiên trong ngày của tôi là kiểm tra email.)'},
+      { english: 'interview', type: 'n', pronunciation: '/ˈɪntərvjuː/', vietnamese: 'phỏng vấn', example: 'I have a job interview tomorrow. (Tôi có một cuộc phỏng vấn xin việc vào ngày mai.)' },
+      { english: 'resume', type: 'n', pronunciation: '/ˈrezəmeɪ/', vietnamese: 'sơ yếu lý lịch', example: 'You should update your resume. (Bạn nên cập nhật sơ yếu lý lịch của mình.)' },
+      { english: 'promotion', type: 'n', pronunciation: '/prəˈmoʊʃn/', vietnamese: 'sự thăng chức', example: 'He received a promotion to senior manager. (Anh ấy đã được thăng chức lên quản lý cấp cao.)' },
+      { english: 'department', type: 'n', pronunciation: '/dɪˈpɑːrtmənt/', vietnamese: 'phòng ban', example: 'She works in the marketing department. (Cô ấy làm việc ở phòng marketing.)' },
     ],
   },
   {
@@ -467,6 +492,9 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'dancing', type: 'n', pronunciation: '/ˈdænsɪŋ/', vietnamese: 'khiêu vũ', example: 'Dancing is a great form of exercise. (Khiêu vũ là một hình thức tập thể dục tuyệt vời.)' },
       { english: 'reading', type: 'n', pronunciation: '/ˈriːdɪŋ/', vietnamese: 'đọc sách', example: 'Reading before bed helps me to relax. (Đọc sách trước khi ngủ giúp tôi thư giãn.)' },
       { english: 'hiking', type: 'n', pronunciation: '/ˈhaɪkɪŋ/', vietnamese: 'đi bộ đường dài', example: 'We went hiking in the mountains last weekend. (Chúng tôi đã đi bộ đường dài trên núi vào cuối tuần trước.)' },
+      { english: 'camping', type: 'n', pronunciation: '/ˈkæmpɪŋ/', vietnamese: 'cắm trại', example: 'We are going camping this weekend. (Chúng tôi sẽ đi cắm trại vào cuối tuần này.)' },
+      { english: 'knitting', type: 'n', pronunciation: '/ˈnɪtɪŋ/', vietnamese: 'đan len', example: 'My grandmother taught me knitting. (Bà tôi đã dạy tôi đan len.)' },
+      { english: 'chess', type: 'n', pronunciation: '/tʃes/', vietnamese: 'cờ vua', example: 'Playing chess requires a lot of concentration. (Chơi cờ vua đòi hỏi sự tập trung cao độ.)' },
     ],
   },
   {
@@ -509,6 +537,10 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'virtual', type: 'adj', pronunciation: '/ˈvɜːrtʃuəl/', vietnamese: 'ảo', example: 'Virtual reality games are becoming more popular. (Trò chơi thực tế ảo đang trở nên phổ biến hơn.)' },
       { english: 'automation', type: 'n', pronunciation: '/ˌɔːtəˈmeɪʃn/', vietnamese: 'sự tự động hóa', example: 'Automation has increased efficiency in factories. (Tự động hóa đã làm tăng hiệu quả trong các nhà máy.)' },
       { english: 'cybersecurity', type: 'n', pronunciation: '/ˈsaɪbərsɪkjʊrəti/', vietnamese: 'an ninh mạng', example: 'Cybersecurity is important to protect personal data. (An ninh mạng rất quan trọng để bảo vệ dữ liệu cá nhân.)' },
+      { english: 'interface', type: 'n', pronunciation: '/ˈɪntərfeɪs/', vietnamese: 'giao diện', example: 'The user interface of this app is very friendly. (Giao diện người dùng của ứng dụng này rất thân thiện.)' },
+      { english: 'database', type: 'n', pronunciation: '/ˈdeɪtəbeɪs/', vietnamese: 'cơ sở dữ liệu', example: 'All customer information is stored in a database. (Tất cả thông tin khách hàng được lưu trữ trong một cơ sở dữ liệu.)' },
+      { english: 'cloud computing', type: 'n', pronunciation: '/klaʊd kəmˈpjuːtɪŋ/', vietnamese: 'điện toán đám mây', example: 'Cloud computing allows us to access data from anywhere. (Điện toán đám mây cho phép chúng ta truy cập dữ liệu từ bất cứ đâu.)' },
+      { english: 'bandwidth', type: 'n', pronunciation: '/ˈbændwɪdθ/', vietnamese: 'băng thông', example: 'We need more bandwidth for video conferencing. (Chúng tôi cần thêm băng thông để hội nghị truyền hình.)' },
     ],
   },
   {
@@ -529,6 +561,10 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'policy', type: 'n', pronunciation: '/ˈpɑːləsi/', vietnamese: 'chính sách', example: 'The government introduced a new environmental policy. (Chính phủ đã đưa ra một chính sách môi trường mới.)' },
       { english: 'rights', type: 'n', pronunciation: '/raɪts/', vietnamese: 'quyền lợi', example: 'Everyone should be aware of their basic human rights. (Mọi người nên nhận thức được các quyền con người cơ bản của mình.)' },
       { english: 'poverty', type: 'n', pronunciation: '/ˈpɑːvərti/', vietnamese: 'sự nghèo đói', example: 'The organization aims to reduce poverty in developing countries. (Tổ chức này nhằm mục đích giảm nghèo ở các nước đang phát triển.)' },
+      { english: 'demographics', type: 'n', pronunciation: '/ˌdeməˈɡræfɪks/', vietnamese: 'nhân khẩu học', example: 'The demographics of the country are changing. (Nhân khẩu học của đất nước đang thay đổi.)' },
+      { english: 'urbanization', type: 'n', pronunciation: '/ˌɜːrbənəˈzeɪʃn/', vietnamese: 'đô thị hóa', example: 'Urbanization has led to overcrowding in cities. (Đô thị hóa đã dẫn đến tình trạng quá tải ở các thành phố.)' },
+      { english: 'infrastructure', type: 'n', pronunciation: '/ˈɪnfrəstrʌktʃər/', vietnamese: 'cơ sở hạ tầng', example: 'The country needs to invest in its infrastructure. (Đất nước cần đầu tư vào cơ sở hạ tầng của mình.)' },
+      { english: 'welfare', type: 'n', pronunciation: '/ˈwelfer/', vietnamese: 'phúc lợi', example: 'The government provides welfare for the unemployed. (Chính phủ cung cấp phúc lợi cho người thất nghiệp.)' },
     ],
   },
   {
@@ -611,6 +647,10 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'thesis', type: 'n', pronunciation: '/ˈθiːsɪs/', vietnamese: 'luận văn', example: 'She is writing her thesis on modern art. (Cô ấy đang viết luận văn về nghệ thuật hiện đại.)' },
       { english: 'paradigm', type: 'n', pronunciation: '/ˈpærədaɪm/', vietnamese: 'hệ hình, mô hình', example: 'This discovery created a new paradigm in science. (Khám phá này đã tạo ra một hệ hình mới trong khoa học.)' },
       { english: 'empirical', type: 'adj', pronunciation: '/ɪmˈpɪrɪkl/', vietnamese: 'dựa trên kinh nghiệm', example: 'The theory is supported by empirical evidence. (Lý thuyết được hỗ trợ bởi bằng chứng thực nghiệm.)' },
+      { english: 'discourse', type: 'n', pronunciation: '/ˈdɪskɔːrs/', vietnamese: 'diễn ngôn, bài luận', example: 'She wrote a discourse on the nature of freedom. (Cô ấy đã viết một bài luận về bản chất của tự do.)' },
+      { english: 'synthesis', type: 'n', pronunciation: '/ˈsɪnθəsɪs/', vietnamese: 'sự tổng hợp', example: 'The report is a synthesis of several different studies. (Báo cáo là sự tổng hợp của nhiều nghiên cứu khác nhau.)' },
+      { english: 'framework', type: 'n', pronunciation: '/ˈfreɪmwɜːrk/', vietnamese: 'khuôn khổ, sườn', example: 'We need to establish a theoretical framework for our research. (Chúng ta cần thiết lập một khuôn khổ lý thuyết cho nghiên cứu của mình.)' },
+      { english: 'longitudinal', type: 'adj', pronunciation: '/ˌlɑːndʒəˈtuːdɪnl/', vietnamese: 'theo chiều dọc, kéo dài', example: 'A longitudinal study follows the same subjects over a long period. (Một nghiên cứu kéo dài theo dõi cùng một đối tượng trong một thời gian dài.)' },
     ],
   },
   {
@@ -629,6 +669,10 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'equity', type: 'n', pronunciation: '/ˈekwəti/', vietnamese: 'vốn chủ sở hữu', example: 'He sold some of his equity in the company. (Anh ấy đã bán một phần vốn chủ sở hữu của mình trong công ty.)'},
       { english: 'acquisition', type: 'n', pronunciation: '/ˌækwɪˈzɪʃn/', vietnamese: 'sự mua lại', example: 'The company announced a major acquisition of its competitor. (Công ty đã công bố một thương vụ mua lại lớn đối thủ cạnh tranh của mình.)'},
       { english: 'stakeholder', type: 'n', pronunciation: '/ˈsteɪkhoʊldər/', vietnamese: 'bên liên quan', example: 'We need to consider the interests of all stakeholders. (Chúng ta cần xem xét lợi ích của tất cả các bên liên quan.)'},
+      { english: 'logistics', type: 'n', pronunciation: '/ləˈdʒɪstɪks/', vietnamese: 'hậu cần', example: 'The logistics of the event were handled by a professional team. (Công tác hậu cần của sự kiện được xử lý bởi một đội ngũ chuyên nghiệp.)' },
+      { english: 'outsourcing', type: 'n', pronunciation: '/ˈaʊtsɔːrsɪŋ/', vietnamese: 'thuê ngoài', example: 'Many companies use outsourcing to reduce costs. (Nhiều công ty sử dụng dịch vụ thuê ngoài để giảm chi phí.)' },
+      { english: 'franchise', type: 'n', pronunciation: '/ˈfræntʃaɪz/', vietnamese: 'nhượng quyền', example: 'He bought a fast-food franchise. (Anh ấy đã mua một cửa hàng nhượng quyền thức ăn nhanh.)' },
+      { english: 'monopoly', type: 'n', pronunciation: '/məˈnɑːpəli/', vietnamese: 'sự độc quyền', example: 'The company has a monopoly on the market. (Công ty này độc quyền trên thị trường.)' },
     ],
   },
   {
@@ -696,6 +740,9 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'ostentatious', type: 'adj', pronunciation: '/ˌɑːstenˈteɪʃəs/', vietnamese: 'phô trương, khoe khoang', example: 'He lives an ostentatious lifestyle with expensive cars and big parties. (Anh ta sống một lối sống phô trương với xe hơi đắt tiền và những bữa tiệc lớn.)' },
       { english: 'plethora', type: 'n', pronunciation: '/ˈpleθərə/', vietnamese: 'sự thừa thãi', example: 'There is a plethora of information available on the internet. (Có một sự thừa thãi thông tin trên mạng internet.)' },
       { english: 'serendipity', type: 'n', pronunciation: '/ˌserənˈdɪpəti/', vietnamese: 'sự tình cờ may mắn', example: 'Finding that old book in the shop was pure serendipity. (Tìm thấy cuốn sách cũ đó trong cửa hàng hoàn toàn là một sự tình cờ may mắn.)' },
+      { english: 'salient', type: 'adj', pronunciation: '/ˈseɪliənt/', vietnamese: 'nổi bật, quan trọng nhất', example: 'The salient point of his argument was that the plan was too expensive. (Điểm nổi bật trong lập luận của anh ấy là kế hoạch quá tốn kém.)' },
+      { english: 'prolific', type: 'adj', pronunciation: '/prəˈlɪfɪk/', vietnamese: 'sáng tác nhiều, mắn đẻ', example: 'She was a prolific writer, publishing three novels a year. (Bà là một nhà văn sáng tác nhiều, xuất bản ba tiểu thuyết mỗi năm.)' },
+      { english: 'panacea', type: 'n', pronunciation: '/ˌpænəˈsiːə/', vietnamese: 'thuốc chữa bách bệnh', example: 'Unfortunately, there is no panacea for the country\'s economic problems. (Thật không may, không có thuốc chữa bách bệnh cho các vấn đề kinh tế của đất nước.)' },
     ],
   },
   {
@@ -729,6 +776,10 @@ const rawCategories: (Omit<Category, 'words'> & { words: Omit<Word, 'color'>[] }
       { english: 'ethics', type: 'n', pronunciation: '/ˈeθɪks/', vietnamese: 'đạo đức học', example: 'The ethics of artificial intelligence is a complex topic. (Đạo đức học của trí tuệ nhân tạo là một chủ đề phức tạp.)' },
       { english: 'aesthetics', type: 'n', pronunciation: '/esˈθetɪks/', vietnamese: 'mỹ học', example: 'Aesthetics is the branch of philosophy concerned with the nature of beauty. (Mỹ học là nhánh triết học liên quan đến bản chất của cái đẹp.)' },
       { english: 'metaphysics', type: 'n', pronunciation: '/ˌmetəˈfɪzɪks/', vietnamese: 'siêu hình học', example: 'Metaphysics deals with fundamental questions of reality. (Siêu hình học giải quyết những câu hỏi cơ bản về thực tại.)' },
+      { english: 'dualism', type: 'n', pronunciation: '/ˈduːəlɪzəm/', vietnamese: 'thuyết nhị nguyên', example: 'Mind-body dualism is the view that the mind and body are distinct and separable. (Thuyết nhị nguyên tâm-vật là quan điểm cho rằng tâm trí và cơ thể là riêng biệt và có thể tách rời.)' },
+      { english: 'empiricism', type: 'n', pronunciation: '/ɪmˈpɪrɪsɪzəm/', vietnamese: 'chủ nghĩa kinh nghiệm', example: 'Empiricism asserts that knowledge comes only or primarily from sensory experience. (Chủ nghĩa kinh nghiệm khẳng định rằng kiến thức chỉ đến từ hoặc chủ yếu từ kinh nghiệm cảm quan.)' },
+      { english: 'rationalism', type: 'n', pronunciation: '/ˈræʃnəlɪzəm/', vietnamese: 'chủ nghĩa duy lý', example: 'Rationalism is the view that reason is the chief source and test of knowledge. (Chủ nghĩa duy lý là quan điểm cho rằng lý trí là nguồn gốc và phép thử chính của kiến thức.)' },
+      { english: 'idealism', type: 'n', pronunciation: '/aɪˈdiːəlɪzəm/', vietnamese: 'chủ nghĩa duy tâm', example: 'Idealism in philosophy asserts that reality is fundamentally mental or otherwise immaterial. (Chủ nghĩa duy tâm trong triết học khẳng định rằng thực tại về cơ bản là tinh thần hoặc phi vật chất.)' },
     ],
   },
 ];

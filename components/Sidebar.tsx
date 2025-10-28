@@ -1,5 +1,5 @@
 import React from 'react';
-import type { User, ViewMode } from '../types';
+import type { User, ViewMode, CEFRLevel } from '../types';
 
 const NavButton: React.FC<{
     onClick: () => void;
@@ -12,14 +12,15 @@ const NavButton: React.FC<{
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+            className={`w-full relative flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
                 isActive 
-                ? 'bg-indigo-100 text-indigo-700' 
+                ? 'bg-gradient-to-r from-indigo-50 to-blue-50 text-indigo-700' 
                 : disabled 
                 ? 'text-slate-400 cursor-not-allowed'
-                : 'text-slate-600 hover:bg-slate-200 hover:text-slate-800'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
             }`}
         >
+            {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 rounded-r-full"></div>}
             <span className={`h-5 w-5 ${isActive ? 'text-indigo-600' : disabled ? 'text-slate-400' : 'text-slate-500'}`}>{children}</span>
             {label}
             {disabled && <span className="ml-auto text-xs font-bold bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full">Sắp ra mắt</span>}
@@ -36,23 +37,45 @@ const NavGroup: React.FC<{ title: string; children: React.ReactNode }> = ({ titl
   </div>
 );
 
-const UserProfile: React.FC<{ currentUser: User | null; onLogoutClick: () => void }> = ({ currentUser, onLogoutClick }) => {
+const UserProfile: React.FC<{ 
+    currentUser: User | null; 
+    onLogoutClick: () => void;
+    onLevelChange: (newLevel: CEFRLevel) => void;
+}> = ({ currentUser, onLogoutClick, onLevelChange }) => {
     if (!currentUser) return null;
     
+    const allLevels: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
     return (
-        <div className="mt-auto p-4 border-t border-slate-200">
+        <div className="mt-auto p-4 border-t border-slate-200 bg-slate-50">
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-lg">
+                <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                     {currentUser.name.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                    <p className="font-bold text-slate-800">{currentUser.name}</p>
-                    <p className="text-xs text-slate-500 font-medium">{currentUser.level} Level</p>
+                <div className="flex-grow min-w-0">
+                    <p className="font-bold text-slate-800 truncate">{currentUser.name}</p>
+                    <div className="relative inline-block group">
+                        <select 
+                            value={currentUser.level}
+                            onChange={(e) => onLevelChange(e.target.value as CEFRLevel)}
+                            className="text-xs text-slate-500 font-medium bg-transparent border-none p-0 pr-4 focus:ring-0 focus:outline-none appearance-none cursor-pointer group-hover:text-indigo-600"
+                            aria-label="Change CEFR level"
+                        >
+                            {allLevels.map(level => (
+                                <option key={level} value={level}>{level} Level</option>
+                            ))}
+                        </select>
+                        <svg className="absolute right-0 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none group-hover:text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
                 </div>
+                <button onClick={onLogoutClick} className="flex-shrink-0 p-2 text-slate-500 hover:bg-red-100 hover:text-red-600 rounded-full transition-colors" title="Đăng xuất">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+                    </svg>
+                </button>
             </div>
-            <button onClick={onLogoutClick} className="w-full mt-4 text-center text-sm font-semibold text-slate-600 hover:text-red-600 bg-slate-100 hover:bg-red-50 py-2 rounded-lg transition-colors">
-                Đăng xuất
-            </button>
         </div>
     );
 };
@@ -62,7 +85,8 @@ const Sidebar: React.FC<{
   navigateTo: (mode: ViewMode) => void;
   currentUser: User | null;
   onLogoutClick: () => void;
-}> = ({ viewMode, navigateTo, currentUser, onLogoutClick }) => {
+  onLevelChange: (newLevel: CEFRLevel) => void;
+}> = ({ viewMode, navigateTo, currentUser, onLogoutClick, onLevelChange }) => {
   return (
     <aside className="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-40 flex flex-col">
       <div className="p-4 border-b border-slate-200">
@@ -126,7 +150,7 @@ const Sidebar: React.FC<{
             </NavButton>
         </NavGroup>
       </nav>
-      <UserProfile currentUser={currentUser} onLogoutClick={onLogoutClick} />
+      <UserProfile currentUser={currentUser} onLogoutClick={onLogoutClick} onLevelChange={onLevelChange} />
     </aside>
   );
 };

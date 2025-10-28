@@ -63,6 +63,28 @@ export interface ChallengeProgress {
     }
 }
 
+// Study Plan Types
+export interface StudyPlanTask {
+  id: string; // e.g., "task-20240101-1"
+  description: string; // e.g., "Ôn tập 15 từ vựng"
+  type: 'flashcard_review' | 'flashcard_new' | 'reading' | 'listening' | 'conversation' | 'pronunciation' | 'role-play' | 'grammar' | 'quiz' | 'writing';
+  duration: number; // in minutes
+  targetId?: string; // e.g., article id or role-play scenario id
+  completed: boolean;
+}
+
+export interface StudyPlan {
+  [day: string]: StudyPlanTask[]; // e.g., "day1", "day2", ...
+}
+
+export interface UserStudyPlanInput {
+  goal: string;
+  timePerDay: number;
+  skillPriorities: string[];
+  targetLevel: CEFRLevel;
+}
+
+
 export interface User {
   name: string;
   password?: string; // Password might not always be present on the client
@@ -72,6 +94,8 @@ export interface User {
   dailyProgress?: DailyProgress;
   challengeProgress?: ChallengeProgress;
   customWords?: Word[];
+  studyPlan?: StudyPlan;
+  studyPlanInput?: UserStudyPlanInput;
 }
 
 export interface StudyRecord {
@@ -84,7 +108,7 @@ export interface StudyProgress {
   [wordEnglish: string]: StudyRecord;
 }
 
-export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading' | 'writing' | 'role-play' | 'welcome' | 'landing' | 'leaderboard' | 'challenges' | 'video-lessons' | 'community-forum' | 'forum-topic';
+export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading' | 'writing' | 'role-play' | 'welcome' | 'landing' | 'leaderboard' | 'challenges' | 'video-lessons' | 'community-forum' | 'forum-topic' | 'study-plan-wizard';
 
 // Content Library Types
 export interface ReadingArticleQuestion {

@@ -25,6 +25,7 @@ const VIEW_TITLES: Record<ViewMode, string> = {
     'video-lessons': 'Bài giảng Video',
     'community-forum': 'Diễn đàn Cộng đồng',
     'forum-topic': 'Chủ đề Diễn đàn',
+    'study-plan-wizard': 'Tạo Lộ Trình Học Tập',
 };
 
 const Header: React.FC<{

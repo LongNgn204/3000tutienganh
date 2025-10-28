@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'rea
 import Header from './components/Header';
 import { WORD_CATEGORIES as CONSTANT_WORD_CATEGORIES, ALL_WORDS as CONSTANT_ALL_WORDS, TYPE_COLORS } from './constants';
 import { CHALLENGES } from './challengesData';
-import type { User, StudyProgress, ViewMode, PlacementTestResult, StudyRecord, DailyProgress, DailyGoal, Category, Word, ForumPost, ForumReply } from './types';
+import type { User, StudyProgress, ViewMode, PlacementTestResult, StudyRecord, DailyProgress, DailyGoal, Category, Word, ForumPost, ForumReply, StudyPlan, UserStudyPlanInput, CEFRLevel } from './types';
 import Footer from './components/Footer';
 import * as api from './services/api';
 import * as srsService from './services/srsService';
@@ -33,6 +33,7 @@ const ChallengesView = lazy(() => import('./components/ChallengesView'));
 const VideoLessonsView = lazy(() => import('./components/VideoLessonsView'));
 const CommunityForumView = lazy(() => import('./components/CommunityForumView'));
 const ForumTopicView = lazy(() => import('./components/ForumTopicView'));
+const StudyPlanWizardView = lazy(() => import('./components/StudyPlanWizardView'));
 
 
 const Loader: React.FC = () => (
@@ -185,6 +186,14 @@ const App: React.FC = () => {
   const handleWelcomeComplete = () => {
     setViewMode('dashboard');
   };
+  
+  const handleCreateStudyPlan = async (plan: StudyPlan, planInput: UserStudyPlanInput) => {
+    if (!currentUser) return;
+    const updatedUser = { ...currentUser, studyPlan: plan, studyPlanInput: planInput };
+    setCurrentUser(updatedUser);
+    await api.updateUser(updatedUser);
+    setViewMode('dashboard');
+  };
 
   const handleLogout = () => {
     api.logout();
@@ -194,6 +203,28 @@ const App: React.FC = () => {
     setWordCategories(CONSTANT_WORD_CATEGORIES);
     setAllWords(CONSTANT_ALL_WORDS);
     setViewMode('landing');
+  };
+
+  const handleLevelChange = async (newLevel: CEFRLevel) => {
+    if (!currentUser || currentUser.level === newLevel) return;
+
+    const wantsNewPlan = confirm(
+      `Thay đổi trình độ có thể làm lộ trình học hiện tại của bạn không còn phù hợp. Bạn có muốn tạo một lộ trình học mới cho trình độ ${newLevel} không?`
+    );
+
+    const updatedUser: User = { 
+      ...currentUser, 
+      level: newLevel,
+      studyPlan: wantsNewPlan ? undefined : currentUser.studyPlan,
+      studyPlanInput: wantsNewPlan ? undefined : currentUser.studyPlanInput
+    };
+    
+    setCurrentUser(updatedUser);
+    await api.updateUser(updatedUser);
+
+    if (wantsNewPlan) {
+      setViewMode('study-plan-wizard');
+    }
   };
   
   const handleUpdateStudyProgress = async (wordEnglish: string, performance: 'again' | 'good' | 'easy') => {
@@ -342,6 +373,11 @@ const App: React.FC = () => {
 
   const renderView = () => {
     if(currentUser) {
+        // Show study plan wizard if user has completed placement test but has no plan yet
+        if (currentUser.placementTestResult && !currentUser.studyPlan && viewMode !== 'study-plan-wizard') {
+            setViewMode('study-plan-wizard');
+        }
+
         switch(viewMode) {
           case 'dashboard':
             return <DashboardView 
@@ -352,6 +388,8 @@ const App: React.FC = () => {
                       allWords={allWords}
                       navigateTo={navigateTo}
                    />;
+          case 'study-plan-wizard':
+             return <StudyPlanWizardView currentUser={currentUser} onCreatePlan={handleCreateStudyPlan} />;
           case 'welcome':
             return <WelcomeView currentUser={currentUser} onComplete={handleWelcomeComplete} />;
           case 'story':
@@ -451,6 +489,7 @@ const App: React.FC = () => {
           navigateTo={navigateTo}
           currentUser={currentUser}
           onLogoutClick={handleLogout}
+          onLevelChange={handleLevelChange}
         />
       </Suspense>
       <div 

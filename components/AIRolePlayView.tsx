@@ -58,6 +58,12 @@ interface TranscriptItem {
     content: string;
 }
 
+interface RolePlayFeedback {
+    goalAchieved: boolean;
+    evaluation: string;
+    suggestions: string[];
+}
+
 interface AIRolePlayViewProps {
   currentUser: User | null;
   onGoalUpdate: () => void;
@@ -69,7 +75,7 @@ const AIRolePlayView: React.FC<AIRolePlayViewProps> = ({ currentUser, onGoalUpda
     const [transcript, setTranscript] = useState<TranscriptItem[]>([]);
     const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
     const [error, setError] = useState<string | null>(null);
-    const [feedback, setFeedback] = useState<string>('');
+    const [feedback, setFeedback] = useState<RolePlayFeedback | null>(null);
     const [isFetchingFeedback, setIsFetchingFeedback] = useState(false);
 
     // Refs for Web Audio API and Gemini Live session
@@ -106,7 +112,7 @@ const AIRolePlayView: React.FC<AIRolePlayViewProps> = ({ currentUser, onGoalUpda
     const getFeedback = async () => {
         if (!selectedScenario) return;
         setIsFetchingFeedback(true);
-        setFeedback('');
+        setFeedback(null);
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const transcriptText = transcript.map(t => `${t.author === 'ai' ? 'AI' : 'User'}: ${t.content}`).join('\n');
@@ -116,13 +122,28 @@ const AIRolePlayView: React.FC<AIRolePlayViewProps> = ({ currentUser, onGoalUpda
 - Conversation Transcript:
 ${transcriptText}
 
-Provide feedback in Vietnamese in a single block of text. Start with a confirmation of whether they achieved the goal (e.g., "Chúc mừng! Bạn đã hoàn thành nhiệm vụ..."). Then, give a brief, encouraging evaluation and one or two clear suggestions for improvement. Keep it concise.`;
+Provide your feedback in a single, valid JSON object with three keys, all with content in Vietnamese:
+1. "goalAchieved": A boolean, true if the student successfully completed the main goal, false otherwise.
+2. "evaluation": A string containing a general, encouraging evaluation of the student's performance (grammar, vocabulary, fluency).
+3. "suggestions": An array of strings with 1-2 clear, actionable suggestions for improvement.
+
+Example response:
+{
+  "goalAchieved": true,
+  "evaluation": "Làm tốt lắm! Bạn đã hoàn thành mục tiêu và giao tiếp một cách tự tin. Ngữ pháp của bạn khá ổn, chỉ có một vài lỗi nhỏ.",
+  "suggestions": [
+    "Để tự nhiên hơn, bạn có thể thử dùng 'Could I get...' thay vì 'I want...'.",
+    "Hãy chú ý phát âm âm cuối /t/ trong từ 'latte'."
+  ]
+}`;
             
             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            setFeedback(response.text);
+            const jsonText = response.text.replace(/```json|```/g, '').trim();
+            const parsedFeedback = JSON.parse(jsonText);
+            setFeedback(parsedFeedback);
         } catch (err) {
             console.error("Feedback generation error:", err);
-            setFeedback("Rất tiếc, không thể tạo nhận xét lúc này.");
+            setError("Rất tiếc, không thể tạo nhận xét lúc này.");
         } finally {
             setIsFetchingFeedback(false);
         }
@@ -139,7 +160,7 @@ Provide feedback in Vietnamese in a single block of text. Start with a confirmat
         setStage('selection');
         setSelectedScenario(null);
         setTranscript([]);
-        setFeedback('');
+        setFeedback(null);
     };
 
     useEffect(() => {
@@ -238,11 +259,44 @@ Provide feedback in Vietnamese in a single block of text. Start with a confirmat
             return acc;
         }, {} as Record<string, Scenario[]>);
     }, []);
+    
+     const renderMicButton = () => {
+     let icon;
+     let text;
+     let colorClass;
+
+     switch (connectionStatus) {
+        case 'connecting':
+            icon = <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
+            text = "Đang kết nối...";
+            colorClass = "bg-slate-400 cursor-not-allowed";
+            break;
+        case 'connected':
+            icon = <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-12 0H3a7.001 7.001 0 006 6.93V17H7a1 1 0 100 2h6a1 1 0 100-2h-2v-2.07z" clipRule="evenodd" /></svg>;
+            text = "AI đang lắng nghe...";
+            colorClass = "bg-blue-600 animate-pulse";
+            break;
+        default: // disconnected or error
+             icon = <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>;
+             text = "Đã ngắt kết nối";
+             colorClass = "bg-red-500";
+     }
+
+     return (
+        <div className="flex flex-col items-center gap-2">
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg ${colorClass}`}>
+              {icon}
+          </div>
+          <p className="font-semibold text-slate-600 text-sm">{text}</p>
+        </div>
+     );
+  };
+
 
     // Selection Stage
     if (stage === 'selection') {
         return (
-            <div className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+            <div className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
                 <div className="text-center mb-10">
                     <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">Tình huống nhập vai AI</h1>
                     <p className="mt-3 max-w-2xl mx-auto text-xl text-slate-500">
@@ -261,7 +315,8 @@ Provide feedback in Vietnamese in a single block of text. Start with a confirmat
                                             <h3 className="text-lg font-bold text-slate-800">{scenario.title}</h3>
                                         </div>
                                         <p className="text-slate-600 text-sm flex-grow">{scenario.description}</p>
-                                        <button onClick={() => handleStartRolePlay(scenario)} className="w-full mt-6 bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700">
+                                        <p className="text-xs text-slate-500 mt-3 pt-3 border-t font-semibold">Mục tiêu: {scenario.goal}</p>
+                                        <button onClick={() => handleStartRolePlay(scenario)} className="w-full mt-4 bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700">
                                             Bắt đầu
                                         </button>
                                     </div>
@@ -295,7 +350,8 @@ Provide feedback in Vietnamese in a single block of text. Start with a confirmat
                     ))}
                 </div>
                 <div className="mt-4 flex flex-col items-center justify-center gap-4">
-                     <button onClick={handleStopAndGetFeedback} className="px-8 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors">
+                     {renderMicButton()}
+                     <button onClick={handleStopAndGetFeedback} className="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg text-sm hover:bg-red-700 transition-colors">
                         Hoàn thành & Nhận xét
                     </button>
                 </div>
@@ -308,14 +364,37 @@ Provide feedback in Vietnamese in a single block of text. Start with a confirmat
         return (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
                 <div className="bg-white p-10 rounded-2xl shadow-xl max-w-2xl w-full">
-                    <h2 className="text-3xl font-bold text-slate-800 mb-4">Kết thúc Tình huống!</h2>
-                     <div className="text-left bg-slate-50 p-4 rounded-lg border min-h-[150px]">
-                        <h3 className="font-semibold text-slate-800 mb-2">Nhận xét từ AI:</h3>
+                    <h2 className="text-3xl font-bold text-slate-800 mb-6">Kết thúc Tình huống!</h2>
+                     <div className="text-left bg-slate-50 p-6 rounded-lg border space-y-6">
                         {isFetchingFeedback ? (
-                             <p className="text-slate-500">Đang tạo nhận xét...</p>
-                        ) : (
-                             <p className="text-slate-700 whitespace-pre-wrap">{feedback}</p>
-                        )}
+                             <p className="text-slate-500 text-center">AI đang tạo nhận xét...</p>
+                        ) : feedback ? (
+                            <>
+                                <div>
+                                    <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">Mục tiêu</h3>
+                                    <div className={`flex items-center gap-3 p-3 rounded-md text-sm font-semibold ${feedback.goalAchieved ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                        {feedback.goalAchieved ? 
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                            : 
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+                                        }
+                                        <span>{feedback.goalAchieved ? "Bạn đã hoàn thành mục tiêu!" : "Mục tiêu chưa được hoàn thành."}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-slate-800 mb-2">Đánh giá chung</h3>
+                                    <p className="text-slate-700 text-sm">{feedback.evaluation}</p>
+                                </div>
+                                {feedback.suggestions && feedback.suggestions.length > 0 && (
+                                     <div>
+                                        <h3 className="font-bold text-slate-800 mb-2">Gợi ý cải thiện</h3>
+                                        <ul className="list-disc list-inside space-y-2 text-sm text-slate-700">
+                                            {feedback.suggestions.map((s, i) => <li key={i}>{s}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
+                            </>
+                        ) : <p className="text-red-600 text-center">{error}</p>}
                      </div>
                     <button onClick={resetAndGoToSelection} className="mt-8 w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg">
                         Thử kịch bản khác

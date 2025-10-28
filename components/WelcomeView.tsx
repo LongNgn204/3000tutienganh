@@ -15,15 +15,19 @@ const CEFR_LEVEL_MAP: Record<CEFRLevel, { name: string, color: string }> = {
     'C2': { name: 'C2 - Thành thạo', color: 'text-purple-600' },
 };
 
-const FeatureCard: React.FC<{ icon: React.ReactNode, title: string, description: string }> = ({ icon, title, description }) => (
-    <div className="bg-white p-6 rounded-xl shadow-lg border border-slate-200 text-center flex flex-col items-center">
-        <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
-            {icon}
+const FeatureCard: React.FC<{ title: string, description: string, imageUrl: string }> = ({ title, description, imageUrl }) => (
+    <div 
+        className="relative text-white p-6 rounded-2xl shadow-lifted overflow-hidden flex flex-col justify-end h-64 bg-cover bg-center transition-transform duration-300 hover:scale-105 group"
+        style={{ backgroundImage: `url(${imageUrl})` }}
+    >
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent transition-all duration-300 group-hover:from-black/80"></div>
+        <div className="relative z-10">
+            <h3 className="text-xl font-bold">{title}</h3>
+            <p className="text-sm mt-1 opacity-90">{description}</p>
         </div>
-        <h3 className="text-lg font-bold text-slate-800 mt-4">{title}</h3>
-        <p className="text-slate-500 mt-2 text-sm flex-grow">{description}</p>
     </div>
 );
+
 
 const updates = [
     {
@@ -50,44 +54,60 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ currentUser, onComplete }) =>
   const userLevelInfo = CEFR_LEVEL_MAP[currentUser.level] || { name: currentUser.level, color: 'text-slate-600' };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 w-full animate-fade-in-up">
-        <div className="w-full max-w-5xl text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-800 tracking-tight">
-                Chào mừng, <span className="text-indigo-600">{currentUser.name}</span>!
-            </h1>
-            <p className="mt-4 text-lg sm:text-xl text-slate-600">
-                AI đã xác định lộ trình học phù hợp cho bạn ở trình độ <strong className={`font-bold ${userLevelInfo.color}`}>{userLevelInfo.name}</strong>.
-            </p>
-            <p className="mt-8 text-2xl font-bold text-slate-700">Đây là những gì đang chờ đợi bạn:</p>
+    <div className="flex-1 flex flex-col items-center justify-start py-12 px-4 sm:px-6 lg:px-8 w-full animate-fade-in-up">
+        <div className="w-full max-w-6xl">
+            <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12 bg-white p-8 md:p-12 rounded-2xl shadow-lifted border border-slate-200">
+                <div className="text-center lg:text-left flex-1">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-800 tracking-tight">
+                        Chào mừng, <span className="text-indigo-600">{currentUser.name}</span>!
+                    </h1>
+                    <p className="mt-4 text-lg sm:text-xl text-slate-600">
+                        Lộ trình học của bạn đã được cá nhân hóa cho trình độ <strong className={`font-bold ${userLevelInfo.color}`}>{userLevelInfo.name}</strong>.
+                    </p>
+                    <p className="mt-4 text-slate-500 max-w-xl">
+                        Hãy sẵn sàng khám phá các tính năng học tập thông minh, từ flashcard SRS đến các tình huống nhập vai thực tế, tất cả đều được thiết kế để giúp bạn tiến bộ nhanh nhất.
+                    </p>
+                </div>
+                <div className="flex-shrink-0">
+                    <img 
+                        src="https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=800&auto=format&fit=crop" 
+                        alt="Học sinh học tập cùng nhau" 
+                        className="w-full max-w-sm h-auto rounded-2xl shadow-lg"
+                    />
+                </div>
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-                <FeatureCard 
-                    title="Học & Ôn tập"
-                    description="Xây dựng vốn từ vựng vững chắc với flashcards SRS, luyện đọc hiểu và cải thiện kỹ năng viết cùng AI."
-                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}
-                />
-                 <FeatureCard 
-                    title="Giao tiếp & Nhập vai"
-                    description="Tự tin giao tiếp qua các cuộc hội thoại và tình huống nhập vai thực tế với AI."
-                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>}
-                />
-                 <FeatureCard 
-                    title="Nghe & Phát âm"
-                    description="Cải thiện kỹ năng nghe và nhận phản hồi tức thì về phát âm để nói chuẩn như người bản xứ."
-                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>}
-                />
-                 <FeatureCard 
-                    title="Ngữ pháp & Thử thách"
-                    description="Nắm vững các chủ điểm ngữ pháp từ cơ bản đến nâng cao và thử thách bản thân với AI."
-                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                />
+            <div className="mt-16">
+                 <h2 className="text-3xl font-bold text-slate-800 text-center mb-8">Hành trình của bạn bắt đầu từ đây</h2>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <FeatureCard 
+                        title="Học & Ôn tập"
+                        description="Xây dựng vốn từ vựng vững chắc với flashcards SRS, luyện đọc và viết cùng AI."
+                        imageUrl="https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=800&auto=format&fit=crop"
+                    />
+                    <FeatureCard 
+                        title="Giao tiếp & Nhập vai"
+                        description="Tự tin giao tiếp qua các cuộc hội thoại và tình huống nhập vai thực tế với AI."
+                        imageUrl="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop"
+                    />
+                    <FeatureCard 
+                        title="Nghe & Phát âm"
+                        description="Cải thiện kỹ năng nghe và nhận phản hồi tức thì về phát âm để nói chuẩn hơn."
+                        imageUrl="https://images.unsplash.com/photo-1593121925328-9a908a38c29b?q=80&w=800&auto=format&fit=crop"
+                    />
+                    <FeatureCard 
+                        title="Ngữ pháp & Thử thách"
+                        description="Nắm vững các chủ điểm ngữ pháp và thử thách bản thân với các bài tập từ AI."
+                        imageUrl="https://images.unsplash.com/photo-1456324504439-367cee3b3c32?q=80&w=800&auto=format&fit=crop"
+                    />
+                </div>
             </div>
             
-             <div className="mt-12 w-full max-w-3xl mx-auto">
+             <div className="mt-16 w-full max-w-3xl mx-auto">
                 <h2 className="text-2xl font-bold text-slate-700 text-center mb-6">Có gì mới trong phiên bản này?</h2>
                 <div className="space-y-4 text-left">
                     {updates.map((update, index) => (
-                        <div key={index} className="bg-white p-4 rounded-xl shadow-md border border-slate-200 flex items-center gap-4 hover:border-indigo-300 transition-colors">
+                        <div key={index} className="bg-white p-4 rounded-xl shadow-subtle border border-slate-200 flex items-center gap-4 hover:border-indigo-300 transition-colors">
                             <div className="flex-shrink-0 w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
                                 {update.icon}
                             </div>
@@ -100,12 +120,14 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ currentUser, onComplete }) =>
                 </div>
             </div>
 
-            <button
-                onClick={onComplete}
-                className="mt-12 px-10 py-4 bg-indigo-600 text-white font-bold text-lg rounded-lg shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105"
-            >
-                Bắt đầu hành trình
-            </button>
+            <div className="text-center">
+                <button
+                    onClick={onComplete}
+                    className="mt-12 px-10 py-4 bg-indigo-600 text-white font-bold text-lg rounded-lg shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105"
+                >
+                    Bắt đầu hành trình
+                </button>
+            </div>
         </div>
     </div>
   );

@@ -6,7 +6,7 @@ interface PlacementTestViewProps {
   onTestSubmit: (result: PlacementTestResult) => void;
 }
 
-const ALL_QUESTIONS = [
+const ALL_QUESTIONS_BANK = [
   // A1 Level - 25 questions
   { id: 'a1_q1', text: 'She ___ a doctor.', options: ['is', 'are', 'am', 'be'], correctAnswer: 'is', level: 'A1' as CEFRLevel },
   { id: 'a1_q2', text: '___ are you from?', options: ['What', 'Where', 'Who', 'When'], correctAnswer: 'Where', level: 'A1' as CEFRLevel },
@@ -141,33 +141,6 @@ const ALL_QUESTIONS = [
   { id: 'c1_q23', text: 'He couldn\'t help ___ when he heard the joke.', options: ['laugh', 'laughing', 'to laugh', 'but laughing'], correctAnswer: 'laughing', level: 'C1' as CEFRLevel },
   { id: 'c1_q24', text: 'The more you practice, ___ you will become.', options: ['the more confident', 'more confident', 'the most confident', 'confident'], correctAnswer: 'the more confident', level: 'C1' as CEFRLevel },
   { id: 'c1_q25', text: 'What ___ me most is their lack of responsibility.', options: ['annoys', 'is annoying', 'are annoying', 'annoy'], correctAnswer: 'annoys', level: 'C1' as CEFRLevel },
-
-  // C2 Level - 25 questions
-  { id: 'c2_q1', text: 'The senator was a ___ speaker, captivating the audience with her words.', options: ['ubiquitous', 'ephemeral', 'eloquent', 'ambiguous'], correctAnswer: 'eloquent', level: 'C2' as CEFRLevel },
-  { id: 'c2_q2', text: 'The committee recommended that the proposal ___ immediately.', options: ['be implemented', 'is implemented', 'was implemented', 'implements'], correctAnswer: 'be implemented', level: 'C2' as CEFRLevel },
-  { id: 'c2_q3', 'text': 'So ___ was the story that everyone believed it instantly.', 'options': ['convincing', 'convinced', 'is convincing', 'convince'], 'correctAnswer': 'convincing', 'level': 'C2' as CEFRLevel },
-  { id: 'c2_q4', text: '___ from the fire, he was praised for his bravery.', options: ['Rescuing the child', 'Having rescued the child', 'The child rescued', 'To rescue the child'], correctAnswer: 'Having rescued the child', level: 'C2' as CEFRLevel },
-  { id: 'c2_q5', text: 'The company\'s problems were ___ by the economic recession.', options: ['exacerbated', 'alleviated', 'mitigated', 'assuaged'], correctAnswer: 'exacerbated', level: 'C2' as CEFRLevel },
-  { id: 'c2_q6', text: 'He has a ___ for making friends easily.', options: ['knack', 'habit', 'tendency', 'skill'], correctAnswer: 'knack', level: 'C2' as CEFRLevel },
-  { id: 'c2_q7', text: 'The artist\'s work is a ___ of different styles and influences.', options: ['cacophony', 'juxtaposition', 'conglomeration', 'veracity'], correctAnswer: 'conglomeration', level: 'C2' as CEFRLevel },
-  { id: 'c2_q8', text: '___ it may seem, he is actually very shy.', options: ['Strange though', 'Although strange', 'Even if', 'Despite'], correctAnswer: 'Strange though', level: 'C2' as CEFRLevel },
-  { id: 'c2_q9', text: 'The decision was made, ___ of the consequences.', options: ['irrespective', 'disregarding', 'unrelated', 'without respect'], correctAnswer: 'irrespective', level: 'C2' as CEFRLevel },
-  { id: 'c2_q10', text: 'The politician\'s speech was full of ___, saying much but meaning little.', options: ['platitudes', 'veracity', 'accolades', 'panaceas'], correctAnswer: 'platitudes', level: 'C2' as CEFRLevel },
-  { id: 'c2_q11', text: 'She had to ___ her principles to get the job.', options: ['contravene', 'impeach', 'infringe', 'compromise'], correctAnswer: 'compromise', level: 'C2' as CEFRLevel },
-  { id: 'c2_q12', text: 'His ___ nature made him an excellent diplomat.', options: ['gregarious', 'pugnacious', 'taciturn', 'fastidious'], correctAnswer: 'gregarious', level: 'C2' as CEFRLevel },
-  { id: 'c2_q13', text: 'The problem is difficult, but not ___.', options: ['insurmountable', 'inevitable', 'inexorable', 'indefatigable'], correctAnswer: 'insurmountable', level: 'C2' as CEFRLevel },
-  { id: 'c2_q14', text: 'Far from ___ the situation, his intervention only made it worse.', options: ['ameliorating', 'exacerbating', 'mitigating', 'placating'], correctAnswer: 'ameliorating', level: 'C2' as CEFRLevel },
-  { id: 'c2_q15', text: 'The evidence was ___ to the case and was therefore disregarded.', options: ['impertinent', 'pertinent', 'apposite', 'congruous'], correctAnswer: 'impertinent', level: 'C2' as CEFRLevel },
-  { id: 'c2_q16', text: 'She was ___ in her refusal to compromise.', options: ['adamant', 'pliable', 'flexible', 'malleable'], correctAnswer: 'adamant', level: 'C2' as CEFRLevel },
-  { id: 'c2_q17', text: 'The politician\'s ___ remarks were completely inappropriate.', options: ['jejune', 'sagacious', 'profound', 'erudite'], correctAnswer: 'jejune', level: 'C2' as CEFRLevel },
-  { id: 'c2_q18', text: 'His arguments were based on ___ reasoning and were easily disproven.', options: ['spurious', 'valid', 'sound', 'cogent'], correctAnswer: 'spurious', level: 'C2' as CEFRLevel },
-  { id: 'c2_q19', text: 'The ___ of the new policy was felt by everyone.', options: ['ramifications', 'beginnings', 'origins', 'sources'], correctAnswer: 'ramifications', level: 'C2' as CEFRLevel },
-  { id: 'c2_q20', text: 'He was known for his ___, always choosing the easiest way out.', options: ['pusillanimity', 'bravery', 'valor', 'courage'], correctAnswer: 'pusillanimity', level: 'C2' as CEFRLevel },
-  { id: 'c2_q21', text: 'The author\'s style is ___, filled with unnecessary jargon.', options: ['turgid', 'lucid', 'concise', 'succinct'], correctAnswer: 'turgid', level: 'C2' as CEFRLevel },
-  { id: 'c2_q22', text: 'He was ___ by the committee for his financial misconduct.', options: ['excoriated', 'extolled', 'lauded', 'praised'], correctAnswer: 'excoriated', level: 'C2' as CEFRLevel },
-  { id: 'c2_q23', text: 'I prefer the ___ of the countryside to the hustle and bustle of the city.', options: ['quiescence', 'cacophony', 'din', 'tumult'], correctAnswer: 'quiescence', level: 'C2' as CEFRLevel },
-  { id: 'c2_q24', text: 'The old manuscript was difficult to ___.', options: ['decipher', 'compose', 'fabricate', 'invent'], correctAnswer: 'decipher', level: 'C2' as CEFRLevel },
-  { id: 'c2_q25', text: 'His ___ apology did little to soothe her anger.', options: ['perfunctory', 'sincere', 'heartfelt', 'genuine'], correctAnswer: 'perfunctory', level: 'C2' as CEFRLevel },
 ];
 
 
@@ -175,19 +148,39 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return [...array].sort(() => Math.random() - 0.5);
 };
 
+interface Question {
+    id: string;
+    text: string;
+    options: string[];
+    correctAnswer: string;
+    level: CEFRLevel;
+}
+
 const PlacementTestView: React.FC<PlacementTestViewProps> = ({ onTestSubmit }) => {
-  const [questions, setQuestions] = useState(() => shuffleArray(ALL_QUESTIONS));
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const levels: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
+    const questionsPerLevel = 5;
+
+    const sampledQuestions = levels.flatMap(level => {
+        const questionsForLevel = ALL_QUESTIONS_BANK.filter(q => q.level === level);
+        return shuffleArray(questionsForLevel).slice(0, questionsPerLevel);
+    });
+
+    setQuestions(shuffleArray(sampledQuestions));
+  }, []);
 
   const handleAnswerChange = (questionId: string, answer: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
   };
   
   const answeredCount = Object.keys(answers).length;
-  const progressPercentage = (answeredCount / questions.length) * 100;
-  const isAllAnswered = answeredCount === questions.length;
+  const progressPercentage = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0;
+  const isAllAnswered = questions.length > 0 && answeredCount === questions.length;
 
   const handleSubmit = async () => {
     if (!isAllAnswered) {
@@ -223,6 +216,7 @@ const PlacementTestView: React.FC<PlacementTestViewProps> = ({ onTestSubmit }) =
     }
     
     const finalPerformance: Partial<Record<CEFRLevel, LevelPerformance>> = {};
+    let performanceSummary = '';
     for (const key in performanceByLevel) {
         const level = key as CEFRLevel;
         const data = performanceByLevel[level]!;
@@ -230,6 +224,7 @@ const PlacementTestView: React.FC<PlacementTestViewProps> = ({ onTestSubmit }) =
             ...data,
             percentage: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
         };
+        performanceSummary += `Level ${level}: ${finalPerformance[level]!.correct}/${finalPerformance[level]!.total} correct (${finalPerformance[level]!.percentage}%).\n`;
     }
 
     const analysis: TestAnalysis = {
@@ -239,16 +234,11 @@ const PlacementTestView: React.FC<PlacementTestViewProps> = ({ onTestSubmit }) =
         performanceByLevel: finalPerformance,
     };
     
-    const submissionText = questions.map(q => 
-      `Question (Level ${q.level}): "${q.text}"\nUser's Answer: "${answers[q.id]}"\nCorrect Answer: "${q.correctAnswer}"`
-    ).join('\n\n');
+    const prompt = `As an expert English language assessor, determine the user's CEFR level (A1, A2, B1, B2, C1, or C2) based on their performance in a placement test. The test included questions from various levels. Here is a summary of their performance:
 
-    const prompt = `As an expert English language assessor, please evaluate the following answers to a placement test and determine the user's overall CEFR level (A1, A2, B1, B2, C1, or C2). The questions are ordered by increasing difficulty. Consider the overall pattern of correct and incorrect answers.
+${performanceSummary}
 
-Here are the user's answers:
-${submissionText}
-
-Based on these answers, the user's CEFR level is:
+Based on this performance distribution, what is their most likely CEFR level?
 Return ONLY the level designation (e.g., "B1"), and nothing else.`;
 
     try {
@@ -271,15 +261,14 @@ Return ONLY the level designation (e.g., "B1"), and nothing else.`;
         console.error("Gemini API Error:", err);
         setError("AI đánh giá đã gặp lỗi. Vui lòng thử lại sau. Sử dụng kết quả phân tích tạm thời.");
         
-        // Fallback logic if AI fails: determine level based on performance
         let determinedLevel: CEFRLevel = 'A1';
-        const levels: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+        const levels: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
         for (const lvl of levels) {
             const perf = finalPerformance[lvl];
             if (perf && perf.percentage >= 50) {
                 determinedLevel = lvl;
             } else {
-                break; // Stop when a level is not passed
+                break;
             }
         }
 
@@ -313,7 +302,7 @@ Return ONLY the level designation (e.g., "B1"), and nothing else.`;
         <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200">
             <div className="text-center">
                 <h1 className="text-3xl font-bold text-slate-800">Bài Kiểm Tra Trình Độ</h1>
-                <p className="text-slate-600 mt-2 mb-8">Hãy chọn đáp án đúng nhất để AI xác định trình độ của bạn.</p>
+                <p className="text-slate-600 mt-2 mb-8">Hãy chọn đáp án đúng nhất để AI xác định trình độ của bạn ({questions.length} câu hỏi).</p>
             </div>
 
             <div className="w-full bg-slate-200 rounded-full h-2.5 mb-8 sticky top-24 z-10">
