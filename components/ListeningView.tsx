@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import type { User, ListeningExercise, CEFRLevel } from '../types';
 import SpeakerButton from './SpeakerButton';
 import { CONTENT_LIBRARY } from '../contentLibrary';
-import { GoogleGenAI, Type } from '@google/ai';
+import { GoogleGenAI, Type } from '@google/genai';
 
 interface ListeningViewProps {
   currentUser: User | null;
