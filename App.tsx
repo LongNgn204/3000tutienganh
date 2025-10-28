@@ -51,6 +51,7 @@ const App: React.FC = () => {
     const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
     const [challengeProgress, setChallengeProgress] = useState<ChallengeProgress>({});
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
     
@@ -288,6 +289,10 @@ Time per day: 30 minutes (default)
         await updateAndSaveUser(updatedUser); // Save the updated progress
     };
     
+    const toggleSidebar = () => {
+        setIsSidebarCollapsed(prev => !prev);
+    };
+
     const filteredWordsForQuiz = useMemo(() => {
         if (!searchQuery) return allWords;
         const lowercasedQuery = searchQuery.toLowerCase();
@@ -397,7 +402,7 @@ Time per day: 30 minutes (default)
     };
 
     return (
-        <div className={`flex h-screen ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+        <div className={`flex h-screen bg-slate-100 ${isSidebarOpen ? 'sidebar-open' : ''}`}>
              <div 
                 className="fixed inset-0 bg-black/30 z-30 opacity-0 pointer-events-none transition-opacity lg:hidden sidebar-overlay"
                 onClick={() => setIsSidebarOpen(false)}
@@ -409,6 +414,8 @@ Time per day: 30 minutes (default)
                     currentUser={currentUser}
                     onLogoutClick={handleLogout}
                     onLevelChange={handleLevelChange}
+                    isCollapsed={isSidebarCollapsed}
+                    onToggle={toggleSidebar}
                 />
             </Suspense>
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -416,7 +423,7 @@ Time per day: 30 minutes (default)
                     viewMode={viewMode}
                     onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
                 />
-                <main ref={mainContentRef} className="flex-1 overflow-y-auto bg-slate-100">
+                <main ref={mainContentRef} className="flex-1 overflow-y-auto">
                     <Suspense fallback={
                         <div className="flex items-center justify-center h-full">
                             <div className="w-14 h-14 border-4 border-slate-200 border-b-indigo-500 rounded-full animate-spin"></div>
