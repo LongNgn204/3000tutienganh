@@ -76,7 +76,7 @@ const ReadingQuiz: React.FC<{ article: ReadingArticle, onComplete: () => void }>
         setExplanations(null);
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const prompt = `As an English teacher, explain in Vietnamese why the correct answers to these multiple-choice questions are correct, based ONLY on the provided article. Return a JSON array of strings, with each string being the explanation for one question, in order.
+            const prompt = `As a detailed-oriented English teacher, your task is to provide explanations for a reading quiz. For each question, you must do two things: 1) Explain in Vietnamese why the correct answer is right by citing evidence from the article. 2) Explain in Vietnamese why EACH of the other incorrect options is wrong. This is very important. Return a JSON array of strings, with each string being the explanation for one question, in order.
 
 Article:
 """
@@ -84,7 +84,7 @@ ${article.content}
 """
 
 Questions:
-${JSON.stringify(article.questions.map((q, index) => ({ index, question: q.question, correctAnswer: q.answer })))}
+${JSON.stringify(article.questions.map((q, index) => ({ index, question: q.question, options: q.options, correctAnswer: q.answer })))}
 `;
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
@@ -93,7 +93,7 @@ ${JSON.stringify(article.questions.map((q, index) => ({ index, question: q.quest
                     responseMimeType: "application/json",
                     responseSchema: {
                         type: Type.ARRAY,
-                        description: "An array of explanation strings, one for each question in order.",
+                        description: "An array of detailed explanation strings, one for each question in order.",
                         items: { type: Type.STRING }
                     }
                 }
@@ -194,7 +194,7 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUp
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'B1';
-            const prompt = `Generate a short English reading exercise for a ${userLevel}-level learner. It should include a title, a passage (100-150 words), and 3 multiple-choice questions with options and the correct answer.`;
+            const prompt = `Generate a challenging English reading exercise that is slightly *above* a ${userLevel}-level learner's current ability. The topic should be academic or semi-formal (e.g., science, technology, sociology). It must include a title, a passage (150-200 words) with some advanced vocabulary (B2/C1 level), and 3-4 difficult multiple-choice questions that require inference and understanding of nuance, not just direct information retrieval.`;
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,

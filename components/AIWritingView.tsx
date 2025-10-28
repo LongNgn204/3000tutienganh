@@ -80,7 +80,7 @@ const AIWritingView: React.FC<AIWritingViewProps> = ({ currentUser, onGoalUpdate
         setFeedback(null);
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const prompt = `As an English teacher evaluating a piece of writing from a Vietnamese learner, please provide feedback on the following text. All feedback content must be in Vietnamese.
+            const prompt = `Act as a strict university writing instructor critiquing an essay from a Vietnamese student. Do not just praise. Your goal is to push the student to improve. Be critical, specific, and academic. Focus on weaknesses and areas for improvement. All feedback content must be in Vietnamese.
 - Writing Prompt: "${topic.topic}"
 - User's Text: "${userText}"`;
 
@@ -92,23 +92,23 @@ const AIWritingView: React.FC<AIWritingViewProps> = ({ currentUser, onGoalUpdate
                     responseSchema: {
                         type: Type.OBJECT,
                         properties: {
-                            overall: { type: Type.STRING, description: "General, encouraging comment in Vietnamese." },
+                            overall: { type: Type.STRING, description: "General, critical but constructive comment in Vietnamese, focusing on key weaknesses." },
                             corrections: {
                                 type: Type.ARRAY,
-                                description: "Array of corrections. Empty if no errors.",
+                                description: "Array of all grammatical and spelling corrections. Empty if no errors.",
                                 items: {
                                     type: Type.OBJECT,
                                     properties: {
                                         original: { type: Type.STRING },
                                         corrected: { type: Type.STRING },
-                                        explanation: { type: Type.STRING, description: "Explanation in Vietnamese." }
+                                        explanation: { type: Type.STRING, description: "Clear explanation in Vietnamese." }
                                     },
                                     required: ['original', 'corrected', 'explanation']
                                 }
                             },
                             suggestions: {
                                 type: Type.ARRAY,
-                                description: "Array of suggestions for improvement in Vietnamese.",
+                                description: "Array of concrete, advanced suggestions for improving vocabulary and sentence structure, in Vietnamese.",
                                 items: { type: Type.STRING }
                             }
                         },

@@ -134,11 +134,11 @@ const PronunciationView: React.FC<PronunciationViewProps> = ({ words, studyProgr
 
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const prompt = `As an expert English pronunciation coach, evaluate a user's pronunciation for a Vietnamese learner.
+            const prompt = `Act as a strict, demanding English pronunciation professor evaluating a Vietnamese student. Your standards are exceptionally high. Do not give high scores easily. Focus on perfection, especially on subtle errors in rhythm, intonation, and phoneme accuracy.
 - The target word is: "${currentWord.english}" (phonetics: ${currentWord.pronunciation}).
 - The user said: "${userTranscript}".
 
-Provide an overall score, a constructive comment, and specific feedback on phonemes if there are mistakes. All feedback should be in Vietnamese. If pronunciation is perfect, the specifics array should be empty.`;
+Provide an overall score, a critical but constructive comment, and extremely detailed feedback on phonemes. All feedback must be in Vietnamese. A score of 100 is for native-speaker perfection. If pronunciation is perfect, which is rare, say so, but still suggest one minor thing to watch out for.`;
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',

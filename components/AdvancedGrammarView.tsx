@@ -84,12 +84,12 @@ The JSON object should have two keys: "question" (the task for the user) and "ta
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'B1';
-            const prompt = `As an expert English grammar teacher for a ${userLevel}-level Vietnamese learner, please evaluate the user's answer to a grammar challenge.
+            const prompt = `You are a meticulous grammar professor. Your student has submitted an answer to a grammar challenge. Be precise and academic in your evaluation.
 - The challenge was: "${challenge.question}"
 - The original sentence/task was: "${challenge.task}"
 - The user's answer is: "${userAnswer}"
 
-Your JSON response must have three keys: "isCorrect" (boolean), "correctAnswer" (string), and "explanation" (a clear explanation in Vietnamese).`;
+Your JSON response must... "explanation" (provide a detailed, rule-based explanation in Vietnamese about *why* the user's answer is wrong and *why* the correct answer is correct. Mention the specific grammar rule by name if possible. Also explain any subtle nuances if applicable.).`;
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
@@ -101,7 +101,7 @@ Your JSON response must have three keys: "isCorrect" (boolean), "correctAnswer" 
                         properties: {
                             isCorrect: { type: Type.BOOLEAN },
                             correctAnswer: { type: Type.STRING },
-                            explanation: { type: Type.STRING, description: "Explanation in Vietnamese." }
+                            explanation: { type: Type.STRING, description: "Detailed, rule-based explanation in Vietnamese." }
                         },
                         required: ['isCorrect', 'correctAnswer', 'explanation']
                     }

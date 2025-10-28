@@ -57,7 +57,7 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress, onGoalU
 
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const prompt = `Act as a creative storyteller for a Vietnamese person learning English. Create a very short, simple story (around 50-70 words) that MUST include the following words: ${wordList}. The story should be easy to understand and engaging. Provide both the English story and its Vietnamese translation.`;
+        const prompt = `Act as a creative writing teacher for a Vietnamese person learning English. Create a short, engaging, and slightly complex story (around 70-90 words) that MUST include the following words: ${wordList}. The story should use interesting sentence structures and vocabulary beyond the absolute basic. Provide both the English story and its Vietnamese translation.`;
         
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -67,7 +67,7 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress, onGoalU
                 responseSchema: {
                     type: Type.OBJECT,
                     properties: {
-                        storyEnglish: { type: Type.STRING, description: "The short story in English." },
+                        storyEnglish: { type: Type.STRING, description: "The short, engaging story in English." },
                         storyVietnamese: { type: Type.STRING, description: "The Vietnamese translation of the story." },
                     },
                     required: ['storyEnglish', 'storyVietnamese']

@@ -116,7 +116,7 @@ const AIRolePlayView: React.FC<AIRolePlayViewProps> = ({ currentUser, onGoalUpda
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const transcriptText = transcript.map(t => `${t.author === 'ai' ? 'AI' : 'User'}: ${t.content}`).join('\n');
-            const prompt = `As an English teacher, provide feedback for a student who completed a role-play scenario. All feedback content must be in Vietnamese.
+            const prompt = `As a *strict* English teacher, provide *critical* feedback for a student who completed a role-play scenario. Focus on what they did wrong and how they can improve. Do not be overly encouraging. Be direct and honest. All feedback content must be in Vietnamese.
 - Scenario: ${selectedScenario.title}
 - Student's Goal: ${selectedScenario.goal}
 - Conversation Transcript:
@@ -131,10 +131,10 @@ ${transcriptText}`;
                         type: Type.OBJECT,
                         properties: {
                             goalAchieved: { type: Type.BOOLEAN },
-                            evaluation: { type: Type.STRING, description: "General evaluation in Vietnamese." },
+                            evaluation: { type: Type.STRING, description: "Critical evaluation in Vietnamese, focusing on weaknesses." },
                             suggestions: {
                                 type: Type.ARRAY,
-                                description: "1-2 actionable suggestions in Vietnamese.",
+                                description: "1-2 direct, actionable suggestions for improvement in Vietnamese.",
                                 items: { type: Type.STRING }
                             }
                         },
@@ -181,13 +181,15 @@ ${transcriptText}`;
             mediaStreamRef.current = stream;
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+            const strictSystemInstruction = `You are a role-play partner but also a strict English teacher. ${scenario.systemInstruction} In addition to your role-play persona, you MUST correct the user's clear grammar or pronunciation mistakes immediately and politely before continuing. For example: "A quick correction, you should say '...'. Now, back to our conversation..."`;
+
             inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
             outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
 
             sessionPromiseRef.current = ai.live.connect({
                 model: 'gemini-2.5-flash-native-audio-preview-09-2025',
                 config: {
-                    systemInstruction: scenario.systemInstruction,
+                    systemInstruction: strictSystemInstruction,
                     responseModalities: [Modality.AUDIO],
                     inputAudioTranscription: {},
                     outputAudioTranscription: {},

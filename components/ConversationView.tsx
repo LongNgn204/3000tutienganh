@@ -181,14 +181,13 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
             ? `You MUST ALWAYS respond in this exact format: First, speak the English sentence. Then, immediately say "In Vietnamese," followed by the Vietnamese translation. For example: "That's a great idea! In Vietnamese, đó là một ý tưởng tuyệt vời!".`
             : `You MUST respond ONLY in English. DO NOT provide any Vietnamese translation.`;
 
-        const systemInstruction = `You are Gem, a highly intelligent and adaptive English tutor. Your primary goal is to have a dynamic voice conversation with a Vietnamese learner.
+        const strictCorrectionRule = `**Correction Rule (VERY IMPORTANT):** If the user makes a clear grammatical or pronunciation mistake, you MUST briefly and politely interrupt them to correct it *before* continuing the conversation. For example, if they say "I go to the store yesterday," you should immediately say, "A quick correction, you should say 'I *went* to the store yesterday.' Please continue." This direct, immediate feedback is crucial for their learning.`;
+
+        const systemInstruction = `You are Gem, a highly intelligent and strict English tutor. Your primary goal is to have a dynamic voice conversation with a Vietnamese learner.
 
 **Initial Level:** The user's starting CEFR level is ${selectedLevel}. Begin the conversation at this level.
 
-**ADAPTIVE BEHAVIOR (CRITICAL):**
-1.  **Analyze Continuously:** As the user speaks, constantly analyze their vocabulary range, grammatical accuracy, and the complexity of their sentence structures.
-2.  **Level Up:** If the user demonstrates a strong command of English (using advanced words, complex sentences, few errors), you MUST gradually increase the difficulty of your own language. Introduce more sophisticated vocabulary, academic phrasing, and more complex grammatical structures to challenge them and help them grow.
-3.  **Level Down:** If the user struggles (simple words, frequent errors, hesitation), you MUST simplify your language to match their current level, ensuring the conversation remains encouraging and comprehensible.
+${strictCorrectionRule}
 
 **Core Task:** The student's mission is to use these words: ${wordList}. Guide the conversation naturally to give them a chance to use these words.
 

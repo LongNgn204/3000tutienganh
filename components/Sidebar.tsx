@@ -23,7 +23,7 @@ const NavButton: React.FC<{
             {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 rounded-r-full"></div>}
             <span className={`h-5 w-5 ${isActive ? 'text-indigo-600' : disabled ? 'text-slate-400' : 'text-slate-500'}`}>{children}</span>
             {label}
-            {disabled && <span className="ml-auto text-xs font-bold bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full">Sắp ra mắt</span>}
+            {disabled && <span className="ml-auto text-xs font-bold bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full">Đang phát triển</span>}
         </button>
     </li>
 );
@@ -139,16 +139,16 @@ const Sidebar: React.FC<{
         </NavGroup>
         
         <NavGroup title="Cộng đồng">
-            <NavButton onClick={() => navigateTo('leaderboard')} isActive={viewMode === 'leaderboard'} label="Bảng xếp hạng">
+            <NavButton onClick={() => navigateTo('leaderboard')} isActive={viewMode === 'leaderboard'} label="Bảng xếp hạng" disabled>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M18 3a1 1 0 00-1.447-.894L13 4.434V3a1 1 0 00-2 0v2.268l-3-1.92-2.32.774A1 1 0 002.732 5H2a1 1 0 00-1 1v8a1 1 0 001 1h.732a1 1 0 00.948-.684L5 13.08l3-1.92V17a1 1 0 002 0v-1.566l3.553 2.279A1 1 0 0018 17V4a1 1 0 000-1z" /></svg>
             </NavButton>
             <NavButton onClick={() => navigateTo('challenges')} isActive={viewMode === 'challenges'} label="Thử thách">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 4a1 1 0 112 0v1a1 1 0 11-2 0V4z" clipRule="evenodd" /><path d="M10 8a1 1 0 011 1v4a1 1 0 11-2 0v-4a1 1 0 011-1z" /></svg>
             </NavButton>
-            <NavButton onClick={() => navigateTo('video-lessons')} isActive={viewMode === 'video-lessons'} label="Bài giảng Video">
+            <NavButton onClick={() => navigateTo('video-lessons')} isActive={viewMode === 'video-lessons'} label="Bài giảng Video" disabled>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M3.5 2.75a.75.75 0 00-1.5 0v14.5a.75.75 0 001.5 0v-4.392l1.657-.348a6.44 6.44 0 015.686 0l1.657.348V17.25a.75.75 0 001.5 0V2.75a.75.75 0 00-1.5 0v4.392l-1.657.348a6.44 6.44 0 01-5.686 0L3.5 7.142V2.75z" /></svg>
             </NavButton>
-             <NavButton onClick={() => navigateTo('community-forum')} isActive={viewMode === 'community-forum' || viewMode === 'forum-topic'} label="Diễn đàn">
+             <NavButton onClick={() => navigateTo('community-forum')} isActive={viewMode === 'community-forum' || viewMode === 'forum-topic'} label="Diễn đàn" disabled>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5A1.5 1.5 0 0116.5 18h-13A1.5 1.5 0 012 16.5v-13z" /></svg>
             </NavButton>
         </NavGroup>

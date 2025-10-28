@@ -121,18 +121,12 @@ const IPAChartView: React.FC<IPAChartViewProps> = ({ onGoalUpdate }) => {
         setStatus('analyzing');
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const prompt = `Evaluate the pronunciation of the phoneme /${target.symbol}/ within the word "${target.exampleWord}" for a Vietnamese learner.
+            const prompt = `You are a meticulous, hard-to-please phonetics professor from Oxford. Your Vietnamese student is practicing a single English phoneme. Be extremely critical and academic in your feedback.
 - Target Word: "${target.exampleWord}" (IPA: ${target.exampleIPA})
-- Target Phoneme: /${target.symbol}/
+- Target Phoneme to evaluate: /${target.symbol}/
 - User's utterance: "${userTranscript}"
 
-Provide feedback in Vietnamese as a JSON object with this structure:
-{
-  "score": <integer 0-100>,
-  "comment": "<overall feedback in Vietnamese>",
-  "specifics": [ { "phoneme": "<the specific sound>", "feedback": "<detailed feedback in Vietnamese>" } ]
-}
-Focus specifically on how well the user pronounced the target phoneme /${target.symbol}/. If other parts of the word are wrong but the target phoneme is correct, give a high score.`;
+Provide brutally honest feedback in Vietnamese as a JSON object. A score of 100 is reserved for absolute, native-speaker perfection. A score of 90 is excellent but still has a tiny flaw. Be very specific about tongue position, lip shape, or airflow if you detect any error in the target phoneme /${target.symbol}/.`;
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
@@ -142,16 +136,17 @@ Focus specifically on how well the user pronounced the target phoneme /${target.
                     responseSchema: {
                         type: Type.OBJECT,
                         properties: {
-                            score: { type: Type.INTEGER },
-                            comment: { type: Type.STRING },
+                            score: { type: Type.INTEGER, description: "A harsh score from 0-100." },
+                            comment: { type: Type.STRING, description: "Critical overall feedback in Vietnamese." },
                             specifics: {
                                 type: Type.ARRAY,
                                 items: {
                                     type: Type.OBJECT,
-                                    properties: { phoneme: { type: Type.STRING }, feedback: { type: Type.STRING } }
+                                    properties: { phoneme: { type: Type.STRING }, feedback: { type: Type.STRING, description: "Detailed, technical feedback in Vietnamese." } }
                                 }
                             }
-                        }
+                        },
+                         required: ['score', 'comment', 'specifics']
                     }
                 }
             });
