@@ -36,7 +36,16 @@ const VstepExamView: React.FC = () => {
 
 Return ONLY the valid JSON object based on the schema.`;
             
-            // This is a simplified schema for brevity. A full production schema would be more detailed.
+            const vstepQuestionSchema = {
+                type: Type.OBJECT,
+                properties: {
+                    question: { type: Type.STRING },
+                    options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    correctAnswer: { type: Type.STRING },
+                },
+                required: ['question', 'options', 'correctAnswer'],
+            };
+
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: prompt,
@@ -45,11 +54,60 @@ Return ONLY the valid JSON object based on the schema.`;
                     responseSchema: {
                         type: Type.OBJECT,
                         properties: {
-                           listening: { type: Type.ARRAY, description: "3 parts of listening test" },
-                           reading: { type: Type.ARRAY, description: "4 reading passages with questions" },
-                           writing: { type: Type.ARRAY, description: "2 writing tasks" },
-                           speaking: { type: Type.ARRAY, description: "3 speaking parts" },
-                        }
+                           listening: { 
+                               type: Type.ARRAY, 
+                               description: "3 parts of listening test",
+                               items: {
+                                   type: Type.OBJECT,
+                                   properties: {
+                                       partNumber: { type: Type.INTEGER },
+                                       instructions: { type: Type.STRING },
+                                       audioScript: { type: Type.STRING },
+                                       questions: { type: Type.ARRAY, items: vstepQuestionSchema },
+                                   },
+                                   required: ['partNumber', 'instructions', 'audioScript', 'questions'],
+                               }
+                           },
+                           reading: { 
+                               type: Type.ARRAY, 
+                               description: "4 reading passages with questions",
+                               items: {
+                                   type: Type.OBJECT,
+                                   properties: {
+                                       passageNumber: { type: Type.INTEGER },
+                                       passageText: { type: Type.STRING },
+                                       questions: { type: Type.ARRAY, items: vstepQuestionSchema },
+                                   },
+                                   required: ['passageNumber', 'passageText', 'questions'],
+                               }
+                           },
+                           writing: { 
+                               type: Type.ARRAY, 
+                               description: "2 writing tasks",
+                               items: {
+                                   type: Type.OBJECT,
+                                   properties: {
+                                       taskNumber: { type: Type.INTEGER },
+                                       prompt: { type: Type.STRING },
+                                   },
+                                   required: ['taskNumber', 'prompt'],
+                               }
+                           },
+                           speaking: { 
+                               type: Type.ARRAY, 
+                               description: "3 speaking parts",
+                               items: {
+                                   type: Type.OBJECT,
+                                   properties: {
+                                       partNumber: { type: Type.INTEGER },
+                                       topic: { type: Type.STRING },
+                                       prompts: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                   },
+                                   required: ['partNumber', 'topic', 'prompts'],
+                               }
+                           },
+                        },
+                        required: ['listening', 'reading', 'writing', 'speaking']
                     }
                 }
             });
