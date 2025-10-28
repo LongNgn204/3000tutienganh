@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, Chat } from "@google/genai";
 import type { User } from '../types';
 
 interface Message {
@@ -46,14 +46,21 @@ const AIChatTutorView: React.FC<AIChatTutorViewProps> = ({ currentUser }) => {
               config: { systemInstruction },
             });
             
-            // Send initial message
-            const initialResponse = await chatRef.current.sendMessage({ message: "Hello, introduce yourself briefly and ask me what I want to learn today."});
-            setMessages([{ role: 'model', text: initialResponse.text }]);
+            // Send initial message via stream
+            const initialStream = await chatRef.current.sendMessageStream({ message: "Hello, introduce yourself briefly and ask me what I want to learn today."});
+            setIsLoading(false);
+            
+            let accumulatedText = '';
+            setMessages([{ role: 'model', text: '' }]);
+
+            for await (const chunk of initialStream) {
+                accumulatedText += chunk.text;
+                setMessages([{ role: 'model', text: accumulatedText }]);
+            }
 
         } catch (err) {
             console.error("Chat initialization error:", err);
             setError("Không thể khởi tạo trợ lý AI. Vui lòng tải lại trang.");
-        } finally {
             setIsLoading(false);
         }
     };
@@ -65,25 +72,41 @@ const AIChatTutorView: React.FC<AIChatTutorViewProps> = ({ currentUser }) => {
     if (chatContainerRef.current) {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || !chatRef.current) return;
 
     const userMessage: Message = { role: 'user', text: input };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage, { role: 'model', text: '' }]);
     setInput('');
     setIsLoading(true);
+    setError(null);
 
     try {
-        const result: GenerateContentResponse = await chatRef.current.sendMessage({ message: userMessage.text });
-        const modelMessage: Message = { role: 'model', text: result.text };
-        setMessages(prev => [...prev, modelMessage]);
+        const stream = await chatRef.current.sendMessageStream({ message: userMessage.text });
+        
+        let accumulatedText = '';
+        for await (const chunk of stream) {
+            accumulatedText += chunk.text;
+            setMessages(prev => {
+                const updatedMessages = [...prev];
+                updatedMessages[updatedMessages.length - 1].text = accumulatedText;
+                return updatedMessages;
+            });
+        }
     } catch (err) {
         console.error("Send message error:", err);
-        const errorMessage: Message = { role: 'model', text: "I'm sorry, I encountered an error. Please try again." };
-        setMessages(prev => [...prev, errorMessage]);
+        const errorMessageText = "I'm sorry, I encountered an error. Please try again.";
+        setMessages(prev => {
+             const updatedMessages = [...prev];
+             if (updatedMessages.length > 0 && updatedMessages[updatedMessages.length - 1].role === 'model') {
+                updatedMessages[updatedMessages.length - 1].text = errorMessageText;
+                return updatedMessages;
+             }
+             return [...prev, { role: 'model', text: errorMessageText }];
+        });
     } finally {
         setIsLoading(false);
     }
@@ -100,6 +123,9 @@ const AIChatTutorView: React.FC<AIChatTutorViewProps> = ({ currentUser }) => {
                         )}
                         <div className={`max-w-lg p-4 rounded-2xl shadow-sm ${msg.role === 'user' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-slate-100 text-slate-800 rounded-bl-none'}`}>
                             <p className="leading-relaxed" dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.text) }} />
+                            {msg.role === 'model' && isLoading && index === messages.length - 1 && (
+                                <span className="blinking-cursor"></span>
+                            )}
                         </div>
                          {msg.role === 'user' && (
                             <div className="w-10 h-10 rounded-full bg-slate-600 text-white flex items-center justify-center flex-shrink-0 font-bold shadow">
@@ -108,7 +134,7 @@ const AIChatTutorView: React.FC<AIChatTutorViewProps> = ({ currentUser }) => {
                         )}
                     </div>
                 ))}
-                 {isLoading && messages.length > 0 && (
+                 {isLoading && messages.length > 0 && messages[messages.length-1].role === 'user' && (
                     <div className="flex items-start gap-4">
                         <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center flex-shrink-0 font-bold shadow">AI</div>
                         <div className="max-w-lg p-4 rounded-2xl shadow-sm bg-slate-100 text-slate-800 rounded-bl-none flex items-center gap-2">

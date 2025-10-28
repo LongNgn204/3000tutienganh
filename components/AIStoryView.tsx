@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import type { Word, StudyProgress } from '../types';
 import SpeakerButton from './SpeakerButton';
 import * as srsService from '../services/srsService';
@@ -57,27 +57,37 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress, onGoalU
 
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const prompt = `Act as a creative writing teacher for a Vietnamese person learning English. Create a short, engaging, and slightly complex story (around 70-90 words) that MUST include the following words: ${wordList}. The story should use interesting sentence structures and vocabulary beyond the absolute basic. Provide both the English story and its Vietnamese translation.`;
+        const prompt = `Act as a creative writing teacher for a Vietnamese person learning English. Your task is to create a short, engaging story (around 70-90 words) that MUST include the following English words: ${wordList}.
+
+First, write the complete English story.
+Then, on a new line, write the exact separator: "---TRANSLATION---"
+Finally, on a new line, write the complete Vietnamese translation of the story.
+
+Do not include any other text or formatting.`;
         
-        const response = await ai.models.generateContent({
+        const responseStream = await ai.models.generateContentStream({
             model: "gemini-2.5-flash",
             contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        storyEnglish: { type: Type.STRING, description: "The short, engaging story in English." },
-                        storyVietnamese: { type: Type.STRING, description: "The Vietnamese translation of the story." },
-                    },
-                    required: ['storyEnglish', 'storyVietnamese']
-                },
-            },
         });
         
-        const storyData = JSON.parse(response.text);
-        setStoryEnglish(storyData.storyEnglish);
-        setStoryVietnamese(storyData.storyVietnamese);
+        let accumulatedText = '';
+        const separator = "---TRANSLATION---";
+
+        for await (const chunk of responseStream) {
+            accumulatedText += chunk.text;
+            
+            const separatorIndex = accumulatedText.indexOf(separator);
+            
+            if (separatorIndex !== -1) {
+                const englishPart = accumulatedText.substring(0, separatorIndex).trim();
+                const vietnamesePart = accumulatedText.substring(separatorIndex + separator.length).trim();
+                setStoryEnglish(englishPart);
+                setStoryVietnamese(vietnamesePart);
+            } else {
+                setStoryEnglish(accumulatedText.trim());
+            }
+        }
+
         onGoalUpdate();
 
     } catch (err) {
@@ -95,7 +105,7 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress, onGoalU
   };
 
   const renderContent = () => {
-    if (isGenerating) {
+    if (isGenerating && !storyEnglish) { // Show spinner only at the very beginning
       return (
         <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
             <svg className="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -126,9 +136,13 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress, onGoalU
             className="text-lg text-slate-700 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: highlightWords(storyEnglish, selectedWords) }}
           />
+          {isGenerating && !storyVietnamese && <span className="blinking-cursor"></span>}
+
 
           {storyVietnamese && (
-            <p className="text-md text-slate-500 mt-4 pt-4 border-t italic">{storyVietnamese}</p>
+            <p className="text-md text-slate-500 mt-4 pt-4 border-t italic">{storyVietnamese}
+             {isGenerating && <span className="blinking-cursor"></span>}
+            </p>
           )}
 
           <div className="mt-6 flex justify-end gap-4">
@@ -140,9 +154,10 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress, onGoalU
             </button>
              <button
               onClick={generateStory}
-              className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+              disabled={isGenerating}
+              className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:bg-slate-400"
             >
-              Tạo truyện khác
+              {isGenerating ? 'Đang tạo...' : 'Tạo truyện khác'}
             </button>
           </div>
         </div>

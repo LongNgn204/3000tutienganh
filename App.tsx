@@ -3,7 +3,6 @@ import Header from './components/Header';
 import { WORD_CATEGORIES as CONSTANT_WORD_CATEGORIES, ALL_WORDS as CONSTANT_ALL_WORDS, TYPE_COLORS } from './constants';
 import { CHALLENGES } from './challengesData';
 import type { User, StudyProgress, ViewMode, PlacementTestResult, StudyRecord, DailyProgress, DailyGoal, Category, Word, ForumPost, ForumReply, StudyPlan, UserStudyPlanInput, CEFRLevel } from './types';
-import Footer from './components/Footer';
 import * as api from './services/api';
 import * as srsService from './services/srsService';
 import { FORUM_TOPICS, FORUM_POSTS_DATA } from './forumData';
@@ -530,7 +529,6 @@ const App: React.FC = () => {
             </div>
           </Suspense>
         </main>
-        <Footer />
       </div>
     </div>
   );

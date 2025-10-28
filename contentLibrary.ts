@@ -206,6 +206,130 @@ However, the pervasive nature of social media also presents significant challeng
                 },
             ],
         },
+        {
+            id: 'b2-esports-phenomenon',
+            title: 'The Rise of Esports',
+            level: 'B2',
+            content: `The rapid advancement of technology has transformed almost every aspect of human life, from communication to commerce, and increasingly, to how we define sports and competition. One area that has seen an explosion in popularity and professionalism in recent decades is esports, or electronic sports. What began as casual video game competitions among friends has evolved into a global phenomenon, attracting millions of viewers and offering lucrative careers for professional players.
+
+Esports involves competitive video gaming at a professional level. Teams of players, often sponsored by major companies, compete in various video games such as 'League of Legends,' 'Dota 2,' 'Counter-Strike: Global Offensive,' and 'Fortnite.' These games require immense skill, strategic thinking, quick reflexes, and effective teamwork. Players spend countless hours training, analyzing opponents, and perfecting their techniques, much like traditional athletes. The prize pools for major tournaments can reach millions of dollars, and top players can earn substantial salaries from their teams, sponsorships, and streaming revenue.
+
+One of the most compelling aspects of esports is its accessibility. Unlike many traditional sports that require specific physical attributes or expensive equipment, esports can be enjoyed by a broader demographic. A gaming console or a computer and an internet connection are often the primary requirements. This lower barrier to entry has allowed diverse talent from around the world to emerge and compete at the highest levels. Furthermore, esports events are predominantly online, allowing a global audience to tune in from their homes, leading to viewership numbers that rival major sporting events.
+
+However, esports also faces challenges. Critics sometimes question its legitimacy as a 'sport,' arguing that it lacks the physical exertion of traditional athletics. There are also concerns about player health, including eye strain, repetitive strain injuries, and the mental pressures of constant competition. The industry is still relatively young and is working to establish standardized regulations, player unions, and clear career pathways, similar to those found in more established sports leagues.
+
+Despite these hurdles, the future of esports looks bright. Universities are beginning to offer scholarships for esports, and some countries are recognizing professional gamers as athletes. As technology continues to integrate further into daily life, and as more people grow up with gaming as a central form of entertainment, esports is poised to continue its ascent, blurring the lines between digital entertainment and athletic competition.`,
+            questions: [
+                {
+                    question: "What is one primary requirement to participate in esports mentioned in the text?",
+                    options: ["Specific physical attributes", "Expensive specialized equipment", "A gaming console or computer and an internet connection", "Sponsorship from major companies"],
+                    answer: "A gaming console or computer and an internet connection",
+                },
+                {
+                    question: "What does the author mean by a 'lower barrier to entry' for esports?",
+                    options: ["It is physically less demanding than traditional sports.", "The games are very easy to learn and play.", "It is relatively easy and inexpensive for people to start participating.", "The prize money in tournaments is not very high."],
+                    answer: "It is relatively easy and inexpensive for people to start participating.",
+                },
+                {
+                    question: "What is one of the main challenges the esports industry is currently facing?",
+                    options: ["A lack of interested viewers.", "The difficulty in finding talented players.", "A lack of major company sponsorship.", "Establishing standardized regulations and addressing player health."],
+                    answer: "Establishing standardized regulations and addressing player health.",
+                },
+            ],
+        },
+        {
+            id: 'b2-urban-green-spaces',
+            title: 'The Importance of Urban Green Spaces',
+            level: 'B2',
+            content: `In an increasingly urbanized world, where concrete structures and bustling streets dominate the landscape, the importance of urban green spaces cannot be overstated. These areas, which include parks, gardens, community allotments, and even tree-lined avenues, offer a multitude of benefits that are crucial for both human well-being and environmental sustainability.
+
+From an ecological perspective, urban green spaces play a vital role in maintaining biodiversity. They provide habitats for various species of plants, insects, and birds, contributing to a healthier ecosystem within the city. Trees and other vegetation act as natural air filters, absorbing pollutants like carbon dioxide and releasing oxygen, thereby improving air quality. They also help regulate urban temperatures, mitigating the 'urban heat island' effect where cities become significantly warmer than surrounding rural areas due to heat absorption by buildings and roads. Furthermore, green spaces assist in stormwater management by absorbing rainwater, reducing runoff and the risk of flooding.
+
+For city dwellers, the advantages are equally significant. Access to green spaces has been consistently linked to improved physical and mental health. Studies show that spending time in nature can reduce stress, lower blood pressure, and improve mood. Parks offer opportunities for physical activity, such as walking, jogging, and cycling, promoting healthier lifestyles. They also serve as crucial communal areas, fostering social interaction and a sense of community among residents. Children benefit immensely from play areas and exposure to nature, which can enhance cognitive development and creativity.
+
+Despite these clear benefits, urban green spaces are often under threat from urban expansion and development. Planners frequently prioritize housing or commercial projects over parks, leading to a reduction in available green areas. Therefore, effective urban planning strategies are essential to protect existing green spaces and create new ones. This includes integrating green infrastructure into new developments, converting unused land into parks, and encouraging rooftop gardens and vertical farms.
+
+Ultimately, investing in and preserving urban green spaces is not merely an aesthetic choice; it is an investment in public health, environmental resilience, and the overall quality of life in cities. As cities continue to grow, recognizing and prioritizing these natural havens will be key to creating truly livable and sustainable urban environments for future generations.`,
+            questions: [
+                 {
+                    question: "What is the 'urban heat island' effect?",
+                    options: ["When cities have more parks than rural areas.", "When cities become much warmer than the surrounding countryside.", "When green spaces absorb too much stormwater.", "When cities experience frequent flooding."],
+                    answer: "When cities become much warmer than the surrounding countryside.",
+                },
+                {
+                    question: "According to the text, how do green spaces contribute to social well-being?",
+                    options: ["By filtering air pollutants.", "By regulating urban temperatures.", "By serving as communal areas that foster social interaction.", "By absorbing rainwater to prevent floods."],
+                    answer: "By serving as communal areas that foster social interaction.",
+                },
+                {
+                    question: "What is the main threat to urban green spaces mentioned in the text?",
+                    options: ["Climate change and pollution.", "Lack of interest from residents.", "Prioritization of commercial and housing development.", "The high cost of maintaining parks and gardens."],
+                    answer: "Prioritization of commercial and housing development.",
+                },
+            ],
+        },
+        {
+            id: 'b2-remote-work-shift',
+            title: 'The Shift to Remote Work',
+            level: 'B2',
+            content: `The concept of work has undergone significant transformations throughout history, from agrarian societies to industrial factories and now, increasingly, to the digital realm. Among the most impactful shifts in recent years is the widespread adoption of remote work, a model accelerated by technological advancements and, more recently, by global events. This paradigm shift has profound implications for individuals, businesses, and urban landscapes.
+
+For employees, remote work often offers increased flexibility and autonomy. The ability to set one's own schedule and work from a preferred location can lead to a better work-life balance, reduced commuting stress, and potentially higher job satisfaction. It also opens up job opportunities for individuals in remote areas or those with specific accessibility needs, democratizing access to employment. However, challenges include potential feelings of isolation, difficulty in separating work from personal life, and the need for self-discipline to maintain productivity without direct supervision.
+
+Businesses, on the other hand, can benefit from remote work through reduced overhead costs associated with office space and utilities. It also expands their talent pool, allowing them to recruit from a global workforce rather than being limited by geographical proximity. Remote teams can also demonstrate higher productivity when managed effectively, as employees often feel more trusted and empowered. Nevertheless, companies must invest in robust communication technologies and training for remote management. Maintaining company culture and fostering team cohesion can also be more challenging in a distributed environment.
+
+Urban centers are also experiencing the ripple effects. A decrease in daily commuters can ease traffic congestion and reduce carbon emissions. Commercial real estate markets might see changes, with less demand for traditional office spaces and perhaps more for flexible co-working hubs or residential properties. Local economies in suburban or rural areas might even flourish as remote workers relocate, bringing their spending power to new communities.
+
+The future of remote work is likely a hybrid model, combining days in the office with days working from home. This approach seeks to capture the benefits of both worlds: maintaining face-to-face collaboration and social connection while retaining flexibility and reduced commute times. As companies and employees continue to adapt, the lessons learned from the full-scale remote experiment are shaping a more flexible and, hopefully, more efficient and inclusive future of work.`,
+            questions: [
+                {
+                    question: "Which of the following is mentioned as a benefit of remote work for businesses?",
+                    options: ["Better work-life balance for managers.", "Reduced stress from commuting.", "Access to a global talent pool.", "Stronger team cohesion."],
+                    answer: "Access to a global talent pool.",
+                },
+                {
+                    question: "What is a potential downside of remote work for employees?",
+                    options: ["Increased overhead costs.", "Difficulty in finding job opportunities.", "Feelings of isolation and loneliness.", "Less autonomy in their work schedule."],
+                    answer: "Feelings of isolation and loneliness.",
+                },
+                {
+                    question: "What does the author suggest is the likely future of work?",
+                    options: ["A complete return to traditional office work.", "A full-scale adoption of permanent remote work.", "A hybrid model combining office and remote work.", "A decrease in the use of communication technologies."],
+                    answer: "A hybrid model combining office and remote work.",
+                },
+            ],
+        },
+        {
+            id: 'b2-deep-ocean-exploration',
+            title: 'Exploring the Deep Ocean',
+            level: 'B2',
+            content: `The Earth's oceans are vast and mysterious, covering more than 70% of the planet's surface. While we've explored much of the surface and coastal waters, the deep ocean remains largely uncharted territory, holding secrets to Earth's geological processes, unique ecosystems, and potentially new forms of life. Among the most extreme environments are the ocean's deepest trenches, which plunge thousands of meters below the surface.
+
+The deepest known point in the world's oceans is the Challenger Deep, located at the southern end of the Mariana Trench in the western Pacific Ocean. It reaches an astonishing depth of approximately 10,928 meters (35,840 feet). To put that into perspective, if Mount Everest, the world's highest peak, were placed in the Challenger Deep, its summit would still be submerged by over two kilometers of water. These trenches are formed by the process of subduction, where one tectonic plate slides beneath another, creating deep, narrow depressions.
+
+Life in these extreme conditions is truly remarkable. Despite the crushing pressure, perpetual darkness, and near-freezing temperatures, a variety of organisms have adapted to thrive. Specialized deep-sea fish, amphipods, and unique microbial communities have evolved incredible strategies to survive. Many of these creatures are bioluminescent, producing their own light to attract mates or prey in the absolute darkness. Their bodies are often designed to withstand immense pressure, featuring flexible bones and water-filled cells that prevent them from being crushed.
+
+Exploring these abyssal zones presents significant technological challenges. The extreme pressure requires specially designed submersibles and remotely operated vehicles (ROVs) that can withstand immense forces. Communication is difficult, and the sheer scale of the environment makes comprehensive mapping and surveying a monumental task. Despite these difficulties, scientific expeditions continue to push the boundaries of exploration, utilizing advanced sonar, cameras, and robotic arms to collect samples and data.
+
+The study of deep-sea trenches is not just about satisfying curiosity; it has broader implications. Understanding the unique chemistry and biology of these environments can provide insights into the origins of life on Earth and the potential for life on other planets. They also play a role in global climate regulation by acting as carbon sinks. Furthermore, the discovery of new species and biochemical compounds could have applications in medicine and biotechnology. As technology advances, our ability to probe these mysterious depths will undoubtedly continue to expand, revealing more about our planet's hidden wonders.`,
+            questions: [
+                {
+                    question: "What is the Challenger Deep?",
+                    options: ["The highest underwater mountain.", "A type of bioluminescent fish.", "The deepest known point in the ocean.", "A specially designed submersible for exploration."],
+                    answer: "The deepest known point in the ocean.",
+                },
+                {
+                    question: "How have creatures in deep-sea trenches adapted to the immense pressure?",
+                    options: ["By having very thick, hard shells.", "By producing their own light to reduce pressure.", "By having flexible bones and water-filled cells.", "By hibernating for long periods."],
+                    answer: "By having flexible bones and water-filled cells.",
+                },
+                {
+                    question: "Why is the study of deep-sea trenches considered important?",
+                    options: ["Primarily for finding new locations for deep-sea fishing.", "It can provide insights into the origins of life and has potential medical applications.", "It is the easiest way to map the entire ocean floor.", "It helps predict the movement of tectonic plates to prevent earthquakes."],
+                    answer: "It can provide insights into the origins of life and has potential medical applications.",
+                },
+            ],
+        },
         // C1 Level
         {
             id: 'c1-globalization',

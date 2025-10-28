@@ -40,11 +40,23 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
     .animate-fade-in {
       animation: fadeIn 0.5s ease-in-out;
     }
     .animate-fade-in-up {
       animation: fadeInUp 0.5s ease-in-out;
+    }
+    .blinking-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 1.25rem; /* Equivalent to h-5 */
+      background-color: var(--slate-700);
+      animation: pulse-subtle 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      margin-left: 4px;
     }
     /* Initial loading spinner */
     #initial-loader {
@@ -102,6 +114,11 @@
     }
     .shadow-lifted {
        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+    }
+
+    /* Global Transitions for better UX */
+    button, a, .card-hover {
+        transition: all 0.2s ease-in-out;
     }
   </style>
 <script type="importmap">

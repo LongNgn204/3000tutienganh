@@ -45,9 +45,19 @@ const UserProfile: React.FC<{
     if (!currentUser) return null;
     
     const allLevels: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    
+    const today = new Date();
+    const dateOptions: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    };
+    const formattedDate = today.toLocaleDateString('vi-VN', dateOptions);
+    const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
 
     return (
-        <div className="mt-auto p-4 border-t border-slate-200 bg-slate-50">
+        <div className="mt-auto p-4 border-t border-slate-200">
             <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                     {currentUser.name.charAt(0).toUpperCase()}
@@ -75,6 +85,16 @@ const UserProfile: React.FC<{
                       <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
                     </svg>
                 </button>
+            </div>
+             <div className="mt-4 pt-4 border-t border-slate-200 text-center space-y-3">
+                <p className="text-xs text-slate-500">
+                    {capitalizedDate}
+                </p>
+                <p className="text-xs text-slate-400">
+                    © 2025 Học Tiếng Anh Cùng AI.
+                    <br/>
+                    Phát triển bởi Long Nguyễn.
+                </p>
             </div>
         </div>
     );

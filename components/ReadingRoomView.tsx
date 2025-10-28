@@ -119,6 +119,14 @@ ${JSON.stringify(article.questions.map((q, index) => ({ index, question: q.quest
     const score = Object.entries(answers).reduce((acc, [qIndex, answer]) => {
         return article.questions[parseInt(qIndex)].answer === answer ? acc + 1 : acc;
     }, 0);
+    
+    if (!article.questions || article.questions.length === 0) {
+        return (
+            <div className="mt-8 pt-6 border-t text-center text-slate-500">
+                <p>AI đang tạo câu hỏi đọc hiểu...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="mt-8 pt-6 border-t">
@@ -177,7 +185,7 @@ ${JSON.stringify(article.questions.map((q, index) => ({ index, question: q.quest
 const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUpdate }) => {
     const [mode, setMode] = useState<'selection' | 'guided' | 'free-read'>('selection');
     const [selectedArticle, setSelectedArticle] = useState<ReadingArticle | null>(null);
-    const [freeReadArticle, setFreeReadArticle] = useState<ReadingArticle | null>(null);
+    const [freeReadArticle, setFreeReadArticle] = useState<Partial<ReadingArticle> | null>(null);
     const [isFetchingFree, setIsFetchingFree] = useState(false);
     const [selectedWord, setSelectedWord] = useState<{ word: string, context: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -187,6 +195,43 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUp
         setMode('guided');
     };
 
+    const generateQuestionsForArticle = async (articleContent: string) => {
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const prompt = `Based on the following article, generate 3-4 difficult multiple-choice questions that require inference and understanding of nuance, not just direct information retrieval.
+
+Article:
+"""
+${articleContent}
+"""`;
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                question: { type: Type.STRING },
+                                options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                answer: { type: Type.STRING }
+                            },
+                            required: ['question', 'options', 'answer']
+                        }
+                    }
+                }
+            });
+            const questions = JSON.parse(response.text);
+            setFreeReadArticle(prev => prev ? ({ ...prev, questions }) : null);
+            onGoalUpdate();
+        } catch (err) {
+            console.error("Gemini Question Generation Error:", err);
+            // Optionally set an error state for the quiz part
+        }
+    };
+
     const getNewFreeArticle = async () => {
         setIsFetchingFree(true);
         setError(null);
@@ -194,39 +239,37 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUp
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'B1';
-            const prompt = `Generate a challenging English reading exercise that is slightly *above* a ${userLevel}-level learner's current ability. The topic should be academic or semi-formal (e.g., science, technology, sociology). It must include a title, a passage (150-200 words) with some advanced vocabulary (B2/C1 level), and 3-4 difficult multiple-choice questions that require inference and understanding of nuance, not just direct information retrieval.`;
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            id: { type: Type.STRING },
-                            title: { type: Type.STRING },
-                            level: { type: Type.STRING },
-                            content: { type: Type.STRING },
-                            questions: {
-                                type: Type.ARRAY,
-                                items: {
-                                    type: Type.OBJECT,
-                                    properties: {
-                                        question: { type: Type.STRING },
-                                        options: { type: Type.ARRAY, items: { type: Type.STRING } },
-                                        answer: { type: Type.STRING }
-                                    },
-                                    required: ['question', 'options', 'answer']
-                                }
-                            }
-                        },
-                        required: ['id', 'title', 'level', 'content', 'questions']
-                    }
-                }
-            });
-            const article: ReadingArticle = JSON.parse(response.text);
-            setFreeReadArticle(article);
-            onGoalUpdate();
+            const prompt = `Generate a challenging English reading exercise that is slightly *above* a ${userLevel}-level learner's current ability. The topic should be academic or semi-formal.
+First, provide a "Title: [Your Title]".
+Then, on a new line, write the separator "---".
+Then, write the full article "Content:" (150-200 words).
+Do not generate questions yet.`;
+
+            const responseStream = await ai.models.generateContentStream({ model: 'gemini-2.5-flash', contents: prompt });
+            
+            let fullText = '';
+            let finalContent = '';
+            for await (const chunk of responseStream) {
+                fullText += chunk.text;
+                const parts = fullText.split('---');
+                const title = parts[0].replace('Title:', '').trim();
+                const content = (parts[1] || '').replace('Content:', '').trim();
+                finalContent = content; // Store final content for question generation
+                
+                setFreeReadArticle({
+                    id: `free-${Date.now()}`,
+                    level: userLevel,
+                    title,
+                    content,
+                    questions: [] // Initialize with empty questions
+                });
+            }
+            
+            // Now that the article is fully streamed, generate questions in the background
+            if (finalContent) {
+                generateQuestionsForArticle(finalContent);
+            }
+
         } catch (err) {
             console.error("Gemini Free Article Generation Error:", err);
             setError('Không thể tạo bài đọc mới. Vui lòng thử lại.');
@@ -286,14 +329,18 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser, onGoalUp
             );
         }
         if (mode === 'free-read') {
-             if (isFetchingFree) return <div className="text-center p-8"><p>AI đang tạo bài đọc và câu hỏi...</p></div>;
+             if (isFetchingFree && !freeReadArticle) return <div className="text-center p-8"><p>AI đang tạo bài đọc...</p></div>;
              if (error) return <p className="text-red-500 text-center p-8">{error}</p>;
               if (freeReadArticle) {
                  return (
                     <div>
                         <h2 className="text-3xl font-bold text-slate-800 mb-4">{freeReadArticle.title}</h2>
-                        <ReadingText text={freeReadArticle.content} onWordClick={(word, context) => setSelectedWord({ word, context })} />
-                        <ReadingQuiz article={freeReadArticle} onComplete={() => setMode('selection')}/>
+                        {freeReadArticle.content ? (
+                            <ReadingText text={freeReadArticle.content} onWordClick={(word, context) => setSelectedWord({ word, context })} />
+                        ) : <p>Đang tải nội dung...</p>}
+                        {isFetchingFree && <span className="inline-block w-2 h-5 bg-slate-700 animate-pulse ml-1"></span>}
+                        
+                        <ReadingQuiz article={freeReadArticle as ReadingArticle} onComplete={() => setMode('selection')}/>
                     </div>
                  );
              }

@@ -55,7 +55,7 @@ const StudyPlanTaskItem: React.FC<StudyPlanTaskItemProps> = ({ task, onStartTask
     };
 
     return (
-        <div className={`p-4 rounded-xl flex items-center gap-4 transition-all duration-300 ${task.completed ? 'bg-green-50 text-slate-500' : 'bg-slate-50 hover:bg-slate-100'}`}>
+        <div className={`p-4 rounded-xl flex items-center gap-4 card-hover ${task.completed ? 'bg-green-50 text-slate-500' : 'bg-slate-50 hover:bg-slate-100 hover:shadow-sm'}`}>
             <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-colors ${task.completed ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'}`}>
                 {ICONS[task.type]}
             </div>
@@ -70,7 +70,7 @@ const StudyPlanTaskItem: React.FC<StudyPlanTaskItemProps> = ({ task, onStartTask
                         <span>Xong!</span>
                      </div>
                 ) : (
-                    <button onClick={handleStart} className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-all transform hover:scale-105">
+                    <button onClick={handleStart} className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transform hover:scale-105">
                         Bắt đầu
                     </button>
                 )}

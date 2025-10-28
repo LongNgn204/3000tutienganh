@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import SpeakerButton from './SpeakerButton';
+import { IPA_DATA, Phoneme } from './ipaData';
 
 declare global {
   interface Window {
@@ -8,60 +9,6 @@ declare global {
     webkitSpeechRecognition: any;
   }
 }
-
-interface Phoneme {
-    symbol: string;
-    type: 'vowel' | 'consonant';
-    exampleWord: string;
-    exampleIPA: string;
-}
-
-const IPA_DATA: Phoneme[] = [
-    // Vowels
-    { symbol: 'iː', type: 'vowel', exampleWord: 'sheep', exampleIPA: '/ʃiːp/' },
-    { symbol: 'ɪ', type: 'vowel', exampleWord: 'ship', exampleIPA: '/ʃɪp/' },
-    { symbol: 'ʊ', type: 'vowel', exampleWord: 'good', exampleIPA: '/ɡʊd/' },
-    { symbol: 'uː', type: 'vowel', exampleWord: 'shoot', exampleIPA: '/ʃuːt/' },
-    { symbol: 'e', type: 'vowel', exampleWord: 'bed', exampleIPA: '/bed/' },
-    { symbol: 'ə', type: 'vowel', exampleWord: 'teacher', exampleIPA: '/ˈtiːtʃər/' },
-    { symbol: 'ɜː', type: 'vowel', exampleWord: 'bird', exampleIPA: '/bɜːrd/' },
-    { symbol: 'ɔː', type: 'vowel', exampleWord: 'door', exampleIPA: '/dɔːr/' },
-    { symbol: 'æ', type: 'vowel', exampleWord: 'cat', exampleIPA: '/kæt/' },
-    { symbol: 'ʌ', type: 'vowel', exampleWord: 'cup', exampleIPA: '/kʌp/' },
-    { symbol: 'ɑː', type: 'vowel', exampleWord: 'father', exampleIPA: '/ˈfɑːðər/' },
-    { symbol: 'ɒ', type: 'vowel', exampleWord: 'hot', exampleIPA: '/hɒt/' },
-    // Diphthongs
-    { symbol: 'eɪ', type: 'vowel', exampleWord: 'say', exampleIPA: '/seɪ/' },
-    { symbol: 'aɪ', type: 'vowel', exampleWord: 'my', exampleIPA: '/maɪ/' },
-    { symbol: 'ɔɪ', type: 'vowel', exampleWord: 'boy', exampleIPA: '/bɔɪ/' },
-    { symbol: 'əʊ', type: 'vowel', exampleWord: 'go', exampleIPA: '/ɡəʊ/' },
-    { symbol: 'aʊ', type: 'vowel', exampleWord: 'now', exampleIPA: '/naʊ/' },
-    // Consonants
-    { symbol: 'p', type: 'consonant', exampleWord: 'pen', exampleIPA: '/pen/' },
-    { symbol: 'b', type: 'consonant', exampleWord: 'bad', exampleIPA: '/bæd/' },
-    { symbol: 't', type: 'consonant', exampleWord: 'tea', exampleIPA: '/tiː/' },
-    { symbol: 'd', type: 'consonant', exampleWord: 'did', exampleIPA: '/dɪd/' },
-    { symbol: 'k', type: 'consonant', exampleWord: 'cat', exampleIPA: '/kæt/' },
-    { symbol: 'ɡ', type: 'consonant', exampleWord: 'go', exampleIPA: '/ɡəʊ/' },
-    { symbol: 'f', type: 'consonant', exampleWord: 'fall', exampleIPA: '/fɔːl/' },
-    { symbol: 'v', type: 'consonant', exampleWord: 'van', exampleIPA: '/væn/' },
-    { symbol: 'θ', type: 'consonant', exampleWord: 'think', exampleIPA: '/θɪŋk/' },
-    { symbol: 'ð', type: 'consonant', exampleWord: 'this', exampleIPA: '/ðɪs/' },
-    { symbol: 's', type: 'consonant', exampleWord: 'so', exampleIPA: '/səʊ/' },
-    { symbol: 'z', type: 'consonant', exampleWord: 'zoo', exampleIPA: '/zuː/' },
-    { symbol: 'ʃ', type: 'consonant', exampleWord: 'she', exampleIPA: '/ʃiː/' },
-    { symbol: 'ʒ', type: 'consonant', exampleWord: 'vision', exampleIPA: '/ˈvɪʒn/' },
-    { symbol: 'h', type: 'consonant', exampleWord: 'hat', exampleIPA: '/hæt/' },
-    { symbol: 'm', type: 'consonant', exampleWord: 'man', exampleIPA: '/mæn/' },
-    { symbol: 'n', type: 'consonant', exampleWord: 'no', exampleIPA: '/nəʊ/' },
-    { symbol: 'ŋ', type: 'consonant', exampleWord: 'sing', exampleIPA: '/sɪŋ/' },
-    { symbol: 'l', type: 'consonant', exampleWord: 'leg', exampleIPA: '/leɡ/' },
-    { symbol: 'r', type: 'consonant', exampleWord: 'red', exampleIPA: '/red/' },
-    { symbol: 'j', type: 'consonant', exampleWord: 'yes', exampleIPA: '/jes/' },
-    { symbol: 'w', type: 'consonant', exampleWord: 'wet', exampleIPA: '/wet/' },
-    { symbol: 'tʃ', type: 'consonant', exampleWord: 'chin', exampleIPA: '/tʃɪn/' },
-    { symbol: 'dʒ', type: 'consonant', exampleWord: 'jam', exampleIPA: '/dʒæm/' },
-];
 
 interface Feedback {
     score: number;
@@ -75,25 +22,51 @@ interface IPAChartViewProps {
 
 const IPAChartView: React.FC<IPAChartViewProps> = ({ onGoalUpdate }) => {
     const [selectedPhoneme, setSelectedPhoneme] = useState<Phoneme | null>(null);
+    const [currentExample, setCurrentExample] = useState<{ word: string, ipa: string } | null>(null);
     const [status, setStatus] = useState<'idle' | 'listening' | 'analyzing' | 'feedback'>('idle');
     const [transcript, setTranscript] = useState('');
     const [feedback, setFeedback] = useState<Feedback | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const recognitionRef = useRef<any>(null);
+    const statusRef = useRef(status);
+    statusRef.current = status;
+    
+    const selectNewExample = (phoneme: Phoneme) => {
+        const randomIndex = Math.floor(Math.random() * phoneme.examples.length);
+        setCurrentExample(phoneme.examples[randomIndex]);
+    };
 
+    const handleSelectPhoneme = (phoneme: Phoneme) => {
+        setSelectedPhoneme(phoneme);
+        selectNewExample(phoneme);
+        // Reset practice state
+        setTranscript('');
+        setFeedback(null);
+        setError(null);
+        setStatus('idle');
+    };
+
+    // Setup recognition instance once
     useEffect(() => {
+        if (recognitionRef.current) return;
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
             setError('Trình duyệt của bạn không hỗ trợ nhận dạng giọng nói.');
             return;
         }
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false;
-        recognitionRef.current.lang = 'en-US';
-        recognitionRef.current.interimResults = false;
-
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognitionRef.current = recognition;
+    }, []);
+    
+    // Re-bind event listeners whenever selectedPhoneme changes to avoid stale state
+    useEffect(() => {
         const recognition = recognitionRef.current;
+        if (!recognition) return;
+        
         recognition.onstart = () => {
             setStatus('listening');
             setTranscript('');
@@ -103,30 +76,34 @@ const IPAChartView: React.FC<IPAChartViewProps> = ({ onGoalUpdate }) => {
         recognition.onresult = (event: any) => {
             const finalTranscript = event.results[0][0].transcript;
             setTranscript(finalTranscript);
-            callGeminiForFeedback(finalTranscript, selectedPhoneme);
+            // Pass selectedPhoneme and currentExample directly to prevent using a stale value from a closure
+            callGeminiForFeedback(finalTranscript, selectedPhoneme, currentExample);
         };
         recognition.onerror = (event: any) => {
             setError('Lỗi nhận dạng giọng nói: ' + event.error);
             setStatus('idle');
         };
         recognition.onend = () => {
-            if (status === 'listening') {
+             // Use a ref to get the latest status, preventing the onend from firing incorrectly
+            if (statusRef.current === 'listening') {
               setStatus('idle');
             }
         };
-    }, [selectedPhoneme]);
 
-    const callGeminiForFeedback = async (userTranscript: string, target: Phoneme | null) => {
-        if (!target) return;
+    }, [selectedPhoneme, currentExample]);
+
+
+    const callGeminiForFeedback = async (userTranscript: string, targetPhoneme: Phoneme | null, targetExample: { word: string, ipa: string } | null) => {
+        if (!targetPhoneme || !targetExample) return;
         setStatus('analyzing');
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = `You are a meticulous, hard-to-please phonetics professor from Oxford. Your Vietnamese student is practicing a single English phoneme. Be extremely critical and academic in your feedback.
-- Target Word: "${target.exampleWord}" (IPA: ${target.exampleIPA})
-- Target Phoneme to evaluate: /${target.symbol}/
+- Target Word: "${targetExample.word}" (IPA: ${targetExample.ipa})
+- Target Phoneme to evaluate: /${targetPhoneme.symbol}/
 - User's utterance: "${userTranscript}"
 
-Provide brutally honest feedback in Vietnamese as a JSON object. A score of 100 is reserved for absolute, native-speaker perfection. A score of 90 is excellent but still has a tiny flaw. Be very specific about tongue position, lip shape, or airflow if you detect any error in the target phoneme /${target.symbol}/.`;
+Provide brutally honest feedback in Vietnamese as a JSON object. A score of 100 is reserved for absolute, native-speaker perfection. A score of 90 is excellent but still has a tiny flaw. Be very specific about tongue position, lip shape, or airflow if you detect any error in the target phoneme /${targetPhoneme.symbol}/.`;
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
@@ -142,7 +119,8 @@ Provide brutally honest feedback in Vietnamese as a JSON object. A score of 100 
                                 type: Type.ARRAY,
                                 items: {
                                     type: Type.OBJECT,
-                                    properties: { phoneme: { type: Type.STRING }, feedback: { type: Type.STRING, description: "Detailed, technical feedback in Vietnamese." } }
+                                    properties: { phoneme: { type: Type.STRING }, feedback: { type: Type.STRING, description: "Detailed, technical feedback in Vietnamese." } },
+                                    required: ['phoneme', 'feedback']
                                 }
                             }
                         },
@@ -163,6 +141,10 @@ Provide brutally honest feedback in Vietnamese as a JSON object. A score of 100 
     };
 
     const handleMicClick = () => {
+        if (!selectedPhoneme) {
+            alert("Vui lòng chọn một âm vị để luyện tập trước.");
+            return;
+        }
         if (status === 'listening') {
             recognitionRef.current?.stop();
         } else if (status === 'idle' || status === 'feedback') {
@@ -177,8 +159,8 @@ Provide brutally honest feedback in Vietnamese as a JSON object. A score of 100 
                 {IPA_DATA.filter(p => p.type === type).map(p => (
                     <button 
                         key={p.symbol}
-                        onClick={() => setSelectedPhoneme(p)}
-                        className={`p-4 border-2 rounded-lg text-2xl font-bold flex items-center justify-center transition-all ${selectedPhoneme?.symbol === p.symbol ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-white border-slate-300 hover:border-indigo-500 hover:bg-indigo-50'}`}
+                        onClick={() => handleSelectPhoneme(p)}
+                        className={`p-4 border-2 rounded-lg text-2xl font-bold flex items-center justify-center transition-all card-hover ${selectedPhoneme?.symbol === p.symbol ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-white border-slate-300 hover:border-indigo-500 hover:bg-indigo-50'}`}
                     >
                         /{p.symbol}/
                     </button>
@@ -202,16 +184,16 @@ Provide brutally honest feedback in Vietnamese as a JSON object. A score of 100 
                 </p>
             </div>
             
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                <div className="xl:col-span-2 space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
                     {renderPhonemeGrid('vowel', 'Nguyên âm (Vowels)')}
                     {renderPhonemeGrid('consonant', 'Phụ âm (Consonants)')}
                 </div>
                 
-                <div className="xl:sticky xl:top-24 self-start">
+                <div className="lg:sticky lg:top-24 self-start">
                     <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 min-h-[400px] flex flex-col">
                         <h2 className="text-xl font-bold text-slate-800 text-center mb-4">Luyện tập</h2>
-                        {!selectedPhoneme ? (
+                        {!selectedPhoneme || !currentExample ? (
                             <div className="flex-1 flex items-center justify-center text-center text-slate-500">
                                 <p>Chọn một âm trong bảng để bắt đầu luyện tập.</p>
                             </div>
@@ -221,10 +203,16 @@ Provide brutally honest feedback in Vietnamese as a JSON object. A score of 100 
                                     <p className="font-semibold text-slate-600">Âm được chọn:</p>
                                     <p className="text-7xl font-bold text-indigo-600 my-2">/{selectedPhoneme.symbol}/</p>
                                     <div className="flex items-center justify-center gap-4 bg-slate-100 p-3 rounded-lg">
-                                        <p className="text-xl font-semibold">{selectedPhoneme.exampleWord}</p>
-                                        <p className="text-lg text-slate-500">{selectedPhoneme.exampleIPA}</p>
-                                        <SpeakerButton textToSpeak={selectedPhoneme.exampleWord} ariaLabel={`Nghe từ ${selectedPhoneme.exampleWord}`} />
+                                        <p className="text-xl font-semibold">{currentExample.word}</p>
+                                        <p className="text-lg text-slate-500">{currentExample.ipa}</p>
+                                        <SpeakerButton textToSpeak={currentExample.word} ariaLabel={`Nghe từ ${currentExample.word}`} />
                                     </div>
+                                    <button
+                                        onClick={() => selectNewExample(selectedPhoneme)}
+                                        className="mt-2 text-sm font-semibold text-indigo-600 hover:underline"
+                                    >
+                                        Lấy từ mới
+                                    </button>
                                 </div>
                                 <div className="flex flex-col items-center gap-3 my-4">
                                      <button 

@@ -14,7 +14,6 @@ const parseSimpleMarkdown = (text: string) => {
         .replace(/\n/g, '<br />'); // Newlines
 };
 
-// FIX: Defined the props interface for the component.
 interface AIExplainModalProps {
   word: Word;
   onClose: () => void;
@@ -110,8 +109,7 @@ Nếu không có từ đồng nghĩa hoặc trái nghĩa, hãy ghi "Không có".
               className="text-slate-700 space-y-3 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: parseSimpleMarkdown(explanation) }} 
             />
-          {/* Blinking cursor effect during streaming */}
-          {isStreaming && <span className="inline-block w-2 h-5 bg-slate-700 animate-pulse ml-1"></span>}
+          {isStreaming && <span className="blinking-cursor"></span>}
         </div>
 
         <div className="mt-6 pt-4 border-t text-right">
