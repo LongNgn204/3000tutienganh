@@ -164,6 +164,36 @@ const App: React.FC = () => {
             handleGoalUpdate(performance === 'again' ? 'review_srs' : (currentRecord.srsLevel === 0 ? 'learn_new' : 'review_srs'));
         }
     };
+
+    const handleAddNewWord = async (wordData: Omit<Word, 'color'>) => {
+        if (!currentUser) return;
+
+        const newWord: Word = {
+            ...wordData,
+            color: TYPE_COLORS[wordData.type] || TYPE_COLORS['n/v'],
+        };
+
+        const updatedCustomWords = [...(currentUser.customWords || []), newWord];
+        const updatedUser: User = { ...currentUser, customWords: updatedCustomWords };
+        
+        const newCategories = [...wordCategories];
+        let customCategory = newCategories.find(cat => cat.id === 'custom');
+
+        if (customCategory) {
+            customCategory.words = [...customCategory.words, newWord];
+        } else {
+            newCategories.push({
+                id: 'custom',
+                name: 'Từ của bạn',
+                level: currentUser.level,
+                words: [newWord],
+            });
+        }
+        setWordCategories(newCategories);
+        setAllWords(prev => [...prev, newWord]);
+
+        await updateAndSaveUser(updatedUser);
+    };
     
     const generateAndSaveAutomaticStudyPlan = async (user: User) => {
         if (!user) return;
@@ -346,7 +376,7 @@ Time per day: 30 minutes (default)
                     activeCategory={activeWordListCategory}
                     setActiveCategory={setActiveWordListCategory}
                     mainContentRef={mainContentRef}
-                    onAddNewWord={async () => {}} // Placeholder for now
+                    onAddNewWord={handleAddNewWord}
                 />;
             case 'flashcard':
                  return <FlashcardView 

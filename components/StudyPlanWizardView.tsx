@@ -46,7 +46,8 @@ const StudyPlanWizardView: React.FC<StudyPlanWizardViewProps> = ({ currentUser, 
     const [draggedSkill, setDraggedSkill] = useState<string | null>(null);
 
     useEffect(() => {
-        let timer: NodeJS.Timeout;
+        // Fix: Use ReturnType<typeof setInterval> for browser compatibility instead of NodeJS.Timeout.
+        let timer: ReturnType<typeof setInterval>;
         if (isLoading) {
             let index = 0;
             setGenerationStatus(loadingMessages[index]);

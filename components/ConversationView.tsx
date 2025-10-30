@@ -47,6 +47,18 @@ async function decodeAudioData(
   return buffer;
 }
 
+function createBlob(data: Float32Array): Blob {
+  const l = data.length;
+  const int16 = new Int16Array(l);
+  for (let i = 0; i < l; i++) {
+    int16[i] = data[i] * 32768;
+  }
+  return {
+    data: encode(new Uint8Array(int16.buffer)),
+    mimeType: 'audio/pcm;rate=16000',
+  };
+}
+
 
 interface ConversationViewProps {
   allWords: Word[];
@@ -62,7 +74,7 @@ interface TranscriptItem {
 
 const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProgress, currentUser, onGoalUpdate }) => {
   const [stage, setStage] = useState<'setup' | 'chatting' | 'finished'>('setup');
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'listening' | 'error'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'listening' | 'error'>('disconnected');
   const [targetWords, setTargetWords] = useState<Word[]>([]);
   const [usedWords, setUsedWords] = useState<Set<string>>(new Set());
   const [transcript, setTranscript] = useState<TranscriptItem[]>([]);
@@ -218,16 +230,14 @@ Start the conversation by saying "Hello! How are you today?".`;
 
                     scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
                         const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
-                        const pcmBlob: Blob = {
-                            data: encode(new Uint8Array(new Int16Array(inputData.map(x => x * 32768)).buffer)),
-                            mimeType: 'audio/pcm;rate=16000',
-                        };
+                        const pcmBlob = createBlob(inputData);
                         sessionPromiseRef.current?.then((session) => {
                             if(session) session.sendRealtimeInput({ media: pcmBlob });
                         });
                     };
-                    scriptProcessor.connect(inputAudioContextRef.current!.destination); // Connect to destination to start processing, but source is not connected yet.
-                    setConnectionStatus('connected');
+                    source.connect(scriptProcessor);
+                    scriptProcessor.connect(inputAudioContextRef.current!.destination);
+                    setConnectionStatus('listening');
                     setStage('chatting');
                 },
                 onmessage: async (message: LiveServerMessage) => {
@@ -307,22 +317,6 @@ Start the conversation by saying "Hello! How are you today?".`;
     }
   };
 
-  const handleMicToggle = () => {
-    if (connectionStatus === 'connected') {
-        if (mediaStreamSourceRef.current && scriptProcessorRef.current) {
-            mediaStreamSourceRef.current.connect(scriptProcessorRef.current);
-            setConnectionStatus('listening');
-        }
-    } else if (connectionStatus === 'listening') {
-        if (mediaStreamSourceRef.current && scriptProcessorRef.current) {
-            try {
-                mediaStreamSourceRef.current.disconnect(scriptProcessorRef.current);
-            } catch (e) { /* ignore */ }
-            setConnectionStatus('connected');
-        }
-    }
-  };
-  
   const highlightUsedWords = (text: string) => {
     const wordRegex = new RegExp(`\\b(${targetWords.map(w => w.english).join('|')})\\b`, 'gi');
     return text.replace(wordRegex, '<strong class="bg-yellow-200/80 text-yellow-900 px-1 py-0.5 rounded">$1</strong>');
@@ -332,7 +326,7 @@ Start the conversation by saying "Hello! How are you today?".`;
     return (
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
             <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full">
-                <h2 className="text-3xl font-bold text-slate-800">AI Luyện Nói</h2>
+                <h2 className="text-3xl font-bold text-slate-800">AI Luyện Giao tiếp</h2>
                 <p className="text-slate-600 mt-4 mb-6">Thực hành từ vựng bằng cách nói chuyện trực tiếp với AI. AI sẽ đưa ra một vài từ, và nhiệm vụ của bạn là sử dụng chúng trong cuộc hội thoại!</p>
                 
                 <div className="mb-6">
@@ -443,51 +437,34 @@ Start the conversation by saying "Hello! How are you today?".`;
             )}
         </div>
         <div className="mt-4 flex flex-col items-center justify-center gap-4">
-            {stage !== 'finished' ? (
-                <>
-                    <button
-                        onClick={handleMicToggle}
-                        disabled={connectionStatus !== 'connected' && connectionStatus !== 'listening'}
-                        className={`w-20 h-20 rounded-full flex items-center justify-center shadow-lg text-white transition-colors
-                            ${connectionStatus === 'listening' ? 'bg-red-500 hover:bg-red-600 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'}
-                            disabled:bg-slate-400 disabled:cursor-not-allowed
-                        `}
-                        aria-label={connectionStatus === 'listening' ? 'Dừng nói' : 'Nhấn để nói'}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
-                           <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-12 0H3a7.001 7.001 0 006 6.93V17H7a1 1 0 100 2h6a1 1 0 100-2h-2v-2.07z" clipRule="evenodd" />
-                        </svg>
-                    </button>
-                    <p className="font-semibold text-slate-600 h-6">
-                        {connectionStatus === 'listening' && 'Đang ghi âm... Nhấn để dừng.'}
-                        {connectionStatus === 'connected' && 'Nhấn để nói'}
-                        {connectionStatus === 'connecting' && 'Đang kết nối...'}
-                        {connectionStatus === 'error' && 'Lỗi kết nối'}
-                    </p>
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => setIsMuted(prev => !prev)}
-                            disabled={connectionStatus === 'disconnected' || connectionStatus === 'connecting'}
-                            className="px-4 py-2 text-sm flex items-center gap-2 rounded-lg bg-slate-200 text-slate-600 disabled:opacity-50 hover:bg-slate-300"
-                        >
-                            {isMuted ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                            ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.929 5.757a1 1 0 011.414 0A5.983 5.983 0 0116 10a5.983 5.983 0 01-1.657 4.243 1 1 0 01-1.414-1.415A3.984 3.984 0 0014 10a3.984 3.984 0 00-1.071-2.828 1 1 0 010-1.415z" /></svg>
-                            )}
-                            {isMuted ? "Bật tiếng" : "Tắt tiếng"}
-                        </button>
-                        <button onClick={stopConversation} className="px-4 py-2 text-sm flex items-center gap-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200">
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" /></svg>
-                            Kết thúc
-                        </button>
-                    </div>
-                </>
-            ) : (
-                <button onClick={stopConversation} className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors">
-                    Chơi lại
+            <div className="flex items-center gap-4 p-2 bg-slate-100 rounded-full">
+                <div className={`w-3 h-3 rounded-full ${connectionStatus === 'listening' ? 'bg-green-500 animate-pulse' : 'bg-slate-400'}`}></div>
+                <p className="font-semibold text-slate-600 text-sm h-5 pr-2">
+                    {connectionStatus === 'listening' && 'AI đang lắng nghe...'}
+                    {connectionStatus === 'connecting' && 'Đang kết nối...'}
+                    {connectionStatus === 'error' && 'Lỗi kết nối'}
+                    {connectionStatus === 'disconnected' && 'Đã ngắt kết nối'}
+                </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+                <button
+                    onClick={() => setIsMuted(prev => !prev)}
+                    disabled={connectionStatus !== 'listening'}
+                    className="px-4 py-2 text-sm flex items-center gap-2 rounded-lg bg-slate-200 text-slate-600 disabled:opacity-50 hover:bg-slate-300"
+                >
+                    {isMuted ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                    ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.929 5.757a1 1 0 011.414 0A5.983 5.983 0 0116 10a5.983 5.983 0 01-1.657 4.243 1 1 0 01-1.414-1.415A3.984 3.984 0 0014 10a3.984 3.984 0 00-1.071-2.828 1 1 0 010-1.415z" /></svg>
+                    )}
+                    {isMuted ? "Bật tiếng" : "Tắt tiếng"}
                 </button>
-            )}
+                <button onClick={stopConversation} className="px-4 py-2 text-sm flex items-center gap-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200">
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" /></svg>
+                    Kết thúc
+                </button>
+            </div>
         </div>
     </div>
   );

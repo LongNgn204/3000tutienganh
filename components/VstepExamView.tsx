@@ -55,7 +55,8 @@ const VstepExamView: React.FC = () => {
 
 
     useEffect(() => {
-        let timer: NodeJS.Timeout;
+        // Fix: Use ReturnType<typeof setInterval> for browser compatibility instead of NodeJS.Timeout.
+        let timer: ReturnType<typeof setInterval>;
         if (examState === 'generating') {
             let index = 0;
             setGenerationStatus(loadingMessages[index]);

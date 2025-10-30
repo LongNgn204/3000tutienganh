@@ -53,6 +53,18 @@ async function decodeAudioData(
   return buffer;
 }
 
+function createBlob(data: Float32Array): Blob {
+  const l = data.length;
+  const int16 = new Int16Array(l);
+  for (let i = 0; i < l; i++) {
+    int16[i] = data[i] * 32768;
+  }
+  return {
+    data: encode(new Uint8Array(int16.buffer)),
+    mimeType: 'audio/pcm;rate=16000',
+  };
+}
+
 interface TranscriptItem {
     author: 'user' | 'ai';
     content: string;
@@ -203,10 +215,7 @@ ${transcriptText}`;
 
                         scriptProcessor.onaudioprocess = (audioEvent) => {
                             const inputData = audioEvent.inputBuffer.getChannelData(0);
-                            const pcmBlob: Blob = {
-                                data: encode(new Uint8Array(new Int16Array(inputData.map(x => x * 32768)).buffer)),
-                                mimeType: 'audio/pcm;rate=16000',
-                            };
+                            const pcmBlob = createBlob(inputData);
                             sessionPromiseRef.current?.then(session => session.sendRealtimeInput({ media: pcmBlob }));
                         };
                         source.connect(scriptProcessor);
@@ -345,12 +354,12 @@ ${transcriptText}`;
                 <div className="flex-1 bg-white rounded-xl shadow-inner border p-4 overflow-y-auto space-y-4">
                     {transcript.map((item, index) => (
                          <div key={index} className={`flex items-start gap-3 ${item.author === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            {item.author === 'ai' && <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-1">AI</div>}
+                            {item.author === 'ai' && <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-1 shadow">AI</div>}
                             <div className={`max-w-md p-3 rounded-2xl shadow-sm ${item.author === 'user' ? 'bg-blue-100 text-slate-800 rounded-br-none' : 'bg-slate-100 text-slate-800 rounded-bl-none'}`}>
-                                <p>{item.content}</p>
+                                <p className="leading-relaxed">{item.content}</p>
                                 {item.author === 'ai' && item.content && <div className="mt-2 -mb-1 -mr-1 text-right"><SpeakerButton textToSpeak={item.content} ariaLabel="Nghe lại" /></div>}
                             </div>
-                            {item.author === 'user' && <div className="w-8 h-8 rounded-full bg-slate-600 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-1">BẠN</div>}
+                            {item.author === 'user' && <div className="w-8 h-8 rounded-full bg-slate-600 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold mt-1 shadow">BẠN</div>}
                          </div>
                     ))}
                 </div>
