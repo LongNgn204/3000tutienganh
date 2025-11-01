@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GRAMMAR_LEVELS } from './grammarData';
-import { aiService, AI_MODELS } from '../services/aiService';
+import { GoogleGenAI } from "@google/genai";
 
 interface AIGeneratedContent {
     status: 'idle' | 'loading' | 'success' | 'error';
@@ -27,6 +27,7 @@ const GrammarView: React.FC = () => {
         }));
 
         try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const cleanContent = originalContent.replace(/<[^>]*>?/gm, '');
 
             const prompt = `Với vai trò là một giáo viên Anh ngữ, hãy tạo thêm 3 ví dụ khác về chủ điểm ngữ pháp "${title}". Các ví dụ phải đơn giản, rõ ràng, phù hợp cho người học tiếng Việt và đi kèm bản dịch. Tránh lặp lại các ví dụ đã có trong phần giải thích sau: "${cleanContent}".
@@ -37,15 +38,14 @@ Hãy trả về dưới dạng danh sách markdown, mỗi ví dụ trên một d
 
 Chỉ trả về danh sách ví dụ, không thêm bất kỳ lời dẫn hay giải thích nào khác.`;
 
+            const responseStream = await ai.models.generateContentStream({
+                model: 'gem-2.5-flash',
+                contents: prompt
+            });
+
             let accumulatedText = '';
-            
-            // Use streaming for better perceived performance
-            for await (const chunk of aiService.generateContentStream(
-                AI_MODELS.FLASH,
-                prompt,
-                { temperature: 0.6 } // Slightly creative but still fast
-            )) {
-                accumulatedText += chunk;
+            for await (const chunk of responseStream) {
+                accumulatedText += chunk.text;
                 setAiExamples(prev => ({
                     ...prev,
                     [topicId]: { status: 'loading', content: accumulatedText }

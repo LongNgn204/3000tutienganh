@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { GoogleGenAI } from "@google/genai";
 import SpeakerButton from './SpeakerButton';
 import type { User } from '../types';
-import { aiService, AI_MODELS, AI_CONFIG } from '../services/aiService';
 
 declare global {
   interface Window {
@@ -31,16 +31,16 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
         setUserTranscript('');
         setFeedback(null);
         try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'A2';
             const prompt = `Create one simple but complete English sentence for a ${userLevel}-level Vietnamese learner to practice listening and speaking. The sentence should be common and practical. Do not add any quotation marks or extra text. Just return the sentence itself.`;
 
-            const sentenceText = await aiService.generateContent(
-                AI_MODELS.FLASH,
-                prompt,
-                { ...AI_CONFIG.FAST, maxOutputTokens: 128 } // Short, fast sentence generation
-            );
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+            });
 
-            setSentence(sentenceText.trim());
+            setSentence(response.text.trim());
             setStatus('ready');
         } catch (err) {
             console.error("Gemini Sentence Generation Error:", err);
@@ -54,6 +54,7 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
         setError(null);
         setFeedback(null);
         try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = `As an English pronunciation coach, evaluate a user's pronunciation of a sentence.
 - The original sentence was: "${sentence}"
 - The user pronounced it as: "${transcript}"
@@ -64,13 +65,12 @@ Please provide your evaluation in a valid JSON object format with two keys:
 
 Example response: {"score": 85, "comment": "Làm tốt lắm! Âm cuối của từ 'like' bạn phát âm rất rõ. Lần tới hãy thử nhấn mạnh hơn vào từ 'really' nhé."}`;
             
-            const responseText = await aiService.generateContent(
-                AI_MODELS.FLASH,
-                prompt,
-                { ...AI_CONFIG.FAST, maxOutputTokens: 256 } // Fast feedback
-            );
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+            });
             
-            const jsonText = responseText.replace(/```json|```/g, '').trim();
+            const jsonText = response.text.replace(/```json|```/g, '').trim();
             const parsedFeedback = JSON.parse(jsonText);
             setFeedback(parsedFeedback);
             setStatus('feedback');

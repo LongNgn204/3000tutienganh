@@ -176,11 +176,8 @@ Start the conversation by saying "Hello! How are you today?".`;
         inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
         outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
         
-        // Note: Live audio conversation requires a model with native audio support
-        // gemini-1.5-flash does not support live audio streaming
-        // Using gemini-1.5-flash-8b which supports audio features for stability
         sessionPromiseRef.current = ai.live.connect({
-            model: 'gemini-1.5-flash-8b',
+            model: 'gemini-2.5-flash-native-audio-preview-09-2025',
             config: {
                 systemInstruction,
                 responseModalities: [Modality.AUDIO],
