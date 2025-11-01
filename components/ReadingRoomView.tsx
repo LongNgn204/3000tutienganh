@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { GoogleGenAI } from "@google/genai";
 import type { User } from '../types';
+import { aiService, AI_MODELS, AI_CONFIG } from '../services/aiService';
 
 interface ReadingRoomViewProps {
     currentUser: User | null;
@@ -21,10 +21,13 @@ const AIExplainModal: React.FC<{ word: string, context: string, onClose: () => v
             setIsLoading(true);
             setExplanation('');
             try {
-                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
                 const prompt = `Explain the English word "${word}" for a Vietnamese learner. The word appears in the following context: "${context}". Please provide a short, clear explanation in Vietnamese, including the word type (noun, verb, etc.) and its meaning in this specific context.`;
-                const response = await ai.models.generateContent({ model: 'gemini-1.5-flash', contents: prompt });
-                setExplanation(response.text);
+                const explanationText = await aiService.generateContent(
+                    AI_MODELS.FLASH,
+                    prompt,
+                    { ...AI_CONFIG.FAST, maxOutputTokens: 256 } // Short, fast explanations
+                );
+                setExplanation(explanationText);
             } catch (err) {
                 setExplanation('Rất tiếc, không thể tải giải thích vào lúc này.');
                 console.error(err);
@@ -61,11 +64,14 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser }) => {
         setError(null);
         setArticle('');
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'B1';
             const prompt = `Generate a short, interesting reading passage (around 100-150 words) in English for a ${userLevel}-level learner. The topic can be about technology, nature, or daily life. The language should be clear and appropriate for the level. Do not include a title. Just return the passage itself.`;
-            const response = await ai.models.generateContent({ model: 'gemini-1.5-flash', contents: prompt });
-            setArticle(response.text);
+            const articleText = await aiService.generateContent(
+                AI_MODELS.FLASH,
+                prompt,
+                AI_CONFIG.BALANCED // Balanced for reading passages
+            );
+            setArticle(articleText);
             setStatus('ready');
         } catch (err) {
             console.error(err);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleGenAI } from "@google/genai";
 import type { User } from '../types';
+import { aiService, AI_MODELS, AI_CONFIG } from '../services/aiService';
 
 interface AdvancedGrammarViewProps {
   currentUser: User | null;
@@ -39,7 +39,6 @@ const AdvancedGrammarView: React.FC<AdvancedGrammarViewProps> = ({ currentUser }
         setUserAnswer('');
         setFeedback(null);
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'B1';
             const prompt = `Create an advanced grammar challenge for a ${userLevel}-level English learner. The challenge could be error correction, sentence transformation (e.g., active to passive), or using a specific grammar structure.
 Return a single, valid JSON object with two keys:
@@ -48,12 +47,13 @@ Return a single, valid JSON object with two keys:
 
 Example response: {"question": "Rewrite this sentence using the past perfect tense.", "task": "When she arrived, the movie started."}`;
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
-                contents: prompt,
-            });
+            const responseText = await aiService.generateContent(
+                AI_MODELS.FLASH,
+                prompt,
+                AI_CONFIG.FAST // Faster responses
+            );
             
-            const jsonText = response.text.replace(/```json|```/g, '').trim();
+            const jsonText = responseText.replace(/```json|```/g, '').trim();
             const parsedChallenge = JSON.parse(jsonText);
             setChallenge(parsedChallenge);
             setStatus('ready');
@@ -75,7 +75,6 @@ Example response: {"question": "Rewrite this sentence using the past perfect ten
         setError(null);
         setFeedback(null);
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'B1';
             const prompt = `As an expert English grammar teacher for a ${userLevel}-level Vietnamese learner, please evaluate the user's answer to a grammar challenge.
 - The challenge was: "${challenge.question}"
@@ -87,12 +86,13 @@ Please provide your evaluation in a single, valid JSON object with three keys:
 2. "correctAnswer": A string containing the most appropriate correct answer.
 3. "explanation": A string containing a clear, concise explanation in Vietnamese about the grammar rule, explaining why the user's answer is right or wrong and why the correct answer is correct.`;
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
-                contents: prompt,
-            });
+            const responseText = await aiService.generateContent(
+                AI_MODELS.FLASH,
+                prompt,
+                AI_CONFIG.FAST // Faster feedback
+            );
 
-            const jsonText = response.text.replace(/```json|```/g, '').trim();
+            const jsonText = responseText.replace(/```json|```/g, '').trim();
             const parsedFeedback = JSON.parse(jsonText);
             setFeedback(parsedFeedback);
             setStatus('feedback');

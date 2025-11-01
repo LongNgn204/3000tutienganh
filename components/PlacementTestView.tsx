@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleGenAI } from "@google/genai";
 import type { CEFRLevel, PlacementTestResult, TestAnalysis, LevelPerformance, IncorrectQuestionInfo } from '../types';
+import { aiService, AI_MODELS, AI_CONFIG } from '../services/aiService';
 
 interface PlacementTestViewProps {
   onTestSubmit: (result: PlacementTestResult) => void;
@@ -110,13 +110,13 @@ Based on these answers, the user's CEFR level is:
 Return ONLY the level designation (e.g., "B1"), and nothing else.`;
 
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
-            contents: prompt
-        });
+        const responseText = await aiService.generateContent(
+            AI_MODELS.FLASH,
+            prompt,
+            AI_CONFIG.FAST // Faster level determination
+        );
         
-        const level = response.text.trim().toUpperCase() as CEFRLevel;
+        const level = responseText.trim().toUpperCase() as CEFRLevel;
         const validLevels: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
         
         const finalResult: PlacementTestResult = {

@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { GoogleGenAI } from "@google/genai";
 import type { Word, StudyProgress } from '../types';
 import SpeakerButton from './SpeakerButton';
 import * as srsService from '../services/srsService';
+import { aiService, AI_MODELS, AI_CONFIG } from '../services/aiService';
 
 interface AIStoryViewProps {
   words: Word[];
@@ -57,18 +57,16 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
     const separator = "---VIETNAMESE_TRANSLATION---";
 
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = `Act as a creative storyteller for a Vietnamese person learning English. Write a very short, simple story (around 50-70 words) that MUST include the following words: ${wordList}. The story should be easy to understand and engaging. 
 First, write the English story.
 Then, on a new line, write the exact separator: "${separator}".
 Finally, on a new line, write the Vietnamese translation of the story.`;
         
-        const response = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
-            contents: prompt,
-        });
-        
-        const fullResponse = response.text;
+        const fullResponse = await aiService.generateContent(
+            AI_MODELS.FLASH,
+            prompt,
+            { ...AI_CONFIG.FAST, useCache: false } // Fast responses for better UX
+        );
         
         if (fullResponse.includes(separator)) {
             const parts = fullResponse.split(separator);

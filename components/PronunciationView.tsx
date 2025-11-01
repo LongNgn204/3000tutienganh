@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { GoogleGenAI } from "@google/genai";
 import type { Word, StudyProgress } from '../types';
 import SpeakerButton from './SpeakerButton';
 import * as srsService from '../services/srsService';
+import { aiService, AI_MODELS, AI_CONFIG } from '../services/aiService';
 
 // Add SpeechRecognition to the window interface for browsers that support it
 declare global {
@@ -100,7 +100,6 @@ const PronunciationView: React.FC<{ words: Word[], studyProgress: StudyProgress 
         setFeedback('');
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = `Với vai trò là một giáo viên dạy phát âm tiếng Anh, hãy đưa ra nhận xét cho một học viên người Việt.
 Học viên đang cố gắng phát âm từ: **"${targetWord.english}"** (phiên âm: /${targetWord.pronunciation}/).
 Họ đã phát âm thành: **"${userTranscript}"**.
@@ -111,12 +110,13 @@ Hãy đưa ra phản hồi bằng **tiếng Việt**, thật ngắn gọn, mang 
 - Nếu họ phát âm **sai**, hãy nhẹ nhàng chỉ ra lỗi sai và hướng dẫn cách sửa một cách đơn giản nhất (ví dụ: "Gần đúng rồi! Hãy chú ý âm /s/ ở cuối từ nhé.").
 `;
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
-                contents: prompt
-            });
+            const feedbackText = await aiService.generateContent(
+                AI_MODELS.FLASH,
+                prompt,
+                { ...AI_CONFIG.FAST, maxOutputTokens: 256 } // Short, fast feedback
+            );
             
-            setFeedback(response.text);
+            setFeedback(feedbackText);
 
         } catch (err) {
             console.error("Gemini API Error:", err);
