@@ -52,7 +52,7 @@ const AIExplainModal: React.FC<AIExplainModalProps> = ({ word, onClose }) => {
 Nếu không có từ đồng nghĩa hoặc trái nghĩa, hãy ghi "Không có".`;
 
         const responseStream = await ai.models.generateContentStream({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-1.5-flash',
             contents: prompt
         });
         

@@ -64,7 +64,7 @@ Then, on a new line, write the exact separator: "${separator}".
 Finally, on a new line, write the Vietnamese translation of the story.`;
         
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-1.5-flash",
             contents: prompt,
         });
         

@@ -112,7 +112,7 @@ Return ONLY the level designation (e.g., "B1"), and nothing else.`;
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-1.5-flash',
             contents: prompt
         });
         

@@ -36,7 +36,7 @@ const ListeningView: React.FC<ListeningViewProps> = ({ currentUser, onGoalUpdate
             const prompt = `Create one simple but complete English sentence for a ${userLevel}-level Vietnamese learner to practice listening and speaking. The sentence should be common and practical. Do not add any quotation marks or extra text. Just return the sentence itself.`;
 
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-1.5-flash',
                 contents: prompt,
             });
 
@@ -66,7 +66,7 @@ Please provide your evaluation in a valid JSON object format with two keys:
 Example response: {"score": 85, "comment": "Làm tốt lắm! Âm cuối của từ 'like' bạn phát âm rất rõ. Lần tới hãy thử nhấn mạnh hơn vào từ 'really' nhé."}`;
             
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-1.5-flash',
                 contents: prompt,
             });
             

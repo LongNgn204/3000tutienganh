@@ -49,7 +49,7 @@ Return a single, valid JSON object with two keys:
 Example response: {"question": "Rewrite this sentence using the past perfect tense.", "task": "When she arrived, the movie started."}`;
 
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-1.5-flash',
                 contents: prompt,
             });
             
@@ -88,7 +88,7 @@ Please provide your evaluation in a single, valid JSON object with three keys:
 3. "explanation": A string containing a clear, concise explanation in Vietnamese about the grammar rule, explaining why the user's answer is right or wrong and why the correct answer is correct.`;
 
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-1.5-flash',
                 contents: prompt,
             });
 

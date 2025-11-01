@@ -23,7 +23,7 @@ const AIExplainModal: React.FC<{ word: string, context: string, onClose: () => v
             try {
                 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
                 const prompt = `Explain the English word "${word}" for a Vietnamese learner. The word appears in the following context: "${context}". Please provide a short, clear explanation in Vietnamese, including the word type (noun, verb, etc.) and its meaning in this specific context.`;
-                const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+                const response = await ai.models.generateContent({ model: 'gemini-1.5-flash', contents: prompt });
                 setExplanation(response.text);
             } catch (err) {
                 setExplanation('Rất tiếc, không thể tải giải thích vào lúc này.');
@@ -64,7 +64,7 @@ const ReadingRoomView: React.FC<ReadingRoomViewProps> = ({ currentUser }) => {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'B1';
             const prompt = `Generate a short, interesting reading passage (around 100-150 words) in English for a ${userLevel}-level learner. The topic can be about technology, nature, or daily life. The language should be clear and appropriate for the level. Do not include a title. Just return the passage itself.`;
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+            const response = await ai.models.generateContent({ model: 'gemini-1.5-flash', contents: prompt });
             setArticle(response.text);
             setStatus('ready');
         } catch (err) {
