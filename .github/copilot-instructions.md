@@ -105,7 +105,10 @@ for await (const chunk of aiService.generateContentStream(
 ```
 
 ## Environment Variables
-- `GEMINI_API_KEY` - Required for AI features (accessed as `process.env.API_KEY` in code)
+- `GEMINI_API_KEY` - Required for AI features
+  - Defined in `.env.local` as `GEMINI_API_KEY`
+  - Transformed by Vite config to `process.env.API_KEY` in the code
+  - See `vite.config.ts` for the mapping
 - `BACKEND_API_URL` - Optional; uses localStorage if not set
 - Store in `.env.local` (not committed)
 - Use `.env.example` as template
@@ -179,7 +182,7 @@ Defined in `constants.ts` as `WORD_CATEGORIES` array with structure:
 - Test in dev mode before building for production
 
 ## Common Pitfalls to Avoid
-- Don't access `process.env.GEMINI_API_KEY` directly; use `process.env.API_KEY` (Vite alias)
+- Don't access `process.env.GEMINI_API_KEY` directly; Vite maps it to `process.env.API_KEY`
 - Don't modify `constants.ts` structure without updating all consumers
 - Don't create new AI client instances; use `aiService` singleton
 - Don't forget to handle loading/error states in AI interactions
