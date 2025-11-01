@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, useMemo, Suspense, lazy, useCallback } from 'react';
 import Header from './components/Header';
 import { WORD_CATEGORIES as CONSTANT_WORD_CATEGORIES, ALL_WORDS as CONSTANT_ALL_WORDS, TYPE_COLORS } from './constants';
 import { CHALLENGES } from './challengesData';
@@ -68,20 +68,7 @@ const App: React.FC = () => {
 
     const mainContentRef = useRef<HTMLDivElement>(null);
 
-    // Initial load - check for existing session
-    useEffect(() => {
-        const checkUserSession = async () => {
-            const { user } = await api.checkSession();
-            if (user) {
-                handleLoginSuccess(user, true); // Don't show welcome screen on session restore
-            }
-            // Add a small delay to prevent loader flashing
-            setTimeout(() => setIsLoading(false), 300);
-        };
-        checkUserSession();
-    }, []);
-
-    const navigateTo = (mode: ViewMode, options: any = {}) => {
+    const navigateTo = useCallback((mode: ViewMode, options: any = {}) => {
         setViewMode(mode);
         if (mainContentRef.current) {
             mainContentRef.current.scrollTop = 0;
@@ -99,104 +86,9 @@ const App: React.FC = () => {
             setActiveForumTopicId(options.topicId);
         }
         setIsSidebarOpen(false); // Close sidebar on navigation
-    };
+    }, []);
 
-    const handleLoginSuccess = (user: User, isSessionRestore = false) => {
-        setCurrentUser(user);
-        setStudyProgress(user.studyProgress || {});
-        setDailyProgress(user.dailyProgress || null);
-        setChallengeProgress(user.challengeProgress || {});
-        
-        // Combine constant words with user's custom words
-        const combinedCategories = [...CONSTANT_WORD_CATEGORIES];
-        if (user.customWords && user.customWords.length > 0) {
-            combinedCategories.push({
-                id: 'custom',
-                name: 'Từ của bạn',
-                level: user.level, // Or a generic level
-                words: user.customWords
-            });
-        }
-        setWordCategories(combinedCategories);
-        setAllWords(combinedCategories.flatMap(cat => cat.words));
-        
-        // Navigation logic
-        if (!user.placementTestResult) {
-            navigateTo('placement-test');
-        } else if (isSessionRestore) {
-             navigateTo('dashboard');
-        } else {
-            navigateTo('welcome');
-        }
-
-        // Auto-generate study plan if one doesn't exist
-        if (user.placementTestResult && !user.studyPlan) {
-            generateAndSaveAutomaticStudyPlan(user);
-        }
-    };
-
-    const handleRegisterSuccess = (user: User) => {
-        handleLoginSuccess(user); // Treat register as an immediate login
-    };
-
-    const handleLogout = () => {
-        api.logout();
-        setCurrentUser(null);
-        setViewMode('landing');
-    };
-
-    const updateAndSaveUser = async (updatedUser: User) => {
-        setCurrentUser(updatedUser);
-        await api.updateUser(updatedUser);
-    };
-
-    const handleUpdateStudyProgress = async (wordEnglish: string, performance: 'again' | 'good' | 'easy') => {
-        const currentRecord = studyProgress[wordEnglish] || srsService.getInitialRecord();
-        const newRecord = srsService.calculateNextReview(currentRecord, performance);
-        
-        const updatedProgress = { ...studyProgress, [wordEnglish]: newRecord };
-        setStudyProgress(updatedProgress);
-        
-        if(currentUser) {
-            const updatedUser = { ...currentUser, studyProgress: updatedProgress };
-            setCurrentUser(updatedUser); // Optimistic update
-            await api.updateUser(updatedUser); // Persist
-            handleGoalUpdate(performance === 'again' ? 'review_srs' : (currentRecord.srsLevel === 0 ? 'learn_new' : 'review_srs'));
-        }
-    };
-
-    const handleAddNewWord = async (wordData: Omit<Word, 'color'>) => {
-        if (!currentUser) return;
-
-        const newWord: Word = {
-            ...wordData,
-            color: TYPE_COLORS[wordData.type] || TYPE_COLORS['n/v'],
-        };
-
-        const updatedCustomWords = [...(currentUser.customWords || []), newWord];
-        const updatedUser: User = { ...currentUser, customWords: updatedCustomWords };
-        
-        const newCategories = [...wordCategories];
-        let customCategory = newCategories.find(cat => cat.id === 'custom');
-
-        if (customCategory) {
-            customCategory.words = [...customCategory.words, newWord];
-        } else {
-            newCategories.push({
-                id: 'custom',
-                name: 'Từ của bạn',
-                level: currentUser.level,
-                words: [newWord],
-            });
-        }
-        setWordCategories(newCategories);
-        setAllWords(prev => [...prev, newWord]);
-
-        await updateAndSaveUser(updatedUser);
-    };
-    
-    const generateAndSaveAutomaticStudyPlan = async (user: User) => {
-        if (!user) return;
+    const generateAndSaveAutomaticStudyPlan = useCallback(async (user: User) => {
         setIsGeneratingPlan(true);
 
         const cefrOrder: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
@@ -267,14 +159,120 @@ Time per day: 30 minutes (default)
 
             const plan: StudyPlan = JSON.parse(response.text);
             const updatedUser = { ...user, studyPlan: plan };
-            await updateAndSaveUser(updatedUser);
+            setCurrentUser(updatedUser);
+            await api.updateUser(updatedUser);
 
         } catch (err) {
             console.error("Automatic Study Plan Generation Error:", err);
-            // Optionally set an error state to show on the dashboard
         } finally {
             setIsGeneratingPlan(false);
         }
+    }, []);
+
+    const handleLoginSuccess = useCallback((user: User, isSessionRestore = false) => {
+        setCurrentUser(user);
+        setStudyProgress(user.studyProgress || {});
+        setDailyProgress(user.dailyProgress || null);
+        setChallengeProgress(user.challengeProgress || {});
+        
+        // Combine constant words with user's custom words
+        const combinedCategories = [...CONSTANT_WORD_CATEGORIES];
+        if (user.customWords && user.customWords.length > 0) {
+            combinedCategories.push({
+                id: 'custom',
+                name: 'Từ của bạn',
+                level: user.level, // Or a generic level
+                words: user.customWords
+            });
+        }
+        setWordCategories(combinedCategories);
+        setAllWords(combinedCategories.flatMap(cat => cat.words));
+        
+        // Navigation logic
+        if (!user.placementTestResult) {
+            navigateTo('placement-test');
+        } else if (isSessionRestore) {
+             navigateTo('dashboard');
+        } else {
+            navigateTo('welcome');
+        }
+
+        // Auto-generate study plan if one doesn't exist
+        if (user.placementTestResult && !user.studyPlan) {
+            generateAndSaveAutomaticStudyPlan(user);
+        }
+    }, [navigateTo, generateAndSaveAutomaticStudyPlan]);
+
+    // Initial load - check for existing session
+    useEffect(() => {
+        const checkUserSession = async () => {
+            const { user } = await api.checkSession();
+            if (user) {
+                handleLoginSuccess(user, true);
+            }
+            setTimeout(() => setIsLoading(false), 300);
+        };
+        checkUserSession();
+    }, [handleLoginSuccess]);
+
+    const handleRegisterSuccess = (user: User) => {
+        handleLoginSuccess(user); // Treat register as an immediate login
+    };
+
+    const handleLogout = () => {
+        api.logout();
+        setCurrentUser(null);
+        setViewMode('landing');
+    };
+
+    const updateAndSaveUser = async (updatedUser: User) => {
+        setCurrentUser(updatedUser);
+        await api.updateUser(updatedUser);
+    };
+
+    const handleUpdateStudyProgress = async (wordEnglish: string, performance: 'again' | 'good' | 'easy') => {
+        const currentRecord = studyProgress[wordEnglish] || srsService.getInitialRecord();
+        const newRecord = srsService.calculateNextReview(currentRecord, performance);
+        
+        const updatedProgress = { ...studyProgress, [wordEnglish]: newRecord };
+        setStudyProgress(updatedProgress);
+        
+        if(currentUser) {
+            const updatedUser = { ...currentUser, studyProgress: updatedProgress };
+            setCurrentUser(updatedUser); // Optimistic update
+            await api.updateUser(updatedUser); // Persist
+            handleGoalUpdate(performance === 'again' ? 'review_srs' : (currentRecord.srsLevel === 0 ? 'learn_new' : 'review_srs'));
+        }
+    };
+
+    const handleAddNewWord = async (wordData: Omit<Word, 'color'>) => {
+        if (!currentUser) return;
+
+        const newWord: Word = {
+            ...wordData,
+            color: TYPE_COLORS[wordData.type] || TYPE_COLORS['n/v'],
+        };
+
+        const updatedCustomWords = [...(currentUser.customWords || []), newWord];
+        const updatedUser: User = { ...currentUser, customWords: updatedCustomWords };
+        
+        const newCategories = [...wordCategories];
+        let customCategory = newCategories.find(cat => cat.id === 'custom');
+
+        if (customCategory) {
+            customCategory.words = [...customCategory.words, newWord];
+        } else {
+            newCategories.push({
+                id: 'custom',
+                name: 'Từ của bạn',
+                level: currentUser.level,
+                words: [newWord],
+            });
+        }
+        setWordCategories(newCategories);
+        setAllWords(prev => [...prev, newWord]);
+
+        await updateAndSaveUser(updatedUser);
     };
 
     const handlePlacementTestComplete = async (result: PlacementTestResult) => {
