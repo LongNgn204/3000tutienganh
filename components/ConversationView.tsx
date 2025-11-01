@@ -47,6 +47,18 @@ async function decodeAudioData(
   return buffer;
 }
 
+function createBlob(data: Float32Array): Blob {
+  const l = data.length;
+  const int16 = new Int16Array(l);
+  for (let i = 0; i < l; i++) {
+    int16[i] = data[i] * 32768;
+  }
+  return {
+    data: encode(new Uint8Array(int16.buffer)),
+    mimeType: 'audio/pcm;rate=16000',
+  };
+}
+
 
 interface ConversationViewProps {
   allWords: Word[];
@@ -62,12 +74,14 @@ interface TranscriptItem {
 
 const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProgress, currentUser, onGoalUpdate }) => {
   const [stage, setStage] = useState<'setup' | 'chatting' | 'finished'>('setup');
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'listening' | 'error'>('disconnected');
   const [targetWords, setTargetWords] = useState<Word[]>([]);
   const [usedWords, setUsedWords] = useState<Set<string>>(new Set());
   const [transcript, setTranscript] = useState<TranscriptItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [enableVietnamese, setEnableVietnamese] = useState(true);
+  const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'advanced'>('intermediate');
+  const [isMuted, setIsMuted] = useState(false);
 
   // Refs for managing Web Audio API and Gemini Live session
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
@@ -78,18 +92,29 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
   const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const nextAudioStartTimeRef = useRef<number>(0);
   const audioSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+  const outputNodeRef = useRef<GainNode | null>(null);
   
   // Refs for building transcriptions
   const currentInputTranscriptionRef = useRef('');
   const currentOutputTranscriptionRef = useRef('');
 
+  useEffect(() => {
+    if (outputNodeRef.current) {
+        outputNodeRef.current.gain.value = isMuted ? 0 : 1;
+    }
+  }, [isMuted]);
+
   const stopConversation = () => {
     // Disconnect microphone processing
     if (scriptProcessorRef.current && mediaStreamSourceRef.current) {
-        mediaStreamSourceRef.current.disconnect();
-        scriptProcessorRef.current.disconnect();
-        scriptProcessorRef.current = null;
+        try {
+            mediaStreamSourceRef.current.disconnect();
+            scriptProcessorRef.current.disconnect();
+        } catch (e) {
+            // Ignore errors if already disconnected
+        }
     }
+    scriptProcessorRef.current = null;
 
     // Stop microphone stream
     mediaStreamRef.current?.getTracks().forEach(track => track.stop());
@@ -98,6 +123,12 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
     // Close session
     sessionPromiseRef.current?.then(session => session.close());
     sessionPromiseRef.current = null;
+    
+    // Disconnect output node
+    if (outputNodeRef.current) {
+        outputNodeRef.current.disconnect();
+        outputNodeRef.current = null;
+    }
 
     // Close AudioContexts
     inputAudioContextRef.current?.close().catch(console.error);
@@ -151,20 +182,24 @@ const ConversationView: React.FC<ConversationViewProps> = ({ allWords, studyProg
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const wordList = selectedWords.map(w => w.english).join(', ');
         
-        const userLevel = currentUser?.level || 'A2';
+        const difficultyMap = {
+            beginner: 'A2',
+            intermediate: 'B1',
+            advanced: 'C1'
+        };
+        const selectedLevel = difficultyMap[difficulty];
         
         const translationInstruction = enableVietnamese 
             ? `You MUST ALWAYS respond in this exact format: First, speak the English sentence. Then, immediately say "In Vietnamese," followed by the Vietnamese translation. For example: "That's a great idea! In Vietnamese, đó là một ý tưởng tuyệt vời!".`
             : `You MUST respond ONLY in English. DO NOT provide any Vietnamese translation.`;
 
-        const systemInstruction = `You are Gem, a highly intelligent and adaptive English tutor. Your primary goal is to have a dynamic voice conversation with a Vietnamese learner.
+        const strictCorrectionRule = `**Correction Rule (VERY IMPORTANT):** If the user makes a clear grammatical or pronunciation mistake, you MUST briefly and politely interrupt them to correct it *before* continuing the conversation. For example, if they say "I go to the store yesterday," you should immediately say, "A quick correction, you should say 'I *went* to the store yesterday.' Please continue." This direct, immediate feedback is crucial for their learning.`;
 
-**Initial Level:** The user's starting CEFR level is ${userLevel}. Begin the conversation at this level.
+        const systemInstruction = `You are Gem, a highly intelligent and strict English tutor. Your primary goal is to have a dynamic voice conversation with a Vietnamese learner.
 
-**ADAPTIVE BEHAVIOR (CRITICAL):**
-1.  **Analyze Continuously:** As the user speaks, constantly analyze their vocabulary range, grammatical accuracy, and the complexity of their sentence structures.
-2.  **Level Up:** If the user demonstrates a strong command of English (using advanced words, complex sentences, few errors), you MUST gradually increase the difficulty of your own language. Introduce more sophisticated vocabulary, academic phrasing, and more complex grammatical structures to challenge them and help them grow.
-3.  **Level Down:** If the user struggles (simple words, frequent errors, hesitation), you MUST simplify your language to match their current level, ensuring the conversation remains encouraging and comprehensible.
+**Initial Level:** The user's starting CEFR level is ${selectedLevel}. Begin the conversation at this level.
+
+${strictCorrectionRule}
 
 **Core Task:** The student's mission is to use these words: ${wordList}. Guide the conversation naturally to give them a chance to use these words.
 
@@ -175,12 +210,11 @@ Start the conversation by saying "Hello! How are you today?".`;
 
         inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
         outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        outputNodeRef.current = outputAudioContextRef.current.createGain();
+        outputNodeRef.current.connect(outputAudioContextRef.current.destination);
         
-        // Note: Live audio conversation requires a model with native audio support
-        // gemini-1.5-flash does not support live audio streaming
-        // Using gemini-1.5-flash-8b which supports audio features for stability
         sessionPromiseRef.current = ai.live.connect({
-            model: 'gemini-1.5-flash-8b',
+            model: 'gemini-2.5-flash-native-audio-preview-09-2025',
             config: {
                 systemInstruction,
                 responseModalities: [Modality.AUDIO],
@@ -196,17 +230,14 @@ Start the conversation by saying "Hello! How are you today?".`;
 
                     scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
                         const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
-                        const pcmBlob: Blob = {
-                            data: encode(new Uint8Array(new Int16Array(inputData.map(x => x * 32768)).buffer)),
-                            mimeType: 'audio/pcm;rate=16000',
-                        };
+                        const pcmBlob = createBlob(inputData);
                         sessionPromiseRef.current?.then((session) => {
-                            session.sendRealtimeInput({ media: pcmBlob });
+                            if(session) session.sendRealtimeInput({ media: pcmBlob });
                         });
                     };
                     source.connect(scriptProcessor);
                     scriptProcessor.connect(inputAudioContextRef.current!.destination);
-                    setConnectionStatus('connected');
+                    setConnectionStatus('listening');
                     setStage('chatting');
                 },
                 onmessage: async (message: LiveServerMessage) => {
@@ -250,13 +281,13 @@ Start the conversation by saying "Hello! How are you today?".`;
                     }
 
                     const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
-                    if (base64Audio && outputAudioContextRef.current) {
+                    if (base64Audio && outputAudioContextRef.current && outputNodeRef.current) {
                         const outputCtx = outputAudioContextRef.current;
                         nextAudioStartTimeRef.current = Math.max(nextAudioStartTimeRef.current, outputCtx.currentTime);
                         const audioBuffer = await decodeAudioData(decode(base64Audio), outputCtx, 24000, 1);
                         const source = outputCtx.createBufferSource();
                         source.buffer = audioBuffer;
-                        source.connect(outputCtx.destination);
+                        source.connect(outputNodeRef.current);
                         source.addEventListener('ended', () => audioSourcesRef.current.delete(source));
                         source.start(nextAudioStartTimeRef.current);
                         nextAudioStartTimeRef.current += audioBuffer.duration;
@@ -285,51 +316,33 @@ Start the conversation by saying "Hello! How are you today?".`;
         setConnectionStatus('error');
     }
   };
-  
+
   const highlightUsedWords = (text: string) => {
     const wordRegex = new RegExp(`\\b(${targetWords.map(w => w.english).join('|')})\\b`, 'gi');
     return text.replace(wordRegex, '<strong class="bg-yellow-200/80 text-yellow-900 px-1 py-0.5 rounded">$1</strong>');
-  };
-
-  const renderMicButton = () => {
-     let icon;
-     let text;
-     let colorClass;
-
-     switch (connectionStatus) {
-        case 'connecting':
-            icon = <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>;
-            text = "Đang kết nối...";
-            colorClass = "bg-slate-400 cursor-not-allowed";
-            break;
-        case 'connected':
-            icon = <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-12 0H3a7.001 7.001 0 006 6.93V17H7a1 1 0 100 2h6a1 1 0 100-2h-2v-2.07z" clipRule="evenodd" /></svg>;
-            text = "AI đang lắng nghe...";
-            colorClass = "bg-blue-600 animate-pulse";
-            break;
-        default: // disconnected or error
-             icon = <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>;
-             text = "Đã ngắt kết nối";
-             colorClass = "bg-red-500";
-     }
-
-     return (
-        <div className="flex flex-col items-center gap-4">
-          <div className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg ${colorClass}`}>
-              {icon}
-          </div>
-          <p className="font-semibold text-slate-600">{text}</p>
-        </div>
-     );
   };
   
   if (stage === 'setup') {
     return (
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
             <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg w-full">
-                <h2 className="text-3xl font-bold text-slate-800">AI Luyện Nói</h2>
+                <h2 className="text-3xl font-bold text-slate-800">AI Luyện Giao tiếp</h2>
                 <p className="text-slate-600 mt-4 mb-6">Thực hành từ vựng bằng cách nói chuyện trực tiếp với AI. AI sẽ đưa ra một vài từ, và nhiệm vụ của bạn là sử dụng chúng trong cuộc hội thoại!</p>
                 
+                <div className="mb-6">
+                    <label htmlFor="difficulty-select" className="block text-sm font-medium text-slate-700 mb-1 text-left">Chọn độ khó</label>
+                    <select
+                        id="difficulty-select"
+                        value={difficulty}
+                        onChange={(e) => setDifficulty(e.target.value as any)}
+                        className="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="beginner">Mới bắt đầu</option>
+                        <option value="intermediate">Trung bình</option>
+                        <option value="advanced">Nâng cao</option>
+                    </select>
+                </div>
+
                 <div className="flex items-center justify-center mb-8">
                     <label className="flex items-center cursor-pointer">
                         <input 
@@ -424,16 +437,34 @@ Start the conversation by saying "Hello! How are you today?".`;
             )}
         </div>
         <div className="mt-4 flex flex-col items-center justify-center gap-4">
-            {stage !== 'finished' ? (
-                renderMicButton()
-            ) : (
-                <button onClick={stopConversation} className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors">
-                    Chơi lại
+            <div className="flex items-center gap-4 p-2 bg-slate-100 rounded-full">
+                <div className={`w-3 h-3 rounded-full ${connectionStatus === 'listening' ? 'bg-green-500 animate-pulse' : 'bg-slate-400'}`}></div>
+                <p className="font-semibold text-slate-600 text-sm h-5 pr-2">
+                    {connectionStatus === 'listening' && 'AI đang lắng nghe...'}
+                    {connectionStatus === 'connecting' && 'Đang kết nối...'}
+                    {connectionStatus === 'error' && 'Lỗi kết nối'}
+                    {connectionStatus === 'disconnected' && 'Đã ngắt kết nối'}
+                </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+                <button
+                    onClick={() => setIsMuted(prev => !prev)}
+                    disabled={connectionStatus !== 'listening'}
+                    className="px-4 py-2 text-sm flex items-center gap-2 rounded-lg bg-slate-200 text-slate-600 disabled:opacity-50 hover:bg-slate-300"
+                >
+                    {isMuted ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                    ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.929 5.757a1 1 0 011.414 0A5.983 5.983 0 0116 10a5.983 5.983 0 01-1.657 4.243 1 1 0 01-1.414-1.415A3.984 3.984 0 0014 10a3.984 3.984 0 00-1.071-2.828 1 1 0 010-1.415z" /></svg>
+                    )}
+                    {isMuted ? "Bật tiếng" : "Tắt tiếng"}
                 </button>
-            )}
-             <button onClick={stopConversation} className="text-sm text-slate-500 hover:text-slate-700">
-                Kết thúc phiên
-            </button>
+                <button onClick={stopConversation} className="px-4 py-2 text-sm flex items-center gap-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200">
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd" /></svg>
+                    Kết thúc
+                </button>
+            </div>
         </div>
     </div>
   );

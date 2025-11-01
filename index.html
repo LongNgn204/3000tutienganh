@@ -10,28 +10,26 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
+      --primary-50: #eef2ff;
+      --primary-100: #e0e7ff;
+      --primary-600: #4f46e5;
+      --primary-700: #4338ca;
+      --primary-800: #3730a3;
+
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
       scroll-behavior: smooth;
     }
     body {
       font-family: 'Inter', sans-serif;
-    }
-    /* Flashcard 3D flip styles */
-    .flashcard-container {
-      perspective: 1000px;
-    }
-    .flashcard {
-      transition: transform 0.6s;
-      transform-style: preserve-d;
-    }
-    .flashcard.is-flipped {
-      transform: rotateY(180deg);
-    }
-    .flashcard-face {
-      -webkit-backface-visibility: hidden;
-      backface-visibility: hidden;
-    }
-    .flashcard-back {
-      transform: rotateY(180deg);
+      background-color: var(--slate-50);
     }
     /* Animation Keyframes */
     @keyframes fadeIn {
@@ -42,11 +40,23 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
     .animate-fade-in {
       animation: fadeIn 0.5s ease-in-out;
     }
     .animate-fade-in-up {
       animation: fadeInUp 0.5s ease-in-out;
+    }
+    .blinking-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 1.25rem; /* Equivalent to h-5 */
+      background-color: var(--slate-700);
+      animation: pulse-subtle 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      margin-left: 4px;
     }
     /* Initial loading spinner */
     #initial-loader {
@@ -54,25 +64,21 @@
         align-items: center;
         justify-content: center;
         height: 100vh;
-        background-color: #f1f5f9; /* bg-slate-100 */
+        background-color: var(--slate-100);
     }
     .spinner {
         width: 56px;
         height: 56px;
-        border: 6px solid #e2e8f0; /* border-slate-200 */
-        border-bottom-color: #4f46e5; /* border-indigo-600 */
+        border: 6px solid var(--slate-200);
+        border-bottom-color: var(--primary-600);
         border-radius: 50%;
         display: inline-block;
         box-sizing: border-box;
         animation: rotation 1s linear infinite;
     }
     @keyframes rotation {
-        0% {
-            transform: rotate(0deg);
-        }
-        100% {
-            transform: rotate(360deg);
-        }
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
     /* Responsive Sidebar */
     @media (max-width: 1023px) {
@@ -92,15 +98,28 @@
     details > summary { list-style: none; }
     details > summary::-webkit-details-marker { display: none; }
     details[open] > summary .details-arrow { transform: rotate(180deg); }
-    .prose { line-height: 1.7; }
-    .prose strong { color: #1e3a8a; } /* text-blue-900 */
-    .prose code { background-color: #e2e8f0; color: #1e293b; font-weight: 600; padding: 0.2em 0.4em; margin: 0; border-radius: 0.25rem; }
+    .prose { line-height: 1.7; color: var(--slate-700); }
+    .prose strong { color: var(--primary-800); }
+    .prose code { background-color: var(--slate-200); color: var(--slate-800); font-weight: 600; padding: 0.2em 0.4em; margin: 0; border-radius: 0.375rem; font-size: 0.9em; }
     .prose ul { padding-left: 1.5rem; }
     .prose li { margin-top: 0.5em; margin-bottom: 0.5em; }
     .prose p { margin-top: 0; margin-bottom: 1em; }
-    .prose h4 { margin-bottom: 0.5em; color: #1d4ed8; } /* text-blue-700 */
-    .prose em { color: #475569; }
+    .prose h4 { margin-bottom: 0.5em; color: var(--primary-700); }
+    .prose em { color: var(--slate-600); }
     .prose-sm li { margin-top: 0.25em; margin-bottom: 0.25em; }
+
+    /* Custom shadow for a more subtle look */
+    .shadow-subtle {
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    }
+    .shadow-lifted {
+       box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+    }
+
+    /* Global Transitions for better UX */
+    button, a, .card-hover {
+        transition: all 0.2s ease-in-out;
+    }
   </style>
 <script type="importmap">
 {
@@ -114,7 +133,7 @@
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
-<body class="bg-slate-100">
+<body class="bg-slate-50">
   <div id="root">
     <div id="initial-loader">
         <div class="spinner"></div>

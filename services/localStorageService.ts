@@ -16,21 +16,37 @@ const saveUsers = (users: User[]) => {
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
 };
 
+export const getAllUsersLocal = (): User[] => {
+    return getUsers();
+};
+
 export const findUserByNameLocal = (name: string): User | undefined => {
     const users = getUsers();
     return users.find(u => u.name.toLowerCase() === name.toLowerCase());
 };
 
-export const registerUserLocal = (name: string, password: string): { success: boolean, message?: string } => {
+export const registerUserLocal = (name: string, password: string): { success: boolean, user?: User, message?: string } => {
     const users = getUsers();
     if (findUserByNameLocal(name)) {
         return { success: false, message: 'Tên người dùng đã tồn tại.' };
     }
-    // Create a user without level/progress, which will be added after placement test
-    const newUser: Partial<User> = { name, password, studyProgress: {}, dailyProgress: undefined };
-    users.push(newUser as User);
+    
+    const newUser: User = { 
+        name, 
+        password, 
+        level: 'A2', // Default level
+        studyProgress: {}, 
+        dailyProgress: undefined, 
+        challengeProgress: {},
+        placementTestResult: undefined, // No test taken yet
+        customWords: [],
+    };
+    users.push(newUser);
     saveUsers(users);
-    return { success: true };
+    
+    // Log in the new user immediately
+    sessionStorage.setItem('loggedInUser', newUser.name);
+    return { success: true, user: newUser };
 };
 
 export const loginUserLocal = (name: string, password: string): { success: boolean, user?: User, message?: string } => {
@@ -39,6 +55,17 @@ export const loginUserLocal = (name: string, password: string): { success: boole
         return { success: true, user };
     }
     return { success: false, message: 'Tên đăng nhập hoặc mật khẩu không đúng.' };
+};
+
+export const updateUserLocal = (updatedUser: User): void => {
+    const users = getUsers();
+    const userIndex = users.findIndex(u => u.name.toLowerCase() === updatedUser.name.toLowerCase());
+    if (userIndex !== -1) {
+        // Preserve password if it's not included in the update
+        const existingPassword = users[userIndex].password;
+        users[userIndex] = { ...updatedUser, password: updatedUser.password || existingPassword };
+        saveUsers(users);
+    }
 };
 
 export const updateUserProgressLocal = (name: string, progress: StudyProgress): void => {
@@ -67,7 +94,6 @@ export const completePlacementTestLocal = (name: string, result: PlacementTestRe
             ...users[userIndex],
             level: result.level,
             placementTestResult: result,
-            studyProgress: users[userIndex].studyProgress || {}, // Preserve progress if any
         };
         users[userIndex] = updatedUser;
         saveUsers(users);

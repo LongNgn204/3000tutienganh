@@ -1,18 +1,19 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { GoogleGenAI } from "@google/genai";
 import type { Word, StudyProgress } from '../types';
 import SpeakerButton from './SpeakerButton';
 import * as srsService from '../services/srsService';
-import { aiService, AI_MODELS, AI_CONFIG } from '../services/aiService';
 
 interface AIStoryViewProps {
   words: Word[];
   studyProgress: StudyProgress;
+  onGoalUpdate: () => void;
 }
 
 const MIN_WORDS = 3;
 const MAX_WORDS = 5;
 
-const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
+const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress, onGoalUpdate }) => {
   const [selectedWords, setSelectedWords] = useState<Word[]>([]);
   const [storyEnglish, setStoryEnglish] = useState('');
   const [storyVietnamese, setStoryVietnamese] = useState('');
@@ -22,7 +23,6 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
 
   const filteredWords = useMemo(() => {
     if (filter === 'review') {
-      // FIX: Use srsService to get words for review instead of incorrect comparison.
       return srsService.getWordsToReview(words, studyProgress);
     }
     return words;
@@ -54,28 +54,41 @@ const AIStoryView: React.FC<AIStoryViewProps> = ({ words, studyProgress }) => {
     setStoryVietnamese('');
 
     const wordList = selectedWords.map(w => w.english).join(', ');
-    const separator = "---VIETNAMESE_TRANSLATION---";
 
     try {
-        const prompt = `Act as a creative storyteller for a Vietnamese person learning English. Write a very short, simple story (around 50-70 words) that MUST include the following words: ${wordList}. The story should be easy to understand and engaging. 
-First, write the English story.
-Then, on a new line, write the exact separator: "${separator}".
-Finally, on a new line, write the Vietnamese translation of the story.`;
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const prompt = `Act as a creative writing teacher for a Vietnamese person learning English. Your task is to create a short, engaging story (around 70-90 words) that MUST include the following English words: ${wordList}.
+
+First, write the complete English story.
+Then, on a new line, write the exact separator: "---TRANSLATION---"
+Finally, on a new line, write the complete Vietnamese translation of the story.
+
+Do not include any other text or formatting.`;
         
-        const fullResponse = await aiService.generateContent(
-            AI_MODELS.FLASH,
-            prompt,
-            { ...AI_CONFIG.FAST, useCache: false } // Fast responses for better UX
-        );
+        const responseStream = await ai.models.generateContentStream({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
         
-        if (fullResponse.includes(separator)) {
-            const parts = fullResponse.split(separator);
-            setStoryEnglish(parts[0].trim());
-            setStoryVietnamese(parts[1]?.trim() || '');
-        } else {
-            setStoryEnglish(fullResponse.trim());
-            setStoryVietnamese('AI không cung cấp bản dịch.');
+        let accumulatedText = '';
+        const separator = "---TRANSLATION---";
+
+        for await (const chunk of responseStream) {
+            accumulatedText += chunk.text;
+            
+            const separatorIndex = accumulatedText.indexOf(separator);
+            
+            if (separatorIndex !== -1) {
+                const englishPart = accumulatedText.substring(0, separatorIndex).trim();
+                const vietnamesePart = accumulatedText.substring(separatorIndex + separator.length).trim();
+                setStoryEnglish(englishPart);
+                setStoryVietnamese(vietnamesePart);
+            } else {
+                setStoryEnglish(accumulatedText.trim());
+            }
         }
+
+        onGoalUpdate();
 
     } catch (err) {
         console.error("Gemini Story Generation Error:", err);
@@ -92,7 +105,7 @@ Finally, on a new line, write the Vietnamese translation of the story.`;
   };
 
   const renderContent = () => {
-    if (isGenerating) {
+    if (isGenerating && !storyEnglish) { // Show spinner only at the very beginning
       return (
         <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
             <svg className="animate-spin h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -123,9 +136,13 @@ Finally, on a new line, write the Vietnamese translation of the story.`;
             className="text-lg text-slate-700 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: highlightWords(storyEnglish, selectedWords) }}
           />
+          {isGenerating && !storyVietnamese && <span className="blinking-cursor"></span>}
+
 
           {storyVietnamese && (
-            <p className="text-md text-slate-500 mt-4 pt-4 border-t italic">{storyVietnamese}</p>
+            <p className="text-md text-slate-500 mt-4 pt-4 border-t italic">{storyVietnamese}
+             {isGenerating && <span className="blinking-cursor"></span>}
+            </p>
           )}
 
           <div className="mt-6 flex justify-end gap-4">
@@ -137,9 +154,10 @@ Finally, on a new line, write the Vietnamese translation of the story.`;
             </button>
              <button
               onClick={generateStory}
-              className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+              disabled={isGenerating}
+              className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:bg-slate-400"
             >
-              Tạo truyện khác
+              {isGenerating ? 'Đang tạo...' : 'Tạo truyện khác'}
             </button>
           </div>
         </div>

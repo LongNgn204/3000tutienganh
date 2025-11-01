@@ -98,57 +98,6 @@ export const GRAMMAR_LEVELS: GrammarLevel[] = [
                     <p><code>This is my book.</code><br><em>(Đây là quyển sách của tôi.)</em></p>
                     <p><code>Her name is Lisa.</code><br><em>(Tên của cô ấy là Lisa.)</em></p>
                 `
-            },
-            {
-                title: 'There is / There are',
-                content: `
-                    <h4><strong>Công dụng:</strong></h4>
-                    <p>Dùng để nói về sự tồn tại của một người hoặc vật ở một nơi nào đó.</p>
-                    <ul>
-                        <li><code>There is</code> + danh từ số ít.</li>
-                        <li><code>There are</code> + danh từ số nhiều.</li>
-                    </ul>
-                    <h4><strong>Ví dụ:</strong></h4>
-                    <p><code>There is a book on the table.</code><br><em>(Có một quyển sách trên bàn.)</em></p>
-                    <p><code>There are two cats in the garden.</code><br><em>(Có hai con mèo trong vườn.)</em></p>
-                `
-            },
-             {
-                title: 'Từ để hỏi (Wh- questions)',
-                content: `
-                    <h4><strong>Công dụng:</strong></h4>
-                    <p>Dùng để hỏi thông tin cụ thể.</p>
-                    <ul>
-                        <li><strong>What:</strong> Cái gì</li>
-                        <li><strong>Where:</strong> Ở đâu</li>
-                        <li><strong>When:</strong> Khi nào</li>
-                        <li><strong>Who:</strong> Ai</li>
-                        <li><strong>Why:</strong> Tại sao</li>
-                        <li><strong>How:</strong> Như thế nào</li>
-                    </ul>
-                    <h4><strong>Ví dụ:</strong></h4>
-                    <p><code>What is your name?</code><br><em>(Tên bạn là gì?)</em></p>
-                    <p><code>Where do you live?</code><br><em>(Bạn sống ở đâu?)</em></p>
-                `
-            },
-            {
-                title: 'Tân ngữ (Object Pronouns)',
-                content: `
-                    <h4><strong>Công dụng:</strong></h4>
-                    <p>Đứng sau động từ hoặc giới từ để chỉ đối tượng bị tác động.</p>
-                    <ul>
-                        <li>I → <code>me</code></li>
-                        <li>You → <code>you</code></li>
-                        <li>He → <code>him</code></li>
-                        <li>She → <code>her</code></li>
-                        <li>It → <code>it</code></li>
-                        <li>We → <code>us</code></li>
-                        <li>They → <code>them</code></li>
-                    </ul>
-                    <h4><strong>Ví dụ:</strong></h4>
-                    <p><code>She gave the book to me.</code><br><em>(Cô ấy đã đưa quyển sách cho tôi.)</em></p>
-                    <p><code>I saw them at the park.</code><br><em>(Tôi đã thấy họ ở công viên.)</em></p>
-                `
             }
         ],
     },
@@ -221,33 +170,6 @@ export const GRAMMAR_LEVELS: GrammarLevel[] = [
                 `
             },
             {
-                title: 'Tương lai gần (be going to)',
-                content: `
-                    <h4><strong>Công dụng:</strong></h4>
-                    <ul>
-                        <li>Diễn tả một kế hoạch, dự định đã được quyết định từ trước.</li>
-                        <li>Diễn tả một dự đoán dựa trên bằng chứng ở hiện tại.</li>
-                    </ul>
-                    <h4><strong>Cấu trúc:</strong></h4>
-                    <p><code>S + am/is/are + going to + V(nguyên mẫu)</code></p>
-                    <h4><strong>Ví dụ:</strong></h4>
-                    <p><code>I am going to visit my grandparents this weekend.</code><br><em>(Tôi sẽ đi thăm ông bà vào cuối tuần này.)</em></p>
-                    <p><code>Look at the dark clouds! It is going to rain.</code><br><em>(Nhìn những đám mây đen kìa! Trời sắp mưa rồi.)</em></p>
-                `
-            },
-            {
-                title: 'Danh từ đếm được & không đếm được',
-                content: `
-                    <h4><strong>Danh từ đếm được (Countable Nouns):</strong></h4>
-                    <p>Là những danh từ có thể dùng với số đếm, có dạng số ít và số nhiều (e.g., one book, two books).</p>
-                    <h4><strong>Danh từ không đếm được (Uncountable Nouns):</strong></h4>
-                    <p>Là những danh từ chỉ chất liệu, chất lỏng, khái niệm trừu tượng, không dùng với số đếm (e.g., water, information, happiness). Thường đi với <code>some, any, much, a little</code>.</p>
-                    <h4><strong>Ví dụ:</strong></h4>
-                    <p><code>There are three <strong>chairs</strong> in the room.</code> (đếm được)</p>
-                    <p><code>I need some <strong>water</strong>.</code> (không đếm được)</p>
-                `
-            },
-            {
                 title: 'Động từ khuyết thiếu cơ bản (can, could, should)',
                 content: `
                     <h4><strong>Công dụng:</strong></h4>
@@ -261,13 +183,15 @@ export const GRAMMAR_LEVELS: GrammarLevel[] = [
                 `
             },
             {
-                title: 'Trạng từ chỉ cách thức (Adverbs of Manner)',
+                title: 'Danh từ đếm được & không đếm được',
                 content: `
-                    <h4><strong>Công dụng:</strong></h4>
-                    <p>Mô tả hành động diễn ra như thế nào. Thường được tạo bằng cách thêm đuôi "-ly" vào tính từ.</p>
+                    <h4><strong>Danh từ đếm được (Countable Nouns):</strong></h4>
+                    <p>Là những danh từ có thể dùng với số đếm, có dạng số ít và số nhiều (e.g., one book, two books).</p>
+                    <h4><strong>Danh từ không đếm được (Uncountable Nouns):</strong></h4>
+                    <p>Là những danh từ chỉ chất liệu, chất lỏng, khái niệm trừu tượng, không dùng với số đếm (e.g., water, information, happiness). Thường đi với <code>some, any, much, a little</code>.</p>
                     <h4><strong>Ví dụ:</strong></h4>
-                    <p><code>He drives <strong>carefully</strong>.</code><br><em>(Anh ấy lái xe một cách cẩn thận.)</em></p>
-                    <p><code>She sings <strong>beautifully</strong>.</code><br><em>(Cô ấy hát rất hay.)</em></p>
+                    <p><code>There are three <strong>chairs</strong> in the room.</code> (đếm được)</p>
+                    <p><code>I need some <strong>water</strong>.</code> (không đếm được)</p>
                 `
             }
         ],
@@ -290,18 +214,6 @@ export const GRAMMAR_LEVELS: GrammarLevel[] = [
                     <h4><strong>Ví dụ:</strong></h4>
                     <p><code>I have lived here for five years.</code><br><em>(Tôi đã sống ở đây được năm năm rồi.)</em></p>
                     <p><code>Have you ever been to Japan?</code><br><em>(Bạn đã bao giờ đến Nhật Bản chưa?)</em></p>
-                `
-            },
-            {
-                title: 'Thì Hiện tại hoàn thành tiếp diễn',
-                content: `
-                    <h4><strong>Công dụng:</strong></h4>
-                    <p>Nhấn mạnh sự liên tục của hành động bắt đầu trong quá khứ và vẫn còn tiếp diễn ở hiện tại.</p>
-                    <h4><strong>Cấu trúc:</strong></h4>
-                    <p><code>S + have/has + been + V-ing</code></p>
-                    <h4><strong>Ví dụ:</strong></h4>
-                    <p><code>I have been waiting for you for two hours!</code><br><em>(Tôi đã và đang đợi bạn suốt hai tiếng đồng hồ rồi!)</em></p>
-                    <p><code>It has been raining all day.</code><br><em>(Trời đã mưa cả ngày nay.)</em></p>
                 `
             },
             {
@@ -351,7 +263,7 @@ export const GRAMMAR_LEVELS: GrammarLevel[] = [
                         <li>Lùi thì của động từ (e.g., hiện tại đơn → quá khứ đơn).</li>
                         <li>Đổi trạng từ chỉ thời gian và nơi chốn (e.g., <code>now</code> → <code>then</code>).</li>
                     </ul>
-                     <h4><strong>Tường thuật câu hỏi và mệnh lệnh:</strong></h4>
+                    <h4><strong>Tường thuật câu hỏi và mệnh lệnh:</strong></h4>
                     <ul>
                         <li><strong>Câu hỏi Yes/No:</strong> dùng <code>ask + if/whether</code>.</li>
                         <li><strong>Câu hỏi Wh-:</strong> dùng <code>ask + từ để hỏi (what, where...)</code>.</li>
@@ -363,22 +275,6 @@ export const GRAMMAR_LEVELS: GrammarLevel[] = [
                     <p><code>Direct: "Close the door," she told me.</code> → <code>Reported: She told me to close the door.</code></p>
                 `
             },
-             {
-                title: 'Used to',
-                content: `
-                    <h4><strong>Công dụng:</strong></h4>
-                    <p>Diễn tả một thói quen hoặc tình trạng đã tồn tại trong quá khứ nhưng bây giờ không còn nữa.</p>
-                    <h4><strong>Cấu trúc:</strong></h4>
-                    <ul>
-                        <li><strong>Khẳng định:</strong> <code>S + used to + V(nguyên mẫu)</code></li>
-                        <li><strong>Phủ định:</strong> <code>S + didn't use to + V(nguyên mẫu)</code></li>
-                        <li><strong>Nghi vấn:</strong> <code>Did + S + use to + V(nguyên mẫu)?</code></li>
-                    </ul>
-                    <h4><strong>Ví dụ:</strong></h4>
-                    <p><code>He used to smoke, but he quit last year.</code><br><em>(Anh ấy đã từng hút thuốc, nhưng đã bỏ từ năm ngoái.)</em></p>
-                    <p><code>I didn't use to like vegetables when I was a child.</code><br><em>(Tôi đã không từng thích rau khi còn là một đứa trẻ.)</em></p>
-                `
-            }
         ],
     },
     {
@@ -440,23 +336,6 @@ export const GRAMMAR_LEVELS: GrammarLevel[] = [
                 `
             },
             {
-                title: 'Thì Tương lai tiếp diễn & Tương lai hoàn thành',
-                content: `
-                    <h4><strong>Tương lai tiếp diễn (Future Continuous):</strong></h4>
-                    <ul>
-                        <li><strong>Công dụng:</strong> Diễn tả một hành động sẽ đang xảy ra tại một thời điểm cụ thể trong tương lai.</li>
-                        <li><strong>Cấu trúc:</strong> <code>S + will be + V-ing</code></li>
-                        <li><strong>Ví dụ:</strong> <code>This time tomorrow, I will be flying to New York.</code><br><em>(Giờ này ngày mai, tôi sẽ đang bay đến New York.)</em></li>
-                    </ul>
-                    <h4><strong>Tương lai hoàn thành (Future Perfect):</strong></h4>
-                    <ul>
-                        <li><strong>Công dụng:</strong> Diễn tả một hành động sẽ hoàn tất trước một thời điểm hoặc một hành động khác trong tương lai.</li>
-                        <li><strong>Cấu trúc:</strong> <code>S + will have + V3/V-ed</code></li>
-                        <li><strong>Ví dụ:</strong> <code>By the end of this year, I will have finished this course.</code><br><em>(Vào cuối năm nay, tôi sẽ đã hoàn thành khóa học này.)</em></li>
-                    </ul>
-                `
-            },
-            {
                 title: 'Động từ khuyết thiếu chỉ sự suy luận (Modals of Deduction)',
                 content: `
                     <h4><strong>Công dụng:</strong></h4>
@@ -476,22 +355,6 @@ export const GRAMMAR_LEVELS: GrammarLevel[] = [
                     <p><code>The ground is wet. It must have rained last night.</code> (Quá khứ)</p>
                 `
             },
-             {
-                title: 'Câu ao ước (Wishes and Regrets)',
-                content: `
-                    <h4><strong>Công dụng:</strong></h4>
-                    <p>Dùng để diễn tả sự ao ước hoặc hối tiếc.</p>
-                    <ul>
-                        <li><strong>Ước cho hiện tại:</strong> <code>S + wish(es) + S + V2/V-ed</code></li>
-                        <li><strong>Ước cho tương lai:</strong> <code>S + wish(es) + S + would + V(nguyên mẫu)</code></li>
-                        <li><strong>Hối tiếc về quá khứ:</strong> <code>S + wish(es) + S + had + V3/V-ed</code></li>
-                    </ul>
-                    <h4><strong>Ví dụ:</strong></h4>
-                    <p><code>I wish I had more free time.</code> (Ước cho hiện tại)</p>
-                    <p><code>I wish you would stop making that noise.</code> (Ước cho tương lai)</p>
-                    <p><code>She wishes she had studied harder.</code> (Hối tiếc về quá khứ)</p>
-                `
-            }
         ],
     },
     {
@@ -522,18 +385,15 @@ export const GRAMMAR_LEVELS: GrammarLevel[] = [
                 `
             },
             {
-                title: 'Mệnh đề trạng ngữ (Adverbial Clauses)',
+                title: 'Mệnh đề danh từ (Noun Clauses)',
                 content: `
                     <h4><strong>Công dụng:</strong></h4>
-                    <p>Là mệnh đề phụ có chức năng như một trạng ngữ, bổ sung thông tin về thời gian, nơi chốn, nguyên nhân, mục đích, sự nhượng bộ...</p>
-                    <h4><strong>Các loại phổ biến:</strong></h4>
-                    <ul>
-                        <li><strong>Thời gian (Time):</strong> <code>when, while, as soon as, before, after...</code></li>
-                        <li><strong>Nguyên nhân (Reason):</strong> <code>because, since, as...</code></li>
-                        <li><strong>Nhượng bộ (Concession):</strong> <code>although, even though, while...</code></li>
-                    </ul>
+                    <p>Là một mệnh đề phụ có chức năng như một danh từ (làm chủ ngữ, tân ngữ).</p>
+                    <h4><strong>Bắt đầu bằng:</strong></h4>
+                    <p><code>that, what, who, where, when, why, how, whether...</code></p>
                     <h4><strong>Ví dụ:</strong></h4>
-                    <p><code>Although it was raining, we went for a walk.</code><br><em>(Mặc dù trời đang mưa, chúng tôi vẫn đi dạo.)</em></p>
+                    <p><code><strong>What he said</strong> was not true.</code> (Làm chủ ngữ)<br><em>(Những gì anh ấy nói là không đúng.)</em></p>
+                    <p><code>I don't know <strong>where she lives</strong>.</code> (Làm tân ngữ)<br><em>(Tôi không biết cô ấy sống ở đâu.)</em></p>
                 `
             },
             {
@@ -551,29 +411,17 @@ export const GRAMMAR_LEVELS: GrammarLevel[] = [
                 `
             },
             {
-                title: 'Mệnh đề danh từ (Noun Clauses)',
-                content: `
-                    <h4><strong>Công dụng:</strong></h4>
-                    <p>Là một mệnh đề phụ có chức năng như một danh từ (làm chủ ngữ, tân ngữ).</p>
-                    <h4><strong>Bắt đầu bằng:</strong></h4>
-                    <p><code>that, what, who, where, when, why, how, whether...</code></p>
-                    <h4><strong>Ví dụ:</strong></h4>
-                    <p><code><strong>What he said</strong> was not true.</code> (Làm chủ ngữ)<br><em>(Những gì anh ấy nói là không đúng.)</em></p>
-                    <p><code>I don't know <strong>where she lives</strong>.</code> (Làm tân ngữ)<br><em>(Tôi không biết cô ấy sống ở đâu.)</em></p>
-                `
-            },
-            {
                 title: 'Tương lai trong quá khứ (Future in the Past)',
                 content: `
                     <h4><strong>Công dụng:</strong></h4>
                     <p>Dùng để nói về một hành động được cho là sẽ xảy ra trong tương lai, tại một thời điểm trong quá khứ.</p>
                     <h4><strong>Cấu trúc:</strong></h4>
-                    <p>Thường dùng <code>was/were going to + V</code>, <code>would + V</code>.</p>
+                    <p>Thường dùng <code>was/were going to + V</code>, <code>would + V</code>, hoặc thì quá khứ tiếp diễn.</p>
                     <h4><strong>Ví dụ:</strong></h4>
                     <p><code>He said he <strong>would call</strong> me, but he didn't.</code><br><em>(Anh ấy đã nói sẽ gọi cho tôi, nhưng anh ấy đã không làm.)</em></p>
                     <p><code>I <strong>was going to</strong> travel last year, but I couldn't.</code><br><em>(Tôi đã định đi du lịch vào năm ngoái, nhưng tôi không thể.)</em></p>
                 `
-            }
+            },
         ],
     },
     {
@@ -619,32 +467,6 @@ export const GRAMMAR_LEVELS: GrammarLevel[] = [
                     <p><code>The more you practice, the more confident you become.</code><br><em>(Bạn càng luyện tập, bạn càng trở nên tự tin.)</em></p>
                 `
             },
-            {
-                title: 'Các cấu trúc bị động nâng cao',
-                content: `
-                    <h4><strong>Bị động với động từ tường thuật:</strong></h4>
-                    <p>Dùng với các động từ như <code>say, think, believe, report...</code></p>
-                    <ul>
-                        <li><code>It is said that he is very rich.</code></li>
-                        <li><code>He is said to be very rich.</code></li>
-                    </ul>
-                    <h4><strong>Bị động với "have something done":</strong></h4>
-                    <p>Diễn tả hành động mà ai đó làm cho mình (thuê, nhờ vả).</p>
-                    <p><code>I had my car repaired yesterday.</code><br><em>(Hôm qua tôi đã đem xe đi sửa.)</em></p>
-                `
-            },
-            {
-                title: 'Danh từ hóa (Nominalisation)',
-                content: `
-                    <h4><strong>Công dụng:</strong></h4>
-                    <p>Là quá trình biến động từ hoặc tính từ thành danh từ. Rất phổ biến trong văn viết học thuật để tạo sự trang trọng và khách quan.</p>
-                    <h4><strong>Cách thành lập:</strong></h4>
-                    <p>Thường bằng cách thêm các hậu tố như <code>-tion, -sion, -ment, -ance, -ence, -ity</code>.</p>
-                    <h4><strong>Ví dụ:</strong></h4>
-                    <p><code>The company <strong>decided</strong> to expand.</code> (Động từ) → <code>The company's <strong>decision</strong> to expand...</code> (Danh từ)</p>
-                    <p><code>The project was <strong>successful</strong>.</code> (Tính từ) → <code>The <strong>success</strong> of the project...</code> (Danh từ)</p>
-                `
-            }
         ],
     },
 ];

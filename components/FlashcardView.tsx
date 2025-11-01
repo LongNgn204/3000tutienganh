@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { Word, Category, StudyProgress, StudyRecord } from '../types';
+import type { Word, Category, StudyProgress, StudyRecord, CEFRLevel } from '../types';
 import Flashcard from './Flashcard';
 import * as srsService from '../services/srsService';
+import { CEFR_LEVEL_MAP } from '../cefr';
 
 interface FlashcardViewProps {
   words: Word[];
@@ -11,6 +12,8 @@ interface FlashcardViewProps {
   onResetStudyProgress: (wordKeys: string[]) => void;
   initialStudyFilter: 'review' | 'new' | null;
   onInitialFilterConsumed: () => void;
+  initialCategory: string | null;
+  onInitialCategoryConsumed: () => void;
 }
 
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -24,11 +27,22 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
     onUpdateStudyProgress,
     onResetStudyProgress,
     initialStudyFilter,
-    onInitialFilterConsumed
+    onInitialFilterConsumed,
+    initialCategory,
+    onInitialCategoryConsumed
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [studyFilter, setStudyFilter] = useState<'review' | 'new'>('review');
+  const [studyFilter, setStudyFilter] = useState<'review' | 'new'>(() => {
+    // If a filter is passed on initial render, use it.
+    if (initialStudyFilter) {
+      return initialStudyFilter;
+    }
+    // Otherwise, check if there are any words to review across all categories.
+    // If yes, default to 'review'. If no, default to 'new'.
+    const { wordsToReview: initialReviewWords } = srsService.getWordsForSession(words, studyProgress);
+    return initialReviewWords.length > 0 ? 'review' : 'new';
+  });
   const [wordSet, setWordSet] = useState<Word[]>([]);
 
   useEffect(() => {
@@ -37,6 +51,13 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
       onInitialFilterConsumed();
     }
   }, [initialStudyFilter, onInitialFilterConsumed]);
+
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+      onInitialCategoryConsumed();
+    }
+  }, [initialCategory, onInitialCategoryConsumed]);
 
   const categoryFilteredWords = useMemo(() => {
     if (selectedCategory === 'all') return words;
@@ -63,6 +84,21 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
           total: categoryFilteredWords.length
       };
   }, [categoryFilteredWords, studyProgress]);
+  
+  const groupedCategories = useMemo(() => {
+    return categories.reduce((acc, category) => {
+      const level = category.level;
+      if (!acc[level]) acc[level] = [];
+      acc[level].push(category);
+      return acc;
+    }, {} as Record<CEFRLevel, Category[]>);
+  }, [categories]);
+
+  const sortedLevels = useMemo(() => Object.keys(groupedCategories).sort((a, b) => {
+    const levelOrder = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    return levelOrder.indexOf(a) - levelOrder.indexOf(b);
+  }) as CEFRLevel[], [groupedCategories]);
+
 
   useEffect(() => {
     setWordSet(shuffleArray(finalFilteredWords));
@@ -141,8 +177,12 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
                         className="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="all">Tất cả ({words.length} từ)</option>
-                        {categories.map(cat => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        {sortedLevels.map(level => (
+                          <optgroup key={level} label={CEFR_LEVEL_MAP[level].name}>
+                            {groupedCategories[level].map(cat => (
+                              <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                          </optgroup>
                         ))}
                     </select>
                 </div>
@@ -179,6 +219,7 @@ const FlashcardView: React.FC<FlashcardViewProps> = ({
         <>
             <div className="w-full max-w-2xl h-[400px] md:h-[450px] flex items-center justify-center">
                 <Flashcard 
+                  key={wordSet[currentIndex].english}
                   word={wordSet[currentIndex]} 
                   onAnswer={handleAnswer}
                   studyRecord={studyProgress[wordSet[currentIndex].english]}

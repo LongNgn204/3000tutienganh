@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { GoogleGenAI } from "@google/genai";
 import type { Word } from '../types';
-import { aiService, AI_MODELS } from '../services/aiService';
 
 // Simple parser to convert basic markdown to HTML for safe rendering
 const parseSimpleMarkdown = (text: string) => {
@@ -14,7 +14,6 @@ const parseSimpleMarkdown = (text: string) => {
         .replace(/\n/g, '<br />'); // Newlines
 };
 
-// FIX: Defined the props interface for the component.
 interface AIExplainModalProps {
   word: Word;
   onClose: () => void;
@@ -33,6 +32,7 @@ const AIExplainModal: React.FC<AIExplainModalProps> = ({ word, onClose }) => {
       setExplanation('');
       
       try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = `Với vai trò là một giáo viên Anh ngữ, hãy giải thích từ tiếng Anh "${word.english}" (phát âm: ${word.pronunciation}) cho người học tiếng Việt một cách thật rõ ràng và dễ hiểu. Vui lòng trình bày bằng tiếng Việt và tuân thủ định dạng sau:
 
 **Định nghĩa:**
@@ -50,17 +50,16 @@ const AIExplainModal: React.FC<AIExplainModalProps> = ({ word, onClose }) => {
 
 Nếu không có từ đồng nghĩa hoặc trái nghĩa, hãy ghi "Không có".`;
 
+        const responseStream = await ai.models.generateContentStream({
+            model: 'gemini-2.5-flash',
+            contents: prompt
+        });
+        
         setIsLoading(false);
         setIsStreaming(true);
         let accumulatedText = '';
-        
-        // Use streaming for faster perceived performance
-        for await (const chunk of aiService.generateContentStream(
-            AI_MODELS.FLASH,
-            prompt,
-            { temperature: 0.5 } // Lower temperature for faster, more consistent explanations
-        )) {
-            accumulatedText += chunk;
+        for await (const chunk of responseStream) {
+            accumulatedText += chunk.text;
             setExplanation(accumulatedText);
         }
         setIsStreaming(false);
@@ -110,8 +109,7 @@ Nếu không có từ đồng nghĩa hoặc trái nghĩa, hãy ghi "Không có".
               className="text-slate-700 space-y-3 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: parseSimpleMarkdown(explanation) }} 
             />
-          {/* Blinking cursor effect during streaming */}
-          {isStreaming && <span className="inline-block w-2 h-5 bg-slate-700 animate-pulse ml-1"></span>}
+          {isStreaming && <span className="blinking-cursor"></span>}
         </div>
 
         <div className="mt-6 pt-4 border-t text-right">
