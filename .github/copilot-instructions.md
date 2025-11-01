@@ -75,8 +75,8 @@ This is a comprehensive English learning platform powered by AI, following the C
 - Use caching for repeated requests: `{ useCache: true }`
 
 ### Model Selection
-- Use `AI_MODELS.FLASH_8B` for fast responses (default)
-- Use `AI_MODELS.FLASH` for more complex tasks
+- Use `AI_MODELS.FLASH_8B` (`gemini-1.5-flash-8b`) for fast, efficient responses - ideal for quick interactions
+- Use `AI_MODELS.FLASH` (`gemini-1.5-flash`) for more complex tasks requiring better understanding
 
 ### Configuration Presets
 - `AI_CONFIG.FAST` - Quick responses (temperature: 0.5)
@@ -145,6 +145,7 @@ ViewMode enum in `types.ts` controls main app routing:
 - `'list'` - Word list
 - `'flashcard'` - Flashcard practice
 - `'quiz'` - Quiz mode
+- `'story'` - AI-generated stories
 - `'reading'` - Reading room
 - `'listening'` - Listening practice
 - `'conversation'` - AI conversation
