@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
 import type { User } from '../types';
+import { aiService, AI_MODELS, AI_CONFIG } from '../services/aiService';
 
 interface AdvancedGrammarViewProps {
   currentUser: User | null;
-  onGoalUpdate: () => void;
 }
 
 interface Challenge {
@@ -26,7 +25,7 @@ const parseMarkdown = (text: string) => {
         .replace(/\n/g, '<br />');
 };
 
-const AdvancedGrammarView: React.FC<AdvancedGrammarViewProps> = ({ currentUser, onGoalUpdate }) => {
+const AdvancedGrammarView: React.FC<AdvancedGrammarViewProps> = ({ currentUser }) => {
     const [status, setStatus] = useState<'idle' | 'fetching' | 'ready' | 'checking' | 'feedback'>('idle');
     const [challenge, setChallenge] = useState<Challenge | null>(null);
     const [userAnswer, setUserAnswer] = useState('');
@@ -40,28 +39,22 @@ const AdvancedGrammarView: React.FC<AdvancedGrammarViewProps> = ({ currentUser, 
         setUserAnswer('');
         setFeedback(null);
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const userLevel = currentUser?.level || 'B1';
             const prompt = `Create an advanced grammar challenge for a ${userLevel}-level English learner. The challenge could be error correction, sentence transformation (e.g., active to passive), or using a specific grammar structure.
-The JSON object should have two keys: "question" (the task for the user) and "task" (the sentence to work with).`;
+Return a single, valid JSON object with two keys:
+1. "question": A string describing the task for the user (e.g., "Find and correct the mistake in the sentence below." or "Rewrite the following sentence using the passive voice.").
+2. "task": The sentence for the user to work with.
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            question: { type: Type.STRING, description: "The instruction for the user, e.g., 'Rewrite this sentence...'" },
-                            task: { type: Type.STRING, description: "The sentence the user needs to work on." }
-                        },
-                        required: ['question', 'task']
-                    }
-                }
-            });
+Example response: {"question": "Rewrite this sentence using the past perfect tense.", "task": "When she arrived, the movie started."}`;
+
+            const responseText = await aiService.generateContent(
+                AI_MODELS.FLASH,
+                prompt,
+                AI_CONFIG.FAST // Faster responses
+            );
             
-            const parsedChallenge = JSON.parse(response.text);
+            const jsonText = responseText.replace(/```json|```/g, '').trim();
+            const parsedChallenge = JSON.parse(jsonText);
             setChallenge(parsedChallenge);
             setStatus('ready');
 
@@ -82,40 +75,27 @@ The JSON object should have two keys: "question" (the task for the user) and "ta
         setError(null);
         setFeedback(null);
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const prompt = `Act as a very strict and meticulous university grammar professor from England. Your student, a Vietnamese learner, has submitted an answer. Your feedback must be precise, academic, and unforgiving of errors. All explanations must be in Vietnamese.
-- The Challenge: "${challenge.question}"
-- Original Task: "${challenge.task}"
-- Student's Answer: "${userAnswer}"
+            const userLevel = currentUser?.level || 'B1';
+            const prompt = `As an expert English grammar teacher for a ${userLevel}-level Vietnamese learner, please evaluate the user's answer to a grammar challenge.
+- The challenge was: "${challenge.question}"
+- The original sentence/task was: "${challenge.task}"
+- The user's answer is: "${userAnswer}"
 
-Evaluate the answer and provide a JSON response. In the 'explanation', you MUST:
-1. State clearly if the answer is correct or incorrect.
-2. If incorrect, pinpoint the exact error.
-3. Provide the perfectly corrected sentence.
-4. Explain the specific grammatical rule that was violated, using its formal name (e.g., 'Subject-Verb Agreement', 'Incorrect Tense Usage', 'Misplaced Modifier').
-5. Explain WHY the rule applies here and why the student's answer was wrong.`;
+Please provide your evaluation in a single, valid JSON object with three keys:
+1. "isCorrect": A boolean (true if the user's answer is grammatically correct and fulfills the task, otherwise false).
+2. "correctAnswer": A string containing the most appropriate correct answer.
+3. "explanation": A string containing a clear, concise explanation in Vietnamese about the grammar rule, explaining why the user's answer is right or wrong and why the correct answer is correct.`;
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            isCorrect: { type: Type.BOOLEAN },
-                            correctAnswer: { type: Type.STRING },
-                            explanation: { type: Type.STRING, description: "Detailed, rule-based explanation in Vietnamese, referencing the specific grammar rule by name." }
-                        },
-                        required: ['isCorrect', 'correctAnswer', 'explanation']
-                    }
-                }
-            });
+            const responseText = await aiService.generateContent(
+                AI_MODELS.FLASH,
+                prompt,
+                AI_CONFIG.FAST // Faster feedback
+            );
 
-            const parsedFeedback = JSON.parse(response.text);
+            const jsonText = responseText.replace(/```json|```/g, '').trim();
+            const parsedFeedback = JSON.parse(jsonText);
             setFeedback(parsedFeedback);
             setStatus('feedback');
-            onGoalUpdate();
 
         } catch (err) {
             console.error("Gemini Feedback Error:", err);

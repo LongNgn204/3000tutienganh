@@ -1,5 +1,3 @@
-// Fix: Removed circular import. A file cannot import types from itself.
-
 export interface Word {
   english: string;
   type: string;
@@ -12,7 +10,6 @@ export interface Word {
 export interface Category {
   id: string;
   name: string;
-  level: CEFRLevel;
   words: Word[];
 }
 
@@ -47,7 +44,7 @@ export interface PlacementTestResult {
 export interface DailyGoal {
   id: string;
   description: string;
-  type: 'learn_new' | 'review_srs' | 'complete_quiz' | 'complete_listening' | 'complete_conversation' | 'complete_pronunciation' | 'complete_story' | 'complete_adv_grammar' | 'complete_reading' | 'complete_writing' | 'complete_roleplay' | 'complete_challenge' | 'complete_video_lesson' | 'post_in_forum';
+  type: 'learn_new' | 'review_srs' | 'complete_quiz' | 'complete_listening' | 'complete_conversation';
   target: number;
   current: number;
 }
@@ -58,46 +55,13 @@ export interface DailyProgress {
   goals: DailyGoal[];
 }
 
-export interface ChallengeProgress {
-    [challengeId: string]: {
-        current: number;
-        completed: boolean;
-    }
-}
-
-// Study Plan Types
-export interface StudyPlanTask {
-  id: string; // e.g., "task-20240101-1"
-  description: string; // e.g., "Ôn tập 15 từ vựng"
-  type: 'flashcard_review' | 'flashcard_new' | 'reading' | 'listening' | 'conversation' | 'pronunciation' | 'role-play' | 'grammar' | 'quiz' | 'writing';
-  duration: number; // in minutes
-  targetId?: string; // e.g., article id or role-play scenario id
-  completed: boolean;
-}
-
-export interface StudyPlan {
-  [day: string]: StudyPlanTask[]; // e.g., "day1", "day2", ...
-}
-
-export interface UserStudyPlanInput {
-  goal: string;
-  timePerDay: number;
-  skillPriorities: string[];
-  targetLevel: CEFRLevel;
-}
-
-
 export interface User {
   name: string;
-  password?: string; // Password might not always be present on the client
+  password: string;
   level: CEFRLevel;
   placementTestResult?: PlacementTestResult;
   studyProgress?: StudyProgress;
   dailyProgress?: DailyProgress;
-  challengeProgress?: ChallengeProgress;
-  customWords?: Word[];
-  studyPlan?: StudyPlan;
-  studyPlanInput?: UserStudyPlanInput;
 }
 
 export interface StudyRecord {
@@ -110,106 +74,4 @@ export interface StudyProgress {
   [wordEnglish: string]: StudyRecord;
 }
 
-export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading' | 'writing' | 'role-play' | 'welcome' | 'landing' | 'leaderboard' | 'challenges' | 'video-lessons' | 'community-forum' | 'forum-topic' | 'ipa-chart' | 'ai-chat-tutor' | 'progress-dashboard' | 'vstep-exam';
-
-// Content Library Types
-export interface ReadingArticleQuestion {
-  question: string;
-  options: string[];
-  answer: string;
-}
-
-export interface ReadingArticle {
-  id: string;
-  title: string;
-  level: CEFRLevel;
-  content: string;
-  questions: ReadingArticleQuestion[];
-}
-
-export interface ListeningExerciseQuestion {
-  question: string;
-  options: string[];
-  answer: string;
-}
-
-export interface ListeningExercise {
-  id: string;
-  title: string;
-  level: CEFRLevel;
-  transcript: string;
-  questions: ListeningExerciseQuestion[];
-}
-
-// Forum Types
-export interface ForumReply {
-    id: string;
-    author: string;
-    timestamp: string;
-    content: string;
-}
-
-export interface ForumPost {
-    id: string;
-    topicId: string;
-    author: string;
-    timestamp: string;
-    title: string;
-    content: string;
-    replies: ForumReply[];
-}
-
-export interface ForumTopic {
-    id: string;
-    title: string;
-    description: string;
-    postCount: number;
-    lastPost: {
-        author: string;
-        timestamp: string;
-    }
-}
-
-// VSTEP Exam Types
-export interface VstepQuestion {
-  question: string;
-  options: string[];
-  correctAnswer: string;
-}
-
-export interface VstepListeningPart {
-  partNumber: number;
-  instructions: string;
-  audioScript: string;
-  questions: VstepQuestion[];
-}
-
-export interface VstepReadingPassage {
-  passageNumber: number;
-  passageText: string;
-  questions: VstepQuestion[];
-}
-
-export interface VstepWritingTask {
-  taskNumber: number;
-  prompt: string;
-}
-
-export interface VstepSpeakingPart {
-  partNumber: number;
-  topic: string;
-  prompts: string[];
-}
-
-export interface VstepExam {
-  listening: VstepListeningPart[];
-  reading: VstepReadingPassage[];
-  writing: VstepWritingTask[];
-  speaking: VstepSpeakingPart[];
-}
-
-export interface SkillProgress {
-    skill: string;
-    completed: number;
-    total: number;
-}
+export type ViewMode = 'list' | 'flashcard' | 'quiz' | 'story' | 'dashboard' | 'conversation' | 'placement-test' | 'placement-test-result' | 'pronunciation' | 'grammar' | 'listening' | 'advanced-grammar' | 'auth' | 'reading';

@@ -1,6 +1,5 @@
-
 import React from 'react';
-import type { User, ViewMode, CEFRLevel } from '../types';
+import type { User, ViewMode } from '../types';
 
 const NavButton: React.FC<{
     onClick: () => void;
@@ -8,95 +7,52 @@ const NavButton: React.FC<{
     label: string;
     children: React.ReactNode;
     disabled?: boolean;
-    isCollapsed: boolean;
-}> = ({ onClick, isActive, label, children, disabled = false, isCollapsed }) => (
+}> = ({ onClick, isActive, label, children, disabled = false }) => (
     <li>
         <button
             onClick={onClick}
             disabled={disabled}
-            title={isCollapsed ? label : undefined}
-            className={`w-full relative flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                isCollapsed ? 'justify-center' : ''
-            } ${
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                 isActive 
-                ? 'bg-gradient-to-r from-indigo-50 to-blue-50 text-indigo-700' 
+                ? 'bg-indigo-100 text-indigo-700' 
                 : disabled 
                 ? 'text-slate-400 cursor-not-allowed'
-                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
+                : 'text-slate-600 hover:bg-slate-200 hover:text-slate-800'
             }`}
         >
-            {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 rounded-r-full"></div>}
-            <span className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-indigo-600' : disabled ? 'text-slate-400' : 'text-slate-500'}`}>{children}</span>
-            {!isCollapsed && <span className="flex-grow text-left">{label}</span>}
-            {!isCollapsed && disabled && <span className="ml-auto text-xs font-bold bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full flex-shrink-0">Sắp ra mắt</span>}
+            <span className={`h-5 w-5 ${isActive ? 'text-indigo-600' : disabled ? 'text-slate-400' : 'text-slate-500'}`}>{children}</span>
+            {label}
+            {disabled && <span className="ml-auto text-xs font-bold bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full">Sắp ra mắt</span>}
         </button>
     </li>
 );
 
-const NavGroup: React.FC<{ title: string; children: React.ReactNode; isCollapsed: boolean; }> = ({ title, children, isCollapsed }) => (
+const NavGroup: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div>
-    {!isCollapsed && <h3 className="px-4 text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">{title}</h3>}
+    <h3 className="px-4 text-xs font-bold uppercase text-slate-400 tracking-wider mb-2">{title}</h3>
     <ul className="space-y-1">
         {children}
     </ul>
   </div>
 );
 
-const UserProfile: React.FC<{ 
-    currentUser: User | null; 
-    onLogoutClick: () => void;
-    onLevelChange: (newLevel: CEFRLevel) => void;
-    isCollapsed: boolean;
-}> = ({ currentUser, onLogoutClick, onLevelChange, isCollapsed }) => {
+const UserProfile: React.FC<{ currentUser: User | null; onLogoutClick: () => void }> = ({ currentUser, onLogoutClick }) => {
     if (!currentUser) return null;
     
-    const allLevels: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-    
-    const today = new Date();
-    const dateOptions: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const formattedDate = today.toLocaleDateString('vi-VN', dateOptions);
-    const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
-
     return (
-        <div className="p-4 border-t border-slate-200">
-            <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
-                <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+        <div className="mt-auto p-4 border-t border-slate-200">
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-lg">
                     {currentUser.name.charAt(0).toUpperCase()}
                 </div>
-                {!isCollapsed && (
-                    <>
-                        <div className="flex-grow min-w-0">
-                            <p className="font-bold text-slate-800 truncate">{currentUser.name}</p>
-                            <div className="relative inline-block group">
-                                <select 
-                                    value={currentUser.level}
-                                    onChange={(e) => onLevelChange(e.target.value as CEFRLevel)}
-                                    className="text-xs text-slate-500 font-medium bg-transparent border-none p-0 pr-4 focus:ring-0 focus:outline-none appearance-none cursor-pointer group-hover:text-indigo-600"
-                                    aria-label="Change CEFR level"
-                                >
-                                    {allLevels.map(level => (
-                                        <option key={level} value={level}>{level} Level</option>
-                                    ))}
-                                </select>
-                                <svg className="absolute right-0 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none group-hover:text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </div>
-                        </div>
-                        <button onClick={onLogoutClick} className="flex-shrink-0 p-2 text-slate-500 hover:bg-red-100 hover:text-red-600 rounded-full transition-colors" title="Đăng xuất">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
-                            </svg>
-                        </button>
-                    </>
-                )}
-            </div>
-             {!isCollapsed && (
-                 <div className="mt-4 pt-4 border-t border-slate-200 text-center space-y-2">
-                    <p className="text-xs text-slate-500">{capitalizedDate}</p>
-                    <p className="text-xs text-slate-400">© 2025 Học Tiếng Anh Cùng AI.<br/>Phát triển bởi Long Nguyễn.</p>
+                <div>
+                    <p className="font-bold text-slate-800">{currentUser.name}</p>
+                    <p className="text-xs text-slate-500 font-medium">{currentUser.level} Level</p>
                 </div>
-            )}
+            </div>
+            <button onClick={onLogoutClick} className="w-full mt-4 text-center text-sm font-semibold text-slate-600 hover:text-red-600 bg-slate-100 hover:bg-red-50 py-2 rounded-lg transition-colors">
+                Đăng xuất
+            </button>
         </div>
     );
 };
@@ -106,102 +62,56 @@ const Sidebar: React.FC<{
   navigateTo: (mode: ViewMode) => void;
   currentUser: User | null;
   onLogoutClick: () => void;
-  onLevelChange: (newLevel: CEFRLevel) => void;
-  isCollapsed: boolean;
-  onToggle: () => void;
-}> = ({ viewMode, navigateTo, currentUser, onLogoutClick, onLevelChange, isCollapsed, onToggle }) => {
+}> = ({ viewMode, navigateTo, currentUser, onLogoutClick }) => {
   return (
-    <aside className={`sidebar fixed lg:relative top-0 left-0 h-full bg-white border-r border-slate-200 z-40 flex flex-col transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
-      <div className={`p-4 border-b border-slate-200 flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
+    <aside className="sidebar fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-40 flex flex-col">
+      <div className="p-4 border-b border-slate-200">
         <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight cursor-pointer" onClick={() => navigateTo('dashboard')}>
-            {isCollapsed ? <span className="text-indigo-600 font-black text-3xl">AI</span> : <>Học Tiếng Anh <span className="text-indigo-600">Cùng AI</span></>}
+            Học Tiếng Anh <span className="text-indigo-600">Cùng AI</span>
         </h1>
       </div>
-      <nav className="flex-1 p-2 space-y-6 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
         
-        <NavGroup title="Học & Ôn tập" isCollapsed={isCollapsed}>
-            <NavButton onClick={() => navigateTo('dashboard')} isActive={viewMode === 'dashboard'} label="Bảng điều khiển" isCollapsed={isCollapsed}>
+        <NavGroup title="Học tập">
+            <NavButton onClick={() => navigateTo('dashboard')} isActive={viewMode === 'dashboard'} label="Bảng điều khiển">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
             </NavButton>
-            <NavButton onClick={() => navigateTo('list')} isActive={viewMode === 'list'} label="Từ vựng" isCollapsed={isCollapsed}>
+            <NavButton onClick={() => navigateTo('list')} isActive={viewMode === 'list'} label="Từ vựng">
                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10.392C3.057 14.71 4.245 14 5.5 14c1.255 0 2.443.29 3.5.804V4.804zM14.5 4c-1.255 0-2.443.29-3.5.804v10.392c1.057.514 2.245.804 3.5.804c1.255 0 2.443-.29 3.5-.804V4.804C16.943 4.29 15.755 4 14.5 4z" /></svg>
             </NavButton>
-            <NavButton onClick={() => navigateTo('flashcard')} isActive={viewMode === 'flashcard'} label="Flashcard" isCollapsed={isCollapsed}>
+            <NavButton onClick={() => navigateTo('flashcard')} isActive={viewMode === 'flashcard'} label="Flashcard">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" /><path fillRule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" /></svg>
             </NavButton>
-             <NavButton onClick={() => navigateTo('quiz')} isActive={viewMode === 'quiz'} label="Trắc nghiệm" isCollapsed={isCollapsed}>
+             <NavButton onClick={() => navigateTo('quiz')} isActive={viewMode === 'quiz'} label="Trắc nghiệm">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6.22 8.22a.75.75 0 011.06 0l1.47 1.47a.75.75 0 001.06 0l1.47-1.47a.75.75 0 111.06 1.06l-1.47 1.47a.75.75 0 000 1.06l1.47 1.47a.75.75 0 11-1.06 1.06L10 12.56l-1.47 1.47a.75.75 0 11-1.06-1.06l1.47-1.47a.75.75 0 000-1.06L6.22 9.28a.75.75 0 010-1.06z" clipRule="evenodd" /><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM4 10a6 6 0 1112 0 6 6 0 01-12 0z" clipRule="evenodd" /></svg>
             </NavButton>
-            <NavButton onClick={() => navigateTo('grammar')} isActive={viewMode === 'grammar'} label="Ngữ pháp" isCollapsed={isCollapsed}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a.75.75 0 01.75.75v.755a4.5 4.5 0 016.364 4.108l.353.353a.75.75 0 11-1.06 1.06l-.354-.353a4.5 4.5 0 01-8.107 0l-.353.353a.75.75 0 01-1.06-1.06l.353-.353A4.5 4.5 0 019.25 4.505V3.75A.75.75 0 0110 3zm-2.25 6a2.25 2.25 0 114.5 0 2.25 2.25 0 01-4.5 0z" clipRule="evenodd" /><path d="M12.25 18a.75.75 0 00-1.5 0v-2.19c-2.443-1.01-4.25-3.328-4.25-6.06V9a.75.75 0 011.5 0v.75a4.75 4.75 0 009.5 0V9a.75.75 0 011.5 0v.75c0 2.732-1.807 5.05-4.25 6.06V18z" /></svg>
+            <NavButton onClick={() => navigateTo('grammar')} isActive={viewMode === 'grammar'} label="Ngữ pháp">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /><path fillRule="evenodd" d="M9.879 2.47a3 3 0 013.84 0l4.242 4.242a3 3 0 010 3.84l-4.242 4.242a3 3 0 01-3.84 0L5.636 10.53a3 3 0 010-3.84L9.879 2.47zM11.293 4.293a1 1 0 00-1.414 0L5.636 8.536a1 1 0 000 1.414l4.243 4.243a1 1 0 001.414 0l4.243-4.243a1 1 0 000-1.414L11.293 4.293z" clipRule="evenodd" /></svg>
+            </NavButton>
+            <NavButton onClick={() => navigateTo('advanced-grammar')} isActive={viewMode === 'advanced-grammar'} label="Ngữ pháp chuyên sâu">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M15.5 2.75a.75.75 0 00-1.5 0v14.5a.75.75 0 001.5 0V2.75z" /><path d="M1.97 3.03a.75.75 0 00-1.06 1.06l4.5 4.5a.75.75 0 001.06 0l4.5-4.5a.75.75 0 00-1.06-1.06L6.5 6.44 1.97 3.03zM1.97 10.03a.75.75 0 00-1.06 1.06l4.5 4.5a.75.75 0 001.06 0l4.5-4.5a.75.75 0 00-1.06-1.06L6.5 13.44l-4.53-3.41z" /></svg>
             </NavButton>
         </NavGroup>
 
-        <NavGroup title="Luyện Kỹ Năng" isCollapsed={isCollapsed}>
-             <NavButton onClick={() => navigateTo('reading')} isActive={viewMode === 'reading'} label="Luyện Đọc" isCollapsed={isCollapsed}>
-                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10.392C3.057 14.71 4.245 14 5.5 14c1.255 0 2.443.29 3.5.804V4.804zM14.5 4c-1.255 0-2.443.29-3.5.804v10.392c1.057.514 2.245.804 3.5.804c1.255 0 2.443-.29 3.5-.804V4.804C16.943 4.29 15.755 4 14.5 4z" /></svg>
-            </NavButton>
-            <NavButton onClick={() => navigateTo('listening')} isActive={viewMode === 'listening'} label="Luyện Nghe" isCollapsed={isCollapsed}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 4a.75.75 0 01.75.75v10.5a.75.75 0 01-1.5 0V4.75A.75.75 0 017 4zM13 4a.75.75 0 01.75.75v10.5a.75.75 0 01-1.5 0V4.75A.75.75 0 0113 4z" /><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM2 10a8 8 0 1116 0 8 8 0 01-16 0z" clipRule="evenodd" /></svg>
-            </NavButton>
-            <NavButton onClick={() => navigateTo('conversation')} isActive={viewMode === 'conversation'} label="Luyện Giao tiếp" isCollapsed={isCollapsed}>
+        <NavGroup title="Luyện tập AI">
+             <NavButton onClick={() => navigateTo('conversation')} isActive={viewMode === 'conversation'} label="AI Giao tiếp">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" /></svg>
             </NavButton>
-            <NavButton onClick={() => navigateTo('pronunciation')} isActive={viewMode === 'pronunciation'} label="Luyện Phát Âm" isCollapsed={isCollapsed}>
+            <NavButton onClick={() => navigateTo('pronunciation')} isActive={viewMode === 'pronunciation'} label="AI Luyện Âm">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-12 0H3a7.001 7.001 0 006 6.93V17H7a1 1 0 100 2h6a1 1 0 100-2h-2v-2.07z" clipRule="evenodd" /></svg>
             </NavButton>
-             <NavButton onClick={() => navigateTo('ipa-chart')} isActive={viewMode === 'ipa-chart'} label="Bảng IPA" isCollapsed={isCollapsed}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3a1 1 0 000 2h1.158l2.256 9.026A1 1 0 008.385 15h3.23a1 1 0 00.97-1.228L10.342 5H14a1 1 0 100-2H4z" /><path fillRule="evenodd" d="M4.05 3.95a1 1 0 011.414-1.414l10 10a1 1 0 01-1.414 1.414l-10-10z" clipRule="evenodd" /></svg>
+            <NavButton onClick={() => navigateTo('story')} isActive={viewMode === 'story'} label="AI Viết truyện">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg>
             </NavButton>
-             <NavButton onClick={() => navigateTo('writing')} isActive={viewMode === 'writing'} label="Luyện Viết" isCollapsed={isCollapsed}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+             <NavButton onClick={() => navigateTo('listening')} isActive={viewMode === 'listening'} label="Luyện Nghe">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" /></svg>
             </NavButton>
-             <NavButton onClick={() => navigateTo('role-play')} isActive={viewMode === 'role-play'} label="Tình huống nhập vai" isCollapsed={isCollapsed}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zM6 8a2 2 0 11-4 0 2 2 0 014 0zM1.49 15.326a.75.75 0 011.02.043 8.002 8.002 0 0111.985 0 .75.75 0 011.02-.043 9.502 9.502 0 00-14.025 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14.51 15.326a.75.75 0 011.02.043A8.003 8.003 0 0117 18.25a.75.75 0 11-1.44.438 6.503 6.503 0 00-11.12 0 .75.75 0 11-1.44-.438 8.003 8.003 0 012.92-2.88.75.75 0 011.02.043z" /></svg>
-            </NavButton>
-        </NavGroup>
-
-        <NavGroup title="Công cụ AI & Nâng cao" isCollapsed={isCollapsed}>
-            <NavButton onClick={() => navigateTo('ai-chat-tutor')} isActive={viewMode === 'ai-chat-tutor'} label="Trợ lý AI" isCollapsed={isCollapsed}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7 2a1 1 0 00-1 1v1.132a4.002 4.002 0 00-1.095 1.433l-.001.002-.001.002A3.982 3.982 0 002.25 8.25c0 1.84.992 3.444 2.5 4.236V15a1 1 0 001 1h8a1 1 0 001-1v-2.514c1.508-.792 2.5-2.396 2.5-4.236 0-1.54-.83-2.91-2.02-3.68l-.001-.002-.001-.002A4.002 4.002 0 0014 4.132V3a1 1 0 00-1-1H7zm-3.5 7.14A2.484 2.484 0 013.75 8.25c0-1.15.75-2.14 1.8-2.399l.06-.013a2.502 2.502 0 012.38-2.38l.014-.06A2.484 2.484 0 019.14 3.5h1.72c.86 0 1.6.49 1.95 1.22l.014.06a2.502 2.502 0 012.38 2.38l.06.013c1.05.259 1.8 1.25 1.8 2.399a2.484 2.484 0 01-1.14 2.065V14h-7v-2.86a2.484 2.484 0 01-1.14-2.065z" clipRule="evenodd" /></svg>
-            </NavButton>
-            <NavButton onClick={() => navigateTo('progress-dashboard')} isActive={viewMode === 'progress-dashboard'} label="Báo cáo Tiến độ" isCollapsed={isCollapsed}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" /></svg>
-            </NavButton>
-             <NavButton onClick={() => navigateTo('vstep-exam')} isActive={viewMode === 'vstep-exam'} label="Thi thử VSTEP" isCollapsed={isCollapsed}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm3.293 11.707a1 1 0 001.414 0L10 12.414l1.293 1.293a1 1 0 101.414-1.414L11.414 11l1.293-1.293a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414L8.586 11 7.293 12.293a1 1 0 000 1.414z" clipRule="evenodd" /></svg>
-            </NavButton>
-        </NavGroup>
-        
-        <NavGroup title="Cộng đồng" isCollapsed={isCollapsed}>
-            <NavButton onClick={() => navigateTo('leaderboard')} isActive={viewMode === 'leaderboard'} label="Bảng xếp hạng" disabled isCollapsed={isCollapsed}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M18 3a1 1 0 00-1.447-.894L13 4.434V3a1 1 0 00-2 0v2.268l-3-1.92-2.32.774A1 1 0 002.732 5H2a1 1 0 00-1 1v8a1 1 0 001 1h.732a1 1 0 00.948-.684L5 13.08l3-1.92V17a1 1 0 002 0v-1.566l3.553 2.279A1 1 0 0018 17V4a1 1 0 000-1z" /></svg>
-            </NavButton>
-            <NavButton onClick={() => navigateTo('challenges')} isActive={viewMode === 'challenges'} label="Thử thách" isCollapsed={isCollapsed}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 4a1 1 0 112 0v1a1 1 0 11-2 0V4z" clipRule="evenodd" /><path d="M10 8a1 1 0 011 1v4a1 1 0 11-2 0v-4a1 1 0 011-1z" /></svg>
-            </NavButton>
-            <NavButton onClick={() => navigateTo('video-lessons')} isActive={viewMode === 'video-lessons'} label="Bài giảng Video" disabled isCollapsed={isCollapsed}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M3.5 2.75a.75.75 0 00-1.5 0v14.5a.75.75 0 001.5 0v-4.392l1.657-.348a6.44 6.44 0 015.686 0l1.657.348V17.25a.75.75 0 001.5 0V2.75a.75.75 0 00-1.5 0v4.392l-1.657.348a6.44 6.44 0 01-5.686 0L3.5 7.142V2.75z" /></svg>
-            </NavButton>
-             <NavButton onClick={() => navigateTo('community-forum')} isActive={viewMode === 'community-forum' || viewMode === 'forum-topic'} label="Diễn đàn" disabled isCollapsed={isCollapsed}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5A1.5 1.5 0 0116.5 18h-13A1.5 1.5 0 012 16.5v-13z" /></svg>
+            <NavButton onClick={() => navigateTo('reading')} isActive={viewMode === 'reading'} label="Phòng Đọc AI">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M9.25 3.321a.75.75 0 011.5 0v1.821a.75.75 0 01-1.5 0V3.321zM11.603 3.38a.75.75 0 00-1.06-1.06l-1.288 1.287a.75.75 0 001.06 1.06l1.288-1.287zM5.457 4.637a.75.75 0 10-1.06-1.06L3.109 4.865a.75.75 0 001.06 1.06l1.288-1.288zM2.5 9.25a.75.75 0 01.75-.75h1.821a.75.75 0 010 1.5H3.25a.75.75 0 01-.75-.75zM14.929 7.671a.75.75 0 00-1.06 1.06l1.287 1.288a.75.75 0 001.06-1.06l-1.287-1.288zM4.637 14.543a.75.75 0 10-1.06 1.06L4.865 16.89a.75.75 0 001.06-1.06l-1.288-1.287zM10 12.25a.75.75 0 01.75.75v1.821a.75.75 0 01-1.5 0v-1.821a.75.75 0 01.75-.75zM8.397 16.62a.75.75 0 00-1.06 1.06l1.288 1.287a.75.75 0 001.06-1.06L8.397 16.62zM12.5 10a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /><path d="M17.5 9.25a.75.75 0 00-1.5 0v1.821a.75.75 0 001.5 0V9.25zM14.543 15.363a.75.75 0 10-1.06 1.06l1.288 1.288a.75.75 0 001.06-1.06l-1.288-1.288z" /></svg>
             </NavButton>
         </NavGroup>
       </nav>
-      <div className="mt-auto">
-        <div className="hidden lg:flex justify-center p-2 border-t border-slate-200">
-            <button 
-                onClick={onToggle} 
-                className="p-2 text-slate-500 hover:bg-slate-100 rounded-full" 
-                title={isCollapsed ? "Mở rộng" : "Thu gọn"}
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                </svg>
-            </button>
-        </div>
-        <UserProfile currentUser={currentUser} onLogoutClick={onLogoutClick} onLevelChange={onLevelChange} isCollapsed={isCollapsed} />
-      </div>
+      <UserProfile currentUser={currentUser} onLogoutClick={onLogoutClick} />
     </aside>
   );
 };

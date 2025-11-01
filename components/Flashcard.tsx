@@ -32,39 +32,13 @@ const Flashcard: React.FC<FlashcardProps> = ({ word, onAnswer, studyRecord }) =>
 
   const currentStyle = cardStyles[getCardStatus()];
 
-  // Function to adjust font size based on word length
-  const getFontSizeForWord = (wordText: string) => {
-    const len = wordText.length;
-    if (len <= 8) return 'text-6xl md:text-7xl';
-    if (len <= 14) return 'text-5xl md:text-6xl';
-    if (len <= 20) return 'text-4xl md:text-5xl';
-    return 'text-3xl md:text-4xl';
-  };
-
-  const AnswerButton: React.FC<{
-    onClick: (e: React.MouseEvent) => void;
-    colorClasses: string;
-    title: string;
-    label: string;
-    children: React.ReactNode;
-  }> = ({ onClick, colorClasses, title, label, children }) => (
-    <button
-      onClick={onClick}
-      className={`flex-1 flex flex-col items-center justify-center p-3 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105 hover:shadow-lg ${colorClasses}`}
-      aria-label={label}
-      title={title}
-    >
-      {children}
-    </button>
-  );
-
   return (
     <div 
-        className={`w-full h-full bg-gradient-to-br from-white to-slate-50 rounded-2xl shadow-lifted border-b-4 ${currentStyle} flex flex-col p-6 md:p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]`}
+        className={`w-full h-full bg-white rounded-2xl shadow-xl border-4 ${currentStyle} flex flex-col p-6 md:p-8 transition-all duration-300 hover:shadow-2xl hover:scale-105`}
         onClick={() => !isRevealed && setIsRevealed(true)}
     >
         <div 
-          className="absolute top-0 left-0 bottom-0 w-2" 
+          className="absolute top-0 left-0 bottom-0 w-2.5" 
           style={{ backgroundColor: word.color }}
           aria-hidden="true"
         ></div>
@@ -72,7 +46,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ word, onAnswer, studyRecord }) =>
         {/* Top Part (Word Info) */}
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-x-3">
-            <span className="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-1 rounded-full border border-slate-200">{word.type}</span>
+            <span className="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-1 rounded-full">{word.type}</span>
             <p className="text-lg text-slate-500 italic">{word.pronunciation}</p>
           </div>
           <div onClick={(e) => e.stopPropagation()}>
@@ -82,11 +56,11 @@ const Flashcard: React.FC<FlashcardProps> = ({ word, onAnswer, studyRecord }) =>
 
         {/* Main Content (The Word) */}
         <div className="flex-grow flex items-center justify-center cursor-pointer">
-            <h2 className={`${getFontSizeForWord(word.english)} font-extrabold text-slate-800 tracking-tight text-center break-words`}>{word.english}</h2>
+            <h2 className="text-6xl md:text-7xl font-extrabold text-slate-800 tracking-tight text-center">{word.english}</h2>
         </div>
         
         {/* Bottom Part (Meaning & Actions) */}
-        <div className="h-[180px] flex flex-col justify-end">
+        <div className="h-[160px] flex flex-col justify-end">
             {!isRevealed ? (
                 <div className="text-center text-slate-500 opacity-80 cursor-pointer">
                     <p>Nhấn để xem nghĩa</p>
@@ -101,33 +75,30 @@ const Flashcard: React.FC<FlashcardProps> = ({ word, onAnswer, studyRecord }) =>
                         </div>
                     )}
                     <div className="w-full flex justify-center gap-x-2 sm:gap-x-4 mt-6">
-                       <AnswerButton
+                       <button 
                           onClick={(e) => handleAnswerClick(e, 'again')}
-                          colorClasses="bg-red-500 hover:bg-red-600 text-white"
-                          title="Học lại (trong 10 phút)"
-                          label="Đánh dấu học lại"
+                          className="px-4 py-2 sm:px-6 sm:py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg shadow-lg transition-transform transform hover:scale-105"
+                          aria-label="Đánh dấu học lại"
+                          title="Học lại (trong 1 phút)"
                        >
-                           <span className="font-bold text-lg">Lại</span>
-                           <span className="text-xs opacity-80">{'< 10 phút'}</span>
-                       </AnswerButton>
-                       <AnswerButton 
+                           Lại
+                       </button>
+                       <button 
                           onClick={(e) => handleAnswerClick(e, 'good')}
-                          colorClasses="bg-blue-500 hover:bg-blue-600 text-white"
+                          className="px-4 py-2 sm:px-6 sm:py-3 bg-yellow-500 hover:bg-yellow-600 text-yellow-900 font-bold rounded-lg shadow-lg transition-transform transform hover:scale-105"
+                          aria-label="Đánh dấu Tốt"
                           title="Tốt (ôn lại sau)"
-                          label="Đánh dấu Tốt"
                         >
-                           <span className="font-bold text-lg">Tốt</span>
-                           <span className="text-xs opacity-80">...</span>
-                       </AnswerButton>
-                        <AnswerButton 
+                           Tốt
+                       </button>
+                        <button 
                           onClick={(e) => handleAnswerClick(e, 'easy')}
-                          colorClasses="bg-green-500 hover:bg-green-600 text-white"
+                          className="px-4 py-2 sm:px-6 sm:py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-lg transition-transform transform hover:scale-105"
+                          aria-label="Đánh dấu Dễ"
                           title="Dễ (ôn lại sau một thời gian dài)"
-                          label="Đánh dấu Dễ"
                         >
-                           <span className="font-bold text-lg">Dễ</span>
-                           <span className="text-xs opacity-80">...</span>
-                       </AnswerButton>
+                           Dễ
+                       </button>
                    </div>
                 </div>
             )}

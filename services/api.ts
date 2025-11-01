@@ -10,7 +10,7 @@ const BACKEND_API_URL = '';
 
 // --- Các hàm API ---
 
-export const register = async (name: string, password: string): Promise<{ success: boolean; user?: User; message?: string }> => {
+export const register = async (name: string, password: string): Promise<{ success: boolean; message?: string }> => {
     if (!BACKEND_API_URL) {
         return local.registerUserLocal(name, password);
     }
@@ -25,9 +25,7 @@ export const register = async (name: string, password: string): Promise<{ succes
         if (!response.ok) {
             return { success: false, message: data.message || 'Đăng ký thất bại.' };
         }
-        // Assuming backend now logs in and returns user+token on register
-        sessionStorage.setItem('authToken', data.token); 
-        return { success: true, user: data.user };
+        return { success: true };
     } catch (error) {
         console.error('Registration API error:', error);
         return { success: false, message: 'Không thể kết nối đến server.' };
@@ -60,25 +58,6 @@ export const login = async (name: string, password: string): Promise<{ success: 
         return { success: false, message: 'Không thể kết nối đến server.' };
     }
 };
-
-export const updateUser = async (user: User): Promise<void> => {
-     if (!BACKEND_API_URL) {
-        return local.updateUserLocal(user);
-    }
-    try {
-        const token = sessionStorage.getItem('authToken');
-        await fetch(`${BACKEND_API_URL}/user/`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify(user),
-        });
-    } catch (error) {
-        console.error('Update user API error:', error);
-    }
-}
 
 export const updateProgress = async (name: string, progress: StudyProgress): Promise<void> => {
     if (!BACKEND_API_URL) {
@@ -122,25 +101,23 @@ export const completePlacementTest = async (name: string, result: PlacementTestR
      if (!BACKEND_API_URL) {
         const user = local.completePlacementTestLocal(name, result);
         if (user) {
+            sessionStorage.setItem('loggedInUser', user.name);
             return { success: true, user };
         }
         return { success: false, message: "Không tìm thấy người dùng." };
     }
     try {
-        const token = sessionStorage.getItem('authToken');
-        const response = await fetch(`${BACKEND_API_URL}/user/complete-test`, {
+        const response = await fetch(`${BACKEND_API_URL}/auth/complete-test`, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ result }), // No longer need to send name, user is identified by token
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, result }),
         });
         const data = await response.json();
          if (!response.ok) {
             return { success: false, message: data.message || 'Cập nhật thất bại.' };
         }
-        return { success: true, user: data.user }; // Backend returns the updated user
+        sessionStorage.setItem('authToken', data.token); 
+        return { success: true, user: data.user };
     } catch (error) {
         console.error('Complete placement test API error:', error);
         return { success: false, message: 'Không thể kết nối đến server.' };
@@ -170,28 +147,6 @@ export const checkSession = async (): Promise<{ user: User | null }> => {
     } catch (error) {
         console.error('Check session API error:', error);
         return { user: null };
-    }
-};
-
-export const getAllUsers = async (): Promise<User[]> => {
-    if (!BACKEND_API_URL) {
-        return local.getAllUsersLocal();
-    }
-     try {
-        const token = sessionStorage.getItem('authToken');
-        const response = await fetch(`${BACKEND_API_URL}/users`, {
-             headers: { 
-                'Authorization': `Bearer ${token}` 
-            },
-        });
-        if (!response.ok) {
-            return [];
-        }
-        const users = await response.json();
-        return users;
-    } catch (error) {
-        console.error('Get all users API error:', error);
-        return [];
     }
 };
 

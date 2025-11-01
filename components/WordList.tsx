@@ -1,10 +1,7 @@
-import React, { useEffect, useState, useMemo, lazy, Suspense } from 'react';
+import React, { useEffect, useState } from 'react';
 import WordCard from './WordCard';
-import type { Category, CEFRLevel, Word } from '../types';
+import type { Category } from '../types';
 import { TYPE_COLORS } from '../constants';
-import { CEFR_LEVEL_MAP } from '../cefr';
-
-const AddWordModal = lazy(() => import('./AddWordModal'));
 
 const ColorLegend: React.FC = () => {
   const typeNames: { [key: string]: string } = {
@@ -17,8 +14,6 @@ const ColorLegend: React.FC = () => {
     'n/v': 'Danh từ/Động từ',
     'pron': 'Đại từ',
     'det': 'Hạn định từ',
-    'phr v': 'Cụm động từ',
-    'idiom': 'Thành ngữ',
   };
 
   return (
@@ -46,51 +41,30 @@ interface TopicSidebarProps {
 }
 
 const TopicSidebar: React.FC<TopicSidebarProps> = ({ categories, activeCategory, onCategoryClick }) => {
-  const groupedCategories = useMemo(() => {
-    return categories.reduce((acc, category) => {
-      const level = category.level;
-      if (!acc[level]) {
-        acc[level] = [];
-      }
-      acc[level].push(category);
-      return acc;
-    }, {} as Record<CEFRLevel, Category[]>);
-  }, [categories]);
-
-  const sortedLevels = Object.keys(groupedCategories).sort((a, b) => {
-    const levelOrder = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-    return levelOrder.indexOf(a) - levelOrder.indexOf(b);
-  }) as CEFRLevel[];
-
   return (
     <aside className="w-full lg:sticky lg:top-20 self-start">
-      <h2 className="text-lg font-semibold text-slate-700 mb-4 border-b pb-2">Chủ đề theo cấp độ</h2>
+      <h2 className="text-lg font-semibold text-slate-700 mb-4 border-b pb-2">Chủ đề</h2>
       <nav>
-        {sortedLevels.map(level => (
-          <div key={level} className="mb-4">
-            <h3 className={`font-bold text-md mb-2 px-2 ${CEFR_LEVEL_MAP[level].color.replace('bg-', 'text-').replace('-100', '-700')}`}>{CEFR_LEVEL_MAP[level].name}</h3>
-            <ul>
-              {groupedCategories[level].map((category) => (
-                <li key={category.id}>
-                  <a
-                    href={`#${category.id}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onCategoryClick(category.id);
-                    }}
-                    className={`block px-4 py-1.5 my-1 rounded-md text-sm font-medium transition-all duration-200 ease-in-out ${
-                      activeCategory === category.id
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
-                    }`}
-                  >
-                    {category.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        <ul>
+          {categories.map((category) => (
+            <li key={category.id}>
+              <a
+                href={`#${category.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onCategoryClick(category.id);
+                }}
+                className={`block px-4 py-2 my-1 rounded-md text-sm font-medium transition-all duration-200 ease-in-out ${
+                  activeCategory === category.id
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
+                }`}
+              >
+                {category.name}
+              </a>
+            </li>
+          ))}
+        </ul>
       </nav>
     </aside>
   );
@@ -104,12 +78,10 @@ interface WordListProps {
   activeCategory: string;
   setActiveCategory: (id: string) => void;
   mainContentRef: React.RefObject<HTMLDivElement>;
-  onAddNewWord: (wordData: Omit<Word, 'color'>) => Promise<void>;
 }
 
-const WordList: React.FC<WordListProps> = ({ categories, searchQuery, setSearchQuery, activeCategory, setActiveCategory, mainContentRef, onAddNewWord }) => {
+const WordList: React.FC<WordListProps> = ({ categories, searchQuery, setSearchQuery, activeCategory, setActiveCategory, mainContentRef }) => {
   const [isTopicSidebarVisible, setIsTopicSidebarVisible] = useState(true);
-  const [isAddWordModalOpen, setIsAddWordModalOpen] = useState(false);
 
   const filteredCategories = React.useMemo((): Category[] => {
     if (!searchQuery) {
@@ -180,7 +152,7 @@ const WordList: React.FC<WordListProps> = ({ categories, searchQuery, setSearchQ
             className={`w-full mt-8 lg:mt-0 lg:max-h-[calc(100vh-150px)] overflow-y-auto ${isTopicSidebarVisible ? 'lg:col-span-9' : 'lg:col-span-12'}`}
             >
                 <div className="sticky top-0 bg-slate-100/90 backdrop-blur-sm py-4 z-10 -mt-8 pt-8">
-                     <div className="flex flex-wrap items-center gap-4 mb-6">
+                     <div className="flex items-center gap-4 mb-6">
                         <div className="relative flex-grow w-full max-w-xl">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg className="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -193,14 +165,6 @@ const WordList: React.FC<WordListProps> = ({ categories, searchQuery, setSearchQ
                                 className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-full leading-5 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             />
                         </div>
-                        <button
-                            onClick={() => setIsAddWordModalOpen(true)}
-                            className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full font-semibold hover:bg-indigo-700 transition-all shadow-md"
-                            title="Thêm từ mới vào danh sách của bạn"
-                        >
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                           <span className="hidden sm:inline">Thêm từ</span>
-                        </button>
                         <button 
                             onClick={() => setIsTopicSidebarVisible(prev => !prev)}
                             className="hidden lg:flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm font-semibold text-slate-700 hover:bg-slate-100 transition-all text-sm"
@@ -238,14 +202,6 @@ const WordList: React.FC<WordListProps> = ({ categories, searchQuery, setSearchQ
             )}
             </main>
         </div>
-        {isAddWordModalOpen && (
-            <Suspense fallback={<div />}>
-                <AddWordModal 
-                    onClose={() => setIsAddWordModalOpen(false)}
-                    onAddWord={onAddNewWord}
-                />
-            </Suspense>
-        )}
     </div>
   );
 };

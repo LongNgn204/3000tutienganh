@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { Word, Category, CEFRLevel } from '../types';
-import { CEFR_LEVEL_MAP } from '../cefr';
+import type { Word, Category } from '../types';
 
 interface QuizViewProps {
   allWords: Word[]; // All words for generating options
@@ -29,16 +28,13 @@ const QuizView: React.FC<QuizViewProps> = ({ allWords, wordsForQuiz, categories,
     if (selectedCategory !== 'all') {
       const category = categories.find(c => c.id === selectedCategory);
       if (category) {
-        // Since wordsForQuiz can be from a search, we need to filter it further
-        const categoryWordSet = new Set(category.words.map(w => w.english));
-        availableWords = wordsForQuiz.filter(w => categoryWordSet.has(w.english));
-      } else {
-        availableWords = [];
+        const categoryWords = new Set(category.words.map(w => w.english));
+        availableWords = wordsForQuiz.filter(w => categoryWords.has(w.english));
       }
     }
-  
+
     if (availableWords.length === 0) {
-        alert("Không có từ nào trong chủ đề này để tạo bài kiểm tra. Vui lòng chọn chủ đề khác hoặc xóa bộ lọc tìm kiếm.");
+        alert("Không có từ nào trong chủ đề này để tạo bài kiểm tra. Vui lòng chọn chủ đề khác.");
         return;
     }
 
@@ -86,20 +82,6 @@ const QuizView: React.FC<QuizViewProps> = ({ allWords, wordsForQuiz, categories,
       setQuizState('result');
     }
   };
-
-  const groupedCategories = useMemo(() => {
-    return categories.reduce((acc, category) => {
-      const level = category.level;
-      if (!acc[level]) acc[level] = [];
-      acc[level].push(category);
-      return acc;
-    }, {} as Record<CEFRLevel, Category[]>);
-  }, [categories]);
-
-  const sortedLevels = useMemo(() => Object.keys(groupedCategories).sort((a, b) => {
-    const levelOrder = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-    return levelOrder.indexOf(a) - levelOrder.indexOf(b);
-  }) as CEFRLevel[], [groupedCategories]);
   
   if (quizState === 'setup') {
     return (
@@ -116,12 +98,8 @@ const QuizView: React.FC<QuizViewProps> = ({ allWords, wordsForQuiz, categories,
                             className="w-full border border-slate-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="all">Tất cả chủ đề</option>
-                            {sortedLevels.map(level => (
-                                <optgroup key={level} label={CEFR_LEVEL_MAP[level].name}>
-                                    {groupedCategories[level].map(cat => (
-                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                    ))}
-                                </optgroup>
+                            {categories.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
                             ))}
                         </select>
                     </div>
@@ -186,7 +164,7 @@ const QuizView: React.FC<QuizViewProps> = ({ allWords, wordsForQuiz, categories,
         </div>
 
         <p className="text-center text-slate-600 mb-4">Từ nào có nghĩa là:</p>
-        <h2 className="text-4xl sm:text-5xl font-bold text-center text-slate-800 mb-8">{currentQuestion.english}</h2>
+        <h2 className="text-5xl font-bold text-center text-slate-800 mb-8">{currentQuestion.english}</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {options.map(option => {
